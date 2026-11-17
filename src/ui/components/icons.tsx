@@ -94,3 +94,26 @@ export function NextIcon(props: IconProps) {
     </StrokeIcon>
   );
 }
+
+/**
+ * A star of the round's rating (SCR-02), drawn on a dark (ink) background: filled in sun yellow, or only a
+ * white outline. Both stand out from the ink, and from each other, well beyond 3:1 (WCAG 1.4.11).
+ * `data-filled` exposes the state to tests: the icon itself is hidden from assistive technology.
+ */
+export function StarIcon({ filled, size = 22 }: { filled: boolean; size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+      data-filled={filled}
+      className={filled ? 'fill-sun stroke-sun' : 'fill-ink stroke-paper'}
+      strokeWidth={1.8}
+      strokeLinejoin="round"
+    >
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}

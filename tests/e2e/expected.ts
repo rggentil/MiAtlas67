@@ -12,6 +12,15 @@ export function expectedRound(settings: RoundSettings, seed = 42): Question[] {
   return generateRound(countries, settings, createRng(seed), relations);
 }
 
+/**
+ * The first `count` rounds of a visit with `?seed=<seed>`: every round of the visit draws from the same
+ * session generator, so "Jugar otra vez" plays the next one.
+ */
+export function expectedRounds(settings: RoundSettings, count: number, seed = 42): Question[][] {
+  const rng = createRng(seed);
+  return Array.from({ length: count }, () => generateRound(countries, settings, rng, relations));
+}
+
 export function questionAt(questions: readonly Question[], index: number): Question {
   const question = questions[index];
   if (!question) throw new Error(`The round has no question ${String(index + 1)}`);

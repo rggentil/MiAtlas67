@@ -3,12 +3,14 @@ import { countries } from '../data/countries.ts';
 import { relations } from '../data/relations.ts';
 import { generateRound, type Question, type RoundSettings } from '../domain/questions.ts';
 import { createRng } from '../domain/random.ts';
+import type { RoundResult } from '../domain/round.ts';
 import { I18nProvider } from '../i18n/I18nProvider.tsx';
 import { getGameSeed } from './gameSeed.ts';
 import type { PlayableGame } from './games.ts';
 import { GameSetupScreen } from './screens/GameSetupScreen.tsx';
 import { HomeScreen } from './screens/HomeScreen.tsx';
 import { RoundScreen } from './screens/RoundScreen.tsx';
+import { SummaryScreen } from './screens/SummaryScreen.tsx';
 
 // Dev-only component showcase: left out of production builds (import.meta.env.DEV is false there).
 const Showcase = import.meta.env.DEV ? lazy(() => import('./dev/Showcase.tsx')) : null;
@@ -21,6 +23,15 @@ type Screen =
       readonly game: PlayableGame;
       readonly settings: RoundSettings;
       readonly questions: readonly Question[];
+      /** Counts the rounds of the visit, so every new round starts with a fresh screen. */
+      readonly number: number;
+    }
+  | {
+      readonly name: 'summary';
+      readonly game: PlayableGame;
+      readonly settings: RoundSettings;
+      readonly result: RoundResult;
+      readonly number: number;
     };
 
 const HOME: Screen = { name: 'home' };
@@ -33,6 +44,12 @@ const HOME: Screen = { name: 'home' };
 function Screens() {
   const [screen, setScreen] = useState<Screen>(HOME);
   const [rng] = useState(() => createRng(getGameSeed()));
+
+  // Generated in event handlers, never during render, so StrictMode cannot draw twice.
+  function startRound(game: PlayableGame, settings: RoundSettings, number: number) {
+    const questions = generateRound(countries, settings, rng, relations);
+    setScreen({ name: 'round', game, settings, questions, number });
+  }
 
   switch (screen.name) {
     case 'home':
@@ -51,23 +68,35 @@ function Screens() {
             setScreen(HOME);
           }}
           onStart={(settings) => {
-            // Generated in the event handler, never during render, so StrictMode cannot draw twice.
-            const questions = generateRound(countries, settings, rng, relations);
-            setScreen({ name: 'round', game: screen.game, settings, questions });
+            startRound(screen.game, settings, 1);
           }}
         />
       );
     case 'round':
       return (
         <RoundScreen
+          key={screen.number}
           game={screen.game}
           settings={screen.settings}
           questions={screen.questions}
           onQuit={() => {
             setScreen(HOME);
           }}
-          onFinish={() => {
-            // The round summary arrives with #24; until then a finished round goes back home.
+          onFinish={(result) => {
+            setScreen({ ...screen, name: 'summary', result });
+          }}
+        />
+      );
+    case 'summary':
+      return (
+        <SummaryScreen
+          game={screen.game}
+          settings={screen.settings}
+          result={screen.result}
+          onPlayAgain={() => {
+            startRound(screen.game, screen.settings, screen.number + 1);
+          }}
+          onMenu={() => {
             setScreen(HOME);
           }}
         />
