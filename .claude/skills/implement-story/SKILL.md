@@ -87,6 +87,10 @@ requirement ID, so `npm run trace` can see it: `it('RND-04 marks the chosen wron
   only how many there are.
 - Behaviour you add on the side (focus moving to the new screen's title, a new back button) needs a test too.
 - Render every new screen at least once in English in a component test (NFR-06).
+- Component tests that render `<App />` fix the seed first (`window.history.replaceState(null, '', '/?seed=42')`,
+  reset afterwards); otherwise every run plays a different random round.
+- Tag each E2E test with its own IDs (`{ tag: '@LVL-02' }`). A tag on the `describe` applies to every test inside,
+  and `npm run trace` then counts tests that never check that requirement.
 - No `waitForTimeout`, no CSS/XPath selectors, no `data-testid` unless nothing accessible fits.
 - Run the new unit and component tests once before implementing and check that they fail for the right reason.
 
@@ -104,7 +108,8 @@ requirement ID, so `npm run trace` can see it: `it('RND-04 marks the chosen wron
    coverage gate, E2E on mobile-chrome, mobile-safari and desktop-chrome). Fix failures; never skip a gate.
 2. New or changed screen: look at it with the Playwright MCP at 390 × 844 (screenshots in `.playwright-mcp/`,
    which is git-ignored). Tests pass on ugly screens too.
-3. Independent review: spawn the `qa-reviewer` subagent (`.claude/agents/qa-reviewer.md`) with the issue number
+3. Independent review: commit, rebase on `origin/main` (other PRs may have merged meanwhile), then spawn the
+   `qa-reviewer` subagent (`.claude/agents/qa-reviewer.md`) with the issue number
    and the branch. Fix the real findings and rerun the gates; list the ones you reject, with the reason, in the
    PR notes.
 4. `npm run trace`: the story's requirement IDs must now have tests.

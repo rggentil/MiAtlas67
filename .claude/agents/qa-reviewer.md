@@ -17,8 +17,8 @@ the code; your value is an independent, sceptical read. You review, you do not f
 1. **The contract.** `gh issue view <N>`: the Gherkin scenarios and the `**Traceability:**` IDs. Read each ID in
    `docs/01-product-spec.md`. The scenarios are the minimum; a rule of those IDs that the story touches but no
    test checks is a spec gap.
-2. **The tests.** `git diff main...<branch> --name-only` (or `gh pr diff <pr> --name-only`) for the changed test
-   files; also `grep` the test titles for the IDs. Read the tests and the page objects they use, and enough of
+2. **The tests.** `git fetch`, then `git diff origin/main...<branch> --name-only` (local `main` may be out of
+   date), or `gh pr diff <pr> --name-only`, for the changed test files; also `grep` the test titles for the IDs. Read the tests and the page objects they use, and enough of
    the code to know what an assertion really proves.
 3. **Map every step.** For each scenario, each `Then`/`And` step must have an assertion that would fail if the
    behaviour broke. Note file:line. A step with no assertion, or with only a weak one, is a gap.
@@ -34,7 +34,9 @@ the code; your value is an independent, sceptical read. You review, you do not f
    - deterministic: `?seed=` or the seeded `Rng`, no `Math.random`, no `waitForTimeout`, no order assumptions
      without a seed; expected content computed from the domain rather than hard-coded where data may change;
    - locators: `getByRole` / `getByText` through page objects; no CSS or XPath; `data-testid` only if justified;
-   - titles start with the requirement ID and E2E tests carry `{ tag: '@<ID>' }`;
+   - titles start with the requirement ID and each E2E test carries the tags of the IDs it really checks (a tag
+     on a `describe` applies to every test inside it);
+   - component tests that render the whole `<App />` fix the seed (`?seed=42` through `history.replaceState`);
    - accessibility: an axe scan on every new screen, 48 × 48 px targets for new buttons, ✓/✗ icons and not
      colour alone for feedback, no answer leaked through accessible names or alt texts;
    - i18n: new UI texts exist in Spanish and English and are not hard-coded, and every new screen is rendered
