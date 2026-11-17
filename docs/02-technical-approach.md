@@ -26,7 +26,9 @@
 | Repo / CI | Git + GitHub (`rggentil/MiAtlas67`) + GitHub Actions | Free; CI runs every test layer on each push |
 | Hosting (HTTPS preview) | **GitHub Pages**, deployed by GitHub Actions | Free HTTPS for a public repo (D10) |
 
-Versions: latest stable at scaffold time, pinned in `package.json`.
+Versions: latest stable at scaffold time (2026-11), pinned exactly in `package.json`, on Node 22 LTS (`.nvmrc`).
+Exception: TypeScript stays on **6.0** because typescript-eslint does not support TypeScript 7 yet; upgrade
+when it does.
 
 **Alternatives considered**
 - *Flutter*: excellent for native, weaker for "web first".
