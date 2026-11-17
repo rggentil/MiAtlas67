@@ -93,6 +93,10 @@ requirement ID, so `npm run trace` can see it: `it('RND-04 marks the chosen wron
   and `npm run trace` then counts tests that never check that requirement.
 - No `waitForTimeout`, no CSS/XPath selectors, no `data-testid` unless nothing accessible fits.
 - Run the new unit and component tests once before implementing and check that they fail for the right reason.
+- When a test guards something subtle (a layout, a focus move), prove it can fail: break the code on purpose and
+  run it again. Commit or copy the file first; `git checkout -- <file>` would also throw away uncommitted work.
+- jsdom has no layout, no `inert` and no `scrollIntoView`: focus after a dialog, elements hidden behind a panel and
+  sizes need an E2E test.
 
 ## 5. Implement
 

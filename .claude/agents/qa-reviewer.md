@@ -34,6 +34,10 @@ the code; your value is an independent, sceptical read. You review, you do not f
    - deterministic: `?seed=` or the seeded `Rng`, no `Math.random`, no `waitForTimeout`, no order assumptions
      without a seed; expected content computed from the domain rather than hard-coded where data may change;
    - locators: `getByRole` / `getByText` through page objects; no CSS or XPath; `data-testid` only if justified;
+     `exact: true` whenever one name contains another (a lookup for "Correcta" also finds "Incorrecta");
+   - what tests cannot see: an icon or fill against its own background (a yellow star on a yellow panel), and
+     elements covered by a fixed panel. Overlap is checked without scrolling (`elementFromPoint`): Playwright's
+     actions, even a trial click, scroll and retry first, and `toBeVisible()` ignores what covers an element;
    - titles start with the requirement ID and each E2E test carries the tags of the IDs it really checks (a tag
      on a `describe` applies to every test inside it);
    - component tests that render the whole `<App />` fix the seed (`?seed=42` through `history.replaceState`);
