@@ -1,5 +1,7 @@
 # MiAtlas67
 
+[![CI](https://github.com/rggentil/MiAtlas67/actions/workflows/ci.yml/badge.svg)](https://github.com/rggentil/MiAtlas67/actions/workflows/ci.yml)
+
 A mobile-first geography quiz game for the family: learn the world's **flags**, **capitals** and
 **country shapes** in short rounds, from easy to expert, and watch your progress grow.
 
