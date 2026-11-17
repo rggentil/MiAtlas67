@@ -1,6 +1,6 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ComponentPropsWithRef, ReactNode } from 'react';
 
-interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
+interface IconButtonProps extends Omit<ComponentPropsWithRef<'button'>, 'children'> {
   /** Accessible name: the button shows only an icon. */
   label: string;
   icon: ReactNode;

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { I18nContext, type I18nValue } from './context.ts';
 import { dictionaries, type MessageKey } from './dictionaries.ts';
+import { formatMessage, type MessageParams } from './format.ts';
 import type { Language } from './languages.ts';
 import { loadLanguage, saveLanguage } from './storage.ts';
 
@@ -21,7 +22,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     () => ({
       language,
       setLanguage,
-      t: (key: MessageKey) => dictionaries[language][key],
+      t: (key: MessageKey, params?: MessageParams) =>
+        formatMessage(dictionaries[language][key], params),
     }),
     [language, setLanguage],
   );

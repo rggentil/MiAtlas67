@@ -70,7 +70,7 @@ describe('App', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Europa' }));
     await userEvent.click(screen.getByRole('button', { name: 'Fácil' }));
 
-    expect(heading()).toHaveTextContent('¿De qué país es?');
+    expect(heading()).toHaveTextContent('¿De qué país es esta bandera?');
     expect(heading()).toHaveFocus();
     expect(roundSettings('Esta partida')).toEqual(['Banderas', 'Europa', 'Fácil']);
     expect(screen.getByRole('progressbar', { name: 'Progreso de la partida' })).toHaveAttribute(
