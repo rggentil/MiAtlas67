@@ -53,16 +53,29 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
   const [quitting, setQuitting] = useState(false);
   const quitRef = useRef<HTMLButtonElement>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
+  const optionsRef = useRef<HTMLUListElement>(null);
+  const backFromDialog = useRef(false);
 
   const question = currentQuestion(state);
   const chosen = currentAnswer(state);
   const number = state.current + 1;
   const total = state.questions.length;
 
-  // After answering, "Siguiente" is the only thing left to do: it takes the focus.
+  // After answering, "Siguiente" is the only thing left to do: it takes the focus. The answers scroll up
+  // above the feedback panel, so the ✓ and ✗ are never hidden behind it on a short screen.
   useEffect(() => {
-    if (chosen !== null) nextRef.current?.focus();
+    if (chosen === null) return;
+    nextRef.current?.focus({ preventScroll: true });
+    optionsRef.current?.scrollIntoView({ block: 'nearest' });
   }, [chosen]);
+
+  // Back from the quit dialog, the focus returns to "Salir de la partida". It has to wait until the page
+  // is no longer inert: focus() on inert content does nothing.
+  useEffect(() => {
+    if (quitting || !backFromDialog.current) return;
+    backFromDialog.current = false;
+    quitRef.current?.focus();
+  }, [quitting]);
 
   function goOn() {
     if (number === total) onFinish(roundResult(state));
@@ -112,10 +125,14 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
           {game.direction === 'A' ? (
             <>
               <ScreenTitle className="text-2xl">{t('round.FLAG-A.prompt')}</ScreenTitle>
-              <div className="mx-auto w-full max-w-64 rounded-block border-3 border-ink bg-paper p-3 shadow-block">
+              <div className="mx-auto w-full max-w-56 rounded-block border-3 border-ink bg-paper p-3 shadow-block">
                 <FlagImage entity={question.entity} alt={t('round.flagAlt')} />
               </div>
-              <ul aria-label={t('round.options')} className="flex flex-col gap-3">
+              <ul
+                ref={optionsRef}
+                aria-label={t('round.options')}
+                className="flex scroll-mb-56 flex-col gap-3"
+              >
                 {question.options.map((option) => (
                   <TextOption
                     key={option.code}
@@ -140,8 +157,8 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
       {quitting && (
         <QuitDialog
           onStay={() => {
+            backFromDialog.current = true;
             setQuitting(false);
-            quitRef.current?.focus();
           }}
           onQuit={onQuit}
         />
@@ -209,6 +226,8 @@ function AnswerMark({ correct, variant }: { correct: boolean; variant: 'badge' |
         variant === 'badge'
           ? 'absolute -top-3 -right-2 size-9 rounded-full'
           : 'size-12 -rotate-6 rounded-xl shadow-block-sm',
+        // RND-04: a correct answer gets a positive animation, unless the device asks for reduced motion.
+        correct ? 'motion-safe:animate-pop' : '',
       ].join(' ')}
     >
       {correct ? (

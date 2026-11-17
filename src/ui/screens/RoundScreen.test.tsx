@@ -261,7 +261,20 @@ describe('RoundScreen · FLAG-A', () => {
 
     expect(feedback()).toHaveTextContent(`So close! It was ${FIRST.entity.name.en}`);
     expect(within(optionItem(wrong.name.en)).getByRole('img', { name: 'Wrong' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Next' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Quit the round' })).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+    const second = questionAt(1);
+    await userEvent.click(screen.getByRole('button', { name: second.entity.name.en }));
+    expect(feedback()).toHaveTextContent('Correct!');
+    expect(
+      within(optionItem(second.entity.name.en)).getByRole('img', { name: 'Correct' }),
+    ).toBeVisible();
+    expect(screen.getByText('Correct: 1')).toBeVisible();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Quit the round' }));
+    const dialog = screen.getByRole('dialog', { name: 'Quit the round?' });
+    expect(dialog).toHaveAccessibleDescription('If you quit now, this round is not saved.');
+    expect(within(dialog).getByRole('button', { name: 'Keep playing' })).toHaveFocus();
+    expect(within(dialog).getByRole('button', { name: 'Yes, quit' })).toBeVisible();
   });
 });

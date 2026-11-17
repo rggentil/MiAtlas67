@@ -23,6 +23,20 @@
   --radius-block: 1rem;
   --shadow-block: 4px 4px 0 var(--color-ink);
   --shadow-block-sm: 3px 3px 0 var(--color-ink);
+
+  /* RND-04: the positive animation of a correct answer (only with motion-safe) */
+  --animate-pop: pop 450ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  @keyframes pop {
+    0% {
+      scale: 0.4;
+    }
+    60% {
+      scale: 1.25;
+    }
+    100% {
+      scale: 1;
+    }
+  }
 }
 
 @layer base {

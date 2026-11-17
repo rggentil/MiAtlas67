@@ -23,8 +23,3 @@ export function wrongOption(question: Question): Entity {
   if (!wrong) throw new Error('A question always has wrong options');
   return wrong;
 }
-
-/** Matches the URL of the bundled flag of `code`: "/…/es.svg", with "?no-inline" in dev builds. */
-export function flagFile(code: string): RegExp {
-  return new RegExp(String.raw`/${code.toLowerCase()}\.svg(\?no-inline)?$`);
-}
