@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import type { Game } from '../../domain/games.ts';
+import type { PlayableGame } from '../games.ts';
 import { renderWithI18n } from '../../test/render.tsx';
 import { HomeScreen } from './HomeScreen.tsx';
 
@@ -13,7 +13,7 @@ function game(name: string): HTMLElement {
 }
 
 describe('HomeScreen', () => {
-  it('GAME-01 shows the topics Banderas, Capitales and Siluetas, each with two games', () => {
+  it('GAME-01 shows the topics Banderas, Capitales and Siluetas, each with its two games', () => {
     renderWithI18n(<HomeScreen onOpenGame={vi.fn()} />);
 
     expect(screen.getByRole('heading', { level: 1, name: '¿A qué jugamos?' })).toBeVisible();
@@ -21,9 +21,16 @@ describe('HomeScreen', () => {
     expect(
       topics.map((topic) => within(topic).getByRole('heading', { level: 2 }).textContent),
     ).toEqual(['Banderas', 'Capitales', 'Siluetas']);
-    for (const topic of topics) {
-      expect(within(topic).getAllByRole('button')).toHaveLength(2);
-    }
+    const gamesPerTopic = topics.map((topic) =>
+      within(topic)
+        .getAllByRole('button')
+        .map((button) => button.textContent.split(' ¿')[0]),
+    );
+    expect(gamesPerTopic).toEqual([
+      ['Bandera → País', 'País → Bandera'],
+      ['País → Capital', 'Capital → País'],
+      ['Silueta → País', 'País → Silueta'],
+    ]);
   });
 
   it('GAME-01 names each game by its direction and its question', () => {
@@ -36,7 +43,7 @@ describe('HomeScreen', () => {
   });
 
   it('GAME-01 both Flags games can be opened', async () => {
-    const onOpenGame = vi.fn<(game: Game) => void>();
+    const onOpenGame = vi.fn<(game: PlayableGame) => void>();
     renderWithI18n(<HomeScreen onOpenGame={onOpenGame} />);
 
     await userEvent.click(game('Bandera → País'));

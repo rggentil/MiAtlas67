@@ -6,10 +6,10 @@ import { LanguageSwitch } from '../components/LanguageSwitch.tsx';
 import { Logo } from '../components/Logo.tsx';
 import { ScreenTitle } from '../components/ScreenTitle.tsx';
 import { toneClasses } from '../components/tones.ts';
-import { isPlayable } from '../games.ts';
+import { isPlayable, type PlayableGame } from '../games.ts';
 
 interface HomeScreenProps {
-  onOpenGame: (game: Game) => void;
+  onOpenGame: (game: PlayableGame) => void;
 }
 
 const TOPIC_ICONS: Record<GameTopic, ComponentType<{ size?: number }>> = {
@@ -80,7 +80,7 @@ function GameButton({ game, onOpenGame }: { game: Game } & HomeScreenProps) {
       type="button"
       disabled={!playable}
       onClick={() => {
-        onOpenGame(game);
+        if (isPlayable(game)) onOpenGame(game);
       }}
       className={[
         'flex min-h-16 flex-col items-start justify-center gap-0.5 px-2.5 py-2 text-left',
