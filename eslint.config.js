@@ -16,17 +16,15 @@ export default defineConfig([
     'blob-report',
   ]),
   {
+    // All TypeScript: strict, type-aware rules
     files: ['**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
       tseslint.configs.strictTypeChecked,
       tseslint.configs.stylisticTypeChecked,
-      reactHooks.configs.flat['recommended-latest'],
-      reactRefresh.configs.vite,
     ],
     languageOptions: {
       ecmaVersion: 2022,
-      globals: globals.browser,
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
@@ -34,9 +32,19 @@ export default defineConfig([
     },
   },
   {
+    // App code: React rules and browser globals
+    files: ['src/**/*.{ts,tsx}'],
+    extends: [reactHooks.configs.flat['recommended-latest'], reactRefresh.configs.vite],
+    languageOptions: { globals: globals.browser },
+  },
+  {
+    // Tooling and E2E tests run in Node
+    files: ['*.{js,ts}', 'tests/**/*.ts', 'scripts/**/*.{js,ts}'],
+    languageOptions: { globals: globals.node },
+  },
+  {
     files: ['**/*.js'],
     extends: [js.configs.recommended],
-    languageOptions: { globals: globals.node },
   },
   prettier,
 ]);
