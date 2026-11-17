@@ -1,4 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
+import type { Question } from '../../../src/domain/questions.ts';
+import { wrongOption } from '../expected.ts';
 
 /** Page object for the round screen: one question at a time (spec §8). */
 export class RoundPage {
@@ -60,6 +62,18 @@ export class RoundPage {
 
   async answer(name: string): Promise<void> {
     await this.option(name).click();
+  }
+
+  /**
+   * Plays a whole FLAG-A round: the questions at `wrongAt` with a wrong country, the others right, tapping
+   * "Siguiente" after each answer.
+   */
+  async playRound(questions: readonly Question[], wrongAt: readonly number[]): Promise<void> {
+    for (const [index, question] of questions.entries()) {
+      const option = wrongAt.includes(index) ? wrongOption(question) : question.entity;
+      await this.answer(option.name.es);
+      await this.nextButton.click();
+    }
   }
 
   /** "Salir de la partida", then "Sí, salir" in the confirmation (RND-07). */
