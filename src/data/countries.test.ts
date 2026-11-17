@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { flagFileName, REGIONS, type Entity } from '../domain/entity.ts';
+import { flagFileName, isCapitalEligible, REGIONS, type Entity } from '../domain/entity.ts';
 import { countries } from './countries.ts';
 
 const bundledFlags = new Set(
@@ -65,9 +65,19 @@ describe('countries dataset', () => {
     }
   });
 
-  it('CAP-02 only city-states, Nauru and disputed capitals are left out of Capitals games', () => {
-    const withoutCapital = countries.filter((c) => c.capital === null).map((c) => c.code);
-    expect(withoutCapital.sort()).toEqual(['IL', 'MC', 'NR', 'PS', 'SG', 'VA']);
+  it('CAP-02 every one of the 195 countries can be asked in Capitals games', () => {
+    expect(countries.filter((c) => !isCapitalEligible(c)).map((c) => c.code)).toEqual([]);
+  });
+
+  it.each([
+    ['MC', 'Mónaco'],
+    ['SG', 'Singapur'],
+    ['VA', 'Ciudad del Vaticano'],
+    ['NR', 'Yaren'],
+    ['IL', 'Jerusalén'],
+    ['PS', 'Jerusalén Este'],
+  ])('D13 the quiz capital of %s is "%s"', (code, capital) => {
+    expect(byCode(code).capital?.es).toBe(capital);
   });
 
   it('DATA-05 every flag file exists in the bundle', () => {

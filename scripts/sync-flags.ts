@@ -5,6 +5,12 @@ import { join } from 'node:path';
 import { countries } from '../src/data/countries.ts';
 import { flagFileName } from '../src/domain/entity.ts';
 
+/**
+ * Flags kept from another source instead of flag-icons, because flag-icons does not show the flag
+ * in use today. Each one is listed with its source and licence in src/assets/flags/SOURCES.md.
+ */
+const OVERRIDES = new Set(['AF']);
+
 const root = join(import.meta.dirname, '..');
 const source = join(root, 'node_modules', 'flag-icons', 'flags', '4x3');
 const target = join(root, 'src', 'assets', 'flags');
@@ -12,18 +18,26 @@ const target = join(root, 'src', 'assets', 'flags');
 mkdirSync(target, { recursive: true });
 
 const missing: string[] = [];
+let copied = 0;
 for (const entity of countries) {
   const file = flagFileName(entity);
+  if (OVERRIDES.has(entity.code)) {
+    if (!existsSync(join(target, file))) missing.push(`${entity.code} (override)`);
+    continue;
+  }
   const from = join(source, file);
   if (existsSync(from)) {
     copyFileSync(from, join(target, file));
+    copied += 1;
   } else {
     missing.push(entity.code);
   }
 }
 
 if (missing.length > 0) {
-  console.error(`Not found in flag-icons: ${missing.join(', ')}`);
+  console.error(`Flags not found: ${missing.join(', ')}`);
   process.exit(1);
 }
-console.log(`Copied ${String(countries.length)} flags to src/assets/flags`);
+console.log(
+  `Copied ${String(copied)} flags from flag-icons; kept ${String(OVERRIDES.size)} override(s)`,
+);

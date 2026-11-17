@@ -7,9 +7,9 @@ import type { Category, Entity, Localized, Region, Tier } from '../domain/entity
  * - English names follow common English usage.
  * - Transcontinental countries (DATA-04): Rusia → Europa, Chipre → Europa, Turquía → Asia,
  *   Georgia / Armenia / Azerbaiyán / Kazajistán → Asia, Egipto → África.
- * - Tiers (spec §7) are a first proposal, reviewed by the product owner (#15).
- * - `capital: null` keeps a country out of Capitals games (CAP-02): city-states whose capital
- *   is the country itself, countries without an official capital, and disputed capitals.
+ * - Tiers (spec §7) were reviewed by the product owner (#15) and stay editable.
+ * - Every country has a quiz capital (decision D13): city-states use the country itself, Nauru its
+ *   de facto capital Yaren, Israel and Palestina their proclaimed capitals.
  */
 
 type Pair = readonly [es: string, en: string];
@@ -63,7 +63,7 @@ export const countries: readonly Entity[] = [
   c('SK', ['Eslovaquia', 'Slovakia'], ['Bratislava', 'Bratislava'], 'europe', 2),
   c('SI', ['Eslovenia', 'Slovenia'], ['Liubliana', 'Ljubljana'], 'europe', 2),
   c('ES', ['España', 'Spain'], ['Madrid', 'Madrid'], 'europe', 1),
-  c('EE', ['Estonia', 'Estonia'], ['Tallin', 'Tallinn'], 'europe', 3),
+  c('EE', ['Estonia', 'Estonia'], ['Tallin', 'Tallinn'], 'europe', 2),
   c('FI', ['Finlandia', 'Finland'], ['Helsinki', 'Helsinki'], 'europe', 2),
   c('FR', ['Francia', 'France'], ['París', 'Paris'], 'europe', 1),
   c('GR', ['Grecia', 'Greece'], ['Atenas', 'Athens'], 'europe', 1),
@@ -75,10 +75,10 @@ export const countries: readonly Entity[] = [
   c('LI', ['Liechtenstein', 'Liechtenstein'], ['Vaduz', 'Vaduz'], 'europe', 3),
   c('LT', ['Lituania', 'Lithuania'], ['Vilna', 'Vilnius'], 'europe', 3),
   c('LU', ['Luxemburgo', 'Luxembourg'], ['Luxemburgo', 'Luxembourg'], 'europe', 2),
-  c('MK', ['Macedonia del Norte', 'North Macedonia'], ['Skopie', 'Skopje'], 'europe', 3),
+  c('MK', ['Macedonia del Norte', 'North Macedonia'], ['Skopie', 'Skopje'], 'europe', 2),
   c('MT', ['Malta', 'Malta'], ['La Valeta', 'Valletta'], 'europe', 2),
   c('MD', ['Moldavia', 'Moldova'], ['Chisináu', 'Chișinău'], 'europe', 3),
-  c('MC', ['Mónaco', 'Monaco'], null, 'europe', 2), // city-state
+  c('MC', ['Mónaco', 'Monaco'], ['Mónaco', 'Monaco'], 'europe', 2), // city-state: the capital is the country itself
   c('ME', ['Montenegro', 'Montenegro'], ['Podgorica', 'Podgorica'], 'europe', 3),
   c('NO', ['Noruega', 'Norway'], ['Oslo', 'Oslo'], 'europe', 1),
   c('NL', ['Países Bajos', 'Netherlands'], ['Ámsterdam', 'Amsterdam'], 'europe', 1, {
@@ -94,7 +94,16 @@ export const countries: readonly Entity[] = [
   c('SE', ['Suecia', 'Sweden'], ['Estocolmo', 'Stockholm'], 'europe', 1),
   c('CH', ['Suiza', 'Switzerland'], ['Berna', 'Bern'], 'europe', 1),
   c('UA', ['Ucrania', 'Ukraine'], ['Kiev', 'Kyiv'], 'europe', 1),
-  c('VA', ['Ciudad del Vaticano', 'Vatican City'], null, 'europe', 2, { category: 'un-observer' }), // city-state
+  c(
+    'VA',
+    ['Ciudad del Vaticano', 'Vatican City'],
+    ['Ciudad del Vaticano', 'Vatican City'],
+    'europe',
+    2,
+    {
+      category: 'un-observer',
+    },
+  ), // city-state: the capital is the country itself
 
   // ── América (35) ──────────────────────────────────────────────────────────
   c(
@@ -187,13 +196,13 @@ export const countries: readonly Entity[] = [
   c('KP', ['Corea del Norte', 'North Korea'], ['Pionyang', 'Pyongyang'], 'asia', 2),
   c('KR', ['Corea del Sur', 'South Korea'], ['Seúl', 'Seoul'], 'asia', 1),
   c('AE', ['Emiratos Árabes Unidos', 'United Arab Emirates'], ['Abu Dabi', 'Abu Dhabi'], 'asia', 2),
-  c('PH', ['Filipinas', 'Philippines'], ['Manila', 'Manila'], 'asia', 2),
+  c('PH', ['Filipinas', 'Philippines'], ['Manila', 'Manila'], 'asia', 1),
   c('GE', ['Georgia', 'Georgia'], ['Tiflis', 'Tbilisi'], 'asia', 3),
   c('IN', ['India', 'India'], ['Nueva Delhi', 'New Delhi'], 'asia', 1),
   c('ID', ['Indonesia', 'Indonesia'], ['Yakarta', 'Jakarta'], 'asia', 2),
   c('IQ', ['Irak', 'Iraq'], ['Bagdad', 'Baghdad'], 'asia', 2),
   c('IR', ['Irán', 'Iran'], ['Teherán', 'Tehran'], 'asia', 2),
-  c('IL', ['Israel', 'Israel'], null, 'asia', 2), // capital disputed (DATA-08)
+  c('IL', ['Israel', 'Israel'], ['Jerusalén', 'Jerusalem'], 'asia', 1), // proclaimed capital (D13)
   c('JP', ['Japón', 'Japan'], ['Tokio', 'Tokyo'], 'asia', 1),
   c('JO', ['Jordania', 'Jordan'], ['Amán', 'Amman'], 'asia', 2),
   c('KZ', ['Kazajistán', 'Kazakhstan'], ['Astaná', 'Astana'], 'asia', 2),
@@ -209,8 +218,11 @@ export const countries: readonly Entity[] = [
   c('NP', ['Nepal', 'Nepal'], ['Katmandú', 'Kathmandu'], 'asia', 2),
   c('OM', ['Omán', 'Oman'], ['Mascate', 'Muscat'], 'asia', 3),
   c('PK', ['Pakistán', 'Pakistan'], ['Islamabad', 'Islamabad'], 'asia', 2),
-  c('PS', ['Palestina', 'Palestine'], null, 'asia', 2, { category: 'un-observer' }), // capital disputed (DATA-08)
-  c('SG', ['Singapur', 'Singapore'], null, 'asia', 2), // city-state
+  c('PS', ['Palestina', 'Palestine'], ['Jerusalén Este', 'East Jerusalem'], 'asia', 2, {
+    category: 'un-observer',
+    otherCapitals: [['Ramala', 'Ramallah']], // administrative seat
+  }), // proclaimed capital (D13)
+  c('SG', ['Singapur', 'Singapore'], ['Singapur', 'Singapore'], 'asia', 2), // city-state: the capital is the country itself
   c('SY', ['Siria', 'Syria'], ['Damasco', 'Damascus'], 'asia', 2),
   c(
     'LK',
@@ -247,7 +259,7 @@ export const countries: readonly Entity[] = [
   c('SZ', ['Esuatini', 'Eswatini'], ['Mbabane', 'Mbabane'], 'africa', 3, {
     otherCapitals: [['Lobamba', 'Lobamba']],
   }),
-  c('ET', ['Etiopía', 'Ethiopia'], ['Adís Abeba', 'Addis Ababa'], 'africa', 2),
+  c('ET', ['Etiopía', 'Ethiopia'], ['Adís Abeba', 'Addis Ababa'], 'africa', 1),
   c('GA', ['Gabón', 'Gabon'], ['Libreville', 'Libreville'], 'africa', 3),
   c('GM', ['Gambia', 'Gambia'], ['Banjul', 'Banjul'], 'africa', 3),
   c('GH', ['Ghana', 'Ghana'], ['Acra', 'Accra'], 'africa', 2),
@@ -258,7 +270,7 @@ export const countries: readonly Entity[] = [
   c('LS', ['Lesoto', 'Lesotho'], ['Maseru', 'Maseru'], 'africa', 3),
   c('LR', ['Liberia', 'Liberia'], ['Monrovia', 'Monrovia'], 'africa', 3),
   c('LY', ['Libia', 'Libya'], ['Trípoli', 'Tripoli'], 'africa', 2),
-  c('MG', ['Madagascar', 'Madagascar'], ['Antananarivo', 'Antananarivo'], 'africa', 2),
+  c('MG', ['Madagascar', 'Madagascar'], ['Antananarivo', 'Antananarivo'], 'africa', 3),
   c('MW', ['Malaui', 'Malawi'], ['Lilongüe', 'Lilongwe'], 'africa', 3),
   c('ML', ['Malí', 'Mali'], ['Bamako', 'Bamako'], 'africa', 3),
   c('MA', ['Marruecos', 'Morocco'], ['Rabat', 'Rabat'], 'africa', 1),
@@ -324,8 +336,8 @@ export const countries: readonly Entity[] = [
   c('SB', ['Islas Salomón', 'Solomon Islands'], ['Honiara', 'Honiara'], 'oceania', 3),
   c('KI', ['Kiribati', 'Kiribati'], ['Tarawa Sur', 'South Tarawa'], 'oceania', 3),
   c('FM', ['Micronesia', 'Micronesia'], ['Palikir', 'Palikir'], 'oceania', 3),
-  c('NR', ['Nauru', 'Nauru'], null, 'oceania', 3), // no official capital
-  c('NZ', ['Nueva Zelanda', 'New Zealand'], ['Wellington', 'Wellington'], 'oceania', 1),
+  c('NR', ['Nauru', 'Nauru'], ['Yaren', 'Yaren'], 'oceania', 3), // no official capital; Yaren is the de facto one
+  c('NZ', ['Nueva Zelanda', 'New Zealand'], ['Wellington', 'Wellington'], 'oceania', 2),
   c('PW', ['Palaos', 'Palau'], ['Ngerulmud', 'Ngerulmud'], 'oceania', 3),
   c(
     'PG',
