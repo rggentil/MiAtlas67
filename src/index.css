@@ -1,1 +1,32 @@
 @import 'tailwindcss';
+/* Self-hosted fonts (SIL OFL): no request to an external domain (NFR-04) */
+@import '@fontsource/lilita-one/400.css';
+@import '@fontsource-variable/nunito/wght.css';
+
+/* Theme C «Bloques»: tokens from docs/02-technical-approach.md §7 */
+@theme {
+  --color-ink: #1a1a2e;
+  --color-ink-muted: #4a4a66;
+  --color-sky: #cfe6ff;
+  --color-paper: #ffffff;
+  --color-sun: #ffc93c;
+  --color-accent: #ff5d8f;
+  --color-topic-flags: #ff9dbb;
+  --color-topic-capitals: #8db4ff;
+  --color-topic-shapes: #6eddb0;
+  --color-success: #6eddb0;
+  --color-error: #ff8a80;
+
+  --font-display: 'Lilita One', system-ui, sans-serif;
+  --font-body: 'Nunito Variable', system-ui, sans-serif;
+
+  --radius-block: 1rem;
+  --shadow-block: 4px 4px 0 var(--color-ink);
+  --shadow-block-sm: 3px 3px 0 var(--color-ink);
+}
+
+@layer base {
+  body {
+    @apply min-h-dvh bg-sky font-body text-ink antialiased;
+  }
+}
