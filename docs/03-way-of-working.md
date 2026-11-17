@@ -61,9 +61,14 @@ already looks good.
 - **Specs** (what and why) live in the repo under `docs/`. They are the source of truth for requirements.
 - **Stories** are GitHub Issues in `rggentil/MiAtlas67`:
   - the body holds the user story, the Gherkin acceptance criteria and the traced requirement IDs;
-  - labels mark the epic (`epic:data`, `epic:flags`…) and the type (`story`, `bug`, `chore`).
-- **Board**: a GitHub Project (Kanban) with the columns *Backlog → Ready → In progress → In review → Done*.
-- **Epics** map to the roadmap phases, using milestones or a parent issue with sub-issues.
+  - labels mark the type (`epic`, `story`, `chore`, `bug`).
+- **Epics**: one parent issue per roadmap phase; issue **#N is the epic of phase N** (#1–#7). Stories are its
+  sub-issues. Stories are detailed one or two phases ahead; later epics only list their planned stories.
+- **Board**: [GitHub Project "MiAtlas67"](https://github.com/users/rggentil/projects/1) with the columns
+  *Backlog → Ready → In progress → In review → Done*:
+  - *Backlog*: written by Claude, not yet agreed;
+  - *Ready*: agreed by the product owner (Definition of Ready), so it can be started;
+  - *In review*: waiting for your demo and review.
 - **Commits and PRs** reference the issue (`Closes #12`), so the card moves to *Done* when the PR is merged.
 - **Claude manages everything with the `gh` CLI**: it creates issues, adds them to the project and moves cards.
   No MCP is needed, only `gh` logged in to github.com with the `project` scope.
