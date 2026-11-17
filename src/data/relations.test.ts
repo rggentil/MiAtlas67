@@ -30,7 +30,7 @@ describe('relations dataset', () => {
   it.each([
     ['ES', ['PT', 'FR', 'AD', 'MA']],
     ['DE', ['DK', 'PL', 'CZ', 'AT', 'CH', 'FR', 'LU', 'BE', 'NL']],
-    ['BR', ['UY', 'AR', 'PY', 'BO', 'PE', 'CO', 'VE', 'GY', 'SR']],
+    ['BR', ['UY', 'AR', 'PY', 'BO', 'PE', 'CO', 'VE', 'GY', 'SR', 'FR']],
     ['CN', ['KP', 'RU', 'MN', 'KZ', 'KG', 'TJ', 'AF', 'PK', 'IN', 'NP', 'BT', 'MM', 'LA', 'VN']],
     ['ZA', ['NA', 'BW', 'ZW', 'MZ', 'SZ', 'LS']],
   ] as const)('LVL-06 %s has the expected land neighbours', (code, expected) => {
@@ -43,9 +43,11 @@ describe('relations dataset', () => {
     }
   });
 
-  it('LVL-06 borders through distant overseas territories do not count', () => {
-    expect(relations.neighbours.get('FR')).not.toContain('BR');
+  it('D15 territories inside the EU count, dependent territories outside it do not', () => {
+    expect(relations.neighbours.get('FR')).toEqual(expect.arrayContaining(['BR', 'SR']));
+    expect(relations.neighbours.get('ES')).toContain('MA');
     expect(relations.neighbours.get('GB')).not.toContain('ES');
+    expect(relations.neighbours.get('CY')).toBeUndefined();
     expect(relations.neighbours.get('DK')).not.toContain('CA');
   });
 });

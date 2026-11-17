@@ -3,13 +3,13 @@
  * "tricky" wrong options of level 3 (LVL-06). Curated by hand and reviewed by the product owner (#37).
  *
  * Rules:
- * - Only the main territory counts, as in SHAPE-02: borders through distant overseas territories are left out
- *   (France–Brazil and France–Suriname via French Guiana, United Kingdom–Spain via Gibraltar,
- *   Denmark–Canada via Greenland, United Kingdom–Cyprus via the sovereign base areas).
- * - Spain–Morocco counts (Ceuta and Melilla are part of Spain, not overseas territories).
+ * - A territory counts when it is part of the country inside the EU (D15): France–Brazil and France–Suriname
+ *   (French Guiana), Spain–Morocco (Ceuta and Melilla). Dependent territories outside the EU do not:
+ *   United Kingdom–Spain (Gibraltar), Denmark–Canada (Greenland), United Kingdom–Cyprus (sovereign base areas).
  * - De facto lines: China–Pakistan counts, India–Afghanistan does not (both through Kashmir).
  * - Only the 195 countries: Kosovo, Western Sahara and other extended entities are not in this list,
- *   so Albania–Serbia and Morocco–Mauritania are not neighbours here.
+ *   so Albania–Serbia and Morocco–Mauritania are not neighbours here. Their borders come with the extended set
+ *   (level 4, D15).
  */
 // prettier-ignore
 export const landBorders: readonly string[] = [
@@ -49,7 +49,7 @@ export const landBorders: readonly string[] = [
   'JO-PS', 'JO-SA', 'JO-SY', 'KG-KZ', 'KG-TJ', 'KG-UZ', 'KH-LA', 'KH-TH', 'KH-VN', 'KP-KR',
   'KW-SA', 'KZ-TM', 'KZ-UZ', 'LA-MM', 'LA-TH', 'LA-VN', 'LB-SY', 'MM-TH', 'MY-TH', 'OM-SA',
   'OM-YE', 'QA-SA', 'SA-YE', 'SY-TR', 'TJ-UZ', 'TM-UZ',
-  // Across regions (12)
-  'AZ-RU', 'BG-TR', 'CN-RU', 'EG-IL', 'EG-PS', 'ES-MA', 'GE-RU', 'GR-TR', 'ID-PG', 'KP-RU',
-  'KZ-RU', 'MN-RU',
+  // Across regions (14)
+  'AZ-RU', 'BG-TR', 'BR-FR', 'CN-RU', 'EG-IL', 'EG-PS', 'ES-MA', 'FR-SR', 'GE-RU', 'GR-TR',
+  'ID-PG', 'KP-RU', 'KZ-RU', 'MN-RU',
 ];

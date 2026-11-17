@@ -113,7 +113,8 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
   flags similar to the answer's (Flags games only), countries that share a land border with it, countries of its
   region. In "Mundo" a similar flag or a neighbour can come from another region; a region round only uses its own
   countries. The similar-flag groups and the land borders are curated data reviewed by the product owner (D15):
-  only the main territory counts (as in SHAPE-02), de facto lines are used, and only the 195 countries count.
+  a territory counts when it is part of the country inside the EU, de facto lines are used, and in levels 1–3 only
+  the 195 countries count.
 
 ## 8. Round flow
 
@@ -256,13 +257,14 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 | D12 | Extended entity list | ✅ Appendix A, including de facto states and autonomous regions. The data story verifies each entity (DATA-07) |
 | D13 | Country data review (#15) | ✅ Tiers reviewed one by one. Flags show the flag in de facto use (Afganistán: the Islamic Emirate flag). Every country has a quiz capital: city-states → the country itself, Nauru → Yaren (de facto), Israel → Jerusalén, Palestina → Jerusalén Este (Ramala as extra info), so CAP-03 still holds. Sahara Occidental → El Aaiún |
 | D14 | Level 3 "tricky" distractors | ✅ Split from the question generator (#17) into story #37 (similar flags + neighbours, with a data review). Until then level 3 wrong options are random from the same region |
-| D15 | Similar flags and land borders (#37) | ⏳ Waiting for the product owner's review of the data (LVL-06) |
+| D15 | Similar flags and land borders (#37) | ✅ Reviewed in a [review page](https://claude.ai/artifact/TXjaHY9kF97aj8az78G93A). 25 similar-flag groups (Somalia–Micronesia dropped; related groups merged, e.g. all pan-Arab flags, the Union Jack ones; Malta and Singapur join Indonesia–Mónaco–Polonia). Land borders: a territory counts when it is part of the country inside the EU (Francia–Brasil and Francia–Surinam via French Guiana, España–Marruecos via Ceuta and Melilla); dependent territories outside the EU do not (Gibraltar, Groenlandia). De facto lines (China–Pakistán yes, India–Afganistán no). Kosovo and Sahara Occidental stay in the extended set (D2); their borders are added with it for level 4 |
 
 No open questions.
 
 ## 18. Change log
 
-- **v1.3** (2026-11-17): level 3 "tricky" wrong options defined (LVL-06); data review pending (D15).
+- **v1.3** (2026-11-17): level 3 "tricky" wrong options defined (LVL-06); similar flags and land borders reviewed
+  (D15).
 - **v1.2** (2026-11-17): level 3 "tricky" distractors split into story #37; same-region distractors until then (D14).
 - **v1.1** (2026-11-17): country data review (D13) · every country has a quiz capital (CAP-02) · de facto flags
   allowed from Wikimedia Commons (DATA-05) · Sahara Occidental gets its capital, El Aaiún (Appendix A.1).
