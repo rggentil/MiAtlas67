@@ -1,5 +1,6 @@
 import { isCapitalEligible, REGIONS, type Entity, type Tier } from './entity.ts';
 import { shuffle, type Rng } from './random.ts';
+import type { Relations } from './relations.ts';
 
 /** Topics with data so far. Shapes, and its eligibility (SHAPE-03), arrive with the shapes data. */
 export const TOPICS = ['flags', 'capitals'] as const;
@@ -75,44 +76,76 @@ function offersOtherCapital(answer: Entity, candidate: Entity): boolean {
 }
 
 /**
- * Wrong options for one question (spec §7): at level 1 random from the pool; at levels 2 and 3 random from the
- * answer's region (level 3 "tricky" options come with story #37, D14).
+ * Candidate wrong options in priority order (spec §7):
+ * - level 1: the whole pool;
+ * - level 2: the answer's region;
+ * - level 3, "tricky" (LVL-06): similar flags (Flags games only), then land neighbours, then the answer's region.
  */
+function candidateGroups(
+  answer: Entity,
+  candidates: readonly Entity[],
+  settings: RoundSettings,
+  relations: Relations,
+): Entity[][] {
+  const sameRegion = (entity: Entity): boolean => entity.region === answer.region;
+  if (settings.level === 1) return [[...candidates]];
+  if (settings.level === 2) return [candidates.filter(sameRegion)];
+
+  const similar = new Set(
+    settings.topic === 'flags' ? (relations.similarFlags.get(answer.code) ?? []) : [],
+  );
+  const neighbours = new Set(relations.neighbours.get(answer.code) ?? []);
+  const isSimilar = (entity: Entity): boolean => similar.has(entity.code);
+  const isNeighbour = (entity: Entity): boolean =>
+    !isSimilar(entity) && neighbours.has(entity.code);
+  return [
+    candidates.filter(isSimilar),
+    candidates.filter(isNeighbour),
+    candidates.filter((entity) => !isSimilar(entity) && !isNeighbour(entity) && sameRegion(entity)),
+  ];
+}
+
+/** Wrong options for one question: taken group by group, at random within each group. */
 function wrongOptionsFor(
   answer: Entity,
   pool: readonly Entity[],
   settings: RoundSettings,
+  relations: Relations,
   rng: Rng,
 ): Entity[] {
   const needed = OPTIONS_PER_LEVEL[settings.level] - 1;
   const candidates = pool.filter(
     (candidate) =>
       candidate.code !== answer.code &&
-      (settings.level === 1 || candidate.region === answer.region) &&
       !(settings.topic === 'capitals' && offersOtherCapital(answer, candidate)),
   );
-  if (candidates.length < needed) {
+  const chosen: Entity[] = [];
+  for (const group of candidateGroups(answer, candidates, settings, relations)) {
+    chosen.push(...shuffle(group, rng).slice(0, needed - chosen.length));
+  }
+  if (chosen.length < needed) {
     throw new Error(
-      `Not enough wrong options for ${answer.code}: ${String(candidates.length)} of ${String(needed)}`,
+      `Not enough wrong options for ${answer.code}: ${String(chosen.length)} of ${String(needed)}`,
     );
   }
-  return shuffle(candidates, rng).slice(0, needed);
+  return chosen;
 }
 
 /**
  * The 10 questions of a round (RND-01, RND-02). Every random choice comes from `rng`,
- * so the same seed gives the same round (NFR-07).
+ * so the same seed gives the same round (NFR-07). `relations` feed the level 3 wrong options (LVL-06).
  */
 export function generateRound(
   entities: readonly Entity[],
   settings: RoundSettings,
   rng: Rng,
+  relations: Relations,
 ): Question[] {
   const pool = buildPool(entities, settings, rng);
   return shuffle(pool, rng)
     .slice(0, QUESTIONS_PER_ROUND)
     .map((entity) => ({
       entity,
-      options: shuffle([entity, ...wrongOptionsFor(entity, pool, settings, rng)], rng),
+      options: shuffle([entity, ...wrongOptionsFor(entity, pool, settings, relations, rng)], rng),
     }));
 }
