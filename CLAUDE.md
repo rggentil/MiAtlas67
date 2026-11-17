@@ -27,6 +27,7 @@ Never add behaviour that is not in the spec or the story; ask the product owner 
 | `npm run test:coverage` | Unit + component with the gate: `src/domain` ≥ 90 % |
 | `npm run test:e2e` | Playwright on mobile-chrome, mobile-safari, desktop-chrome (starts Vite itself) |
 | `npm run check` | Every gate in sequence: run it before opening a pull request |
+| `npm run trace` | Traceability report: requirements ↔ tests, gaps of the current phase (`-- --phase N` for another) |
 
 ## Layout
 

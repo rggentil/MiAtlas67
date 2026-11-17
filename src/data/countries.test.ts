@@ -25,7 +25,7 @@ describe('countries dataset', () => {
     ]);
   });
 
-  it('DATA-01 every entity has an ISO code, both names, a valid region and a tier', () => {
+  it('DATA-01 DATA-06 every entity has an ISO code, both names, a valid region and a tier', () => {
     for (const entity of countries) {
       expect(entity.code).toMatch(/^[A-Z]{2}$/);
       expect(entity.name.es.trim()).not.toBe('');
@@ -35,7 +35,7 @@ describe('countries dataset', () => {
     }
   });
 
-  it('DATA-01 every quiz capital and other capital has both languages', () => {
+  it('DATA-01 DATA-06 every quiz capital and other capital has both languages', () => {
     for (const entity of countries) {
       for (const capital of [entity.capital, ...entity.otherCapitals]) {
         if (capital === null) continue;
@@ -45,7 +45,7 @@ describe('countries dataset', () => {
     }
   });
 
-  it('DATA-01 codes, Spanish names and English names are unique', () => {
+  it('DATA-06 codes, Spanish names and English names are unique', () => {
     expect(duplicates(countries.map((c) => c.code))).toEqual([]);
     expect(duplicates(countries.map((c) => c.name.es))).toEqual([]);
     expect(duplicates(countries.map((c) => c.name.en))).toEqual([]);
@@ -80,7 +80,7 @@ describe('countries dataset', () => {
     expect(byCode(code).capital?.es).toBe(capital);
   });
 
-  it('DATA-05 every flag file exists in the bundle', () => {
+  it('DATA-05 DATA-06 every flag file exists in the bundle', () => {
     const missing = countries.map(flagFileName).filter((file) => !bundledFlags.has(file));
     expect(missing).toEqual([]);
   });

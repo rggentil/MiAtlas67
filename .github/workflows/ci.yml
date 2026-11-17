@@ -20,6 +20,10 @@ jobs:
     name: Typecheck, lint, format, unit + component tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Read-only: issues are read by the traceability report (the current phase's stories).
+    permissions:
+      contents: read
+      issues: read
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -32,6 +36,12 @@ jobs:
       - run: npm run format:check
       - name: Unit and component tests with coverage gate (src/domain >= 90 %)
         run: npm run test:coverage
+      - name: Traceability report (informational, never fails the build)
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: npm run trace
 
   e2e:
     name: E2E (mobile-chrome, mobile-safari, desktop-chrome)
