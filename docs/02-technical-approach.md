@@ -133,7 +133,7 @@ Taken from the chosen mockups (spec D11). They become the Tailwind theme in phas
 | `topic-capitals` | `#8DB4FF` | Capitales |
 | `topic-shapes` | `#6EDDB0` | Siluetas |
 | `success` | `#6EDDB0` | Correct-answer feedback, always with a ✓ icon |
-| `error` | to define in the theme story | Wrong-answer feedback, always with a ✗ icon |
+| `error` | `#FF8A80` | Wrong-answer feedback, always with a ✗ icon |
 
 - **Shape**: 3 px `ink` border; radius 16 px for cards, 999 px for chips; offset shadow `4px 4px 0 ink`
   (pressed state: no shadow, moved 4 px right and down).
