@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dev-dist/
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
+
+# Environment and secrets: never commit
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor and OS files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude Code local settings (personal, not shared)
+.claude/settings.local.json
