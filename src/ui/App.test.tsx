@@ -88,7 +88,7 @@ describe('App', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Europe' }));
     await userEvent.click(screen.getByRole('button', { name: 'Easy' }));
 
-    expect(heading()).toHaveTextContent('Which one is its flag?');
+    expect(heading()).toHaveTextContent(/^Which one is the flag of .+\?$/);
     expect(roundSettings('This round')).toEqual(['Flags', 'Europe', 'Easy']);
     expect(screen.getByRole('progressbar', { name: 'Round progress' })).toBeInTheDocument();
   });
