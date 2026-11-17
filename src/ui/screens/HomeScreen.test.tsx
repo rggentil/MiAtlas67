@@ -21,16 +21,18 @@ describe('HomeScreen', () => {
     expect(
       topics.map((topic) => within(topic).getByRole('heading', { level: 2 }).textContent),
     ).toEqual(['Banderas', 'Capitales', 'Siluetas']);
-    const gamesPerTopic = topics.map((topic) =>
-      within(topic)
-        .getAllByRole('button')
-        .map((button) => button.textContent.split(' ¿')[0]),
-    );
-    expect(gamesPerTopic).toEqual([
-      ['Bandera → País', 'País → Bandera'],
-      ['País → Capital', 'Capital → País'],
-      ['Silueta → País', 'País → Silueta'],
-    ]);
+    const games: Record<string, [RegExp, RegExp]> = {
+      Banderas: [/^Bandera → País/, /^País → Bandera/],
+      Capitales: [/^País → Capital/, /^Capital → País/],
+      Siluetas: [/^Silueta → País/, /^País → Silueta/],
+    };
+    for (const [topic, [first, second]] of Object.entries(games)) {
+      const region = within(screen.getByRole('region', { name: topic }));
+      expect(region.getAllByRole('button')).toEqual([
+        region.getByRole('button', { name: first }),
+        region.getByRole('button', { name: second }),
+      ]);
+    }
   });
 
   it('GAME-01 names each game by its direction and its question', () => {
