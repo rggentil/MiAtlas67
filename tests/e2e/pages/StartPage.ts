@@ -7,7 +7,7 @@ export class StartPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.heading = page.getByRole('heading', { name: 'Hola MiAtlas68' });
+    this.heading = page.getByRole('heading', { name: 'Hola MiAtlas67' });
   }
 
   async goto(): Promise<void> {
