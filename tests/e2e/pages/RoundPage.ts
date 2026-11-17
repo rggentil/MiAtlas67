@@ -50,7 +50,12 @@ export class RoundPage {
     return this.page
       .getByRole('listitem')
       .filter({ has: this.option(optionName) })
-      .getByRole('img', { name: mark });
+      .getByRole('img', { name: mark, exact: true });
+  }
+
+  /** The ✓ or ✗ tile of the feedback panel. */
+  feedbackMark(mark: 'Correcta' | 'Incorrecta'): Locator {
+    return this.feedback.getByRole('img', { name: mark, exact: true });
   }
 
   async answer(name: string): Promise<void> {

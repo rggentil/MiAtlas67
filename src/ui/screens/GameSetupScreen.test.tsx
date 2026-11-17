@@ -1,19 +1,12 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { GAMES } from '../../domain/games.ts';
 import type { RoundSettings } from '../../domain/questions.ts';
+import { playableGame } from '../../test/games.ts';
 import { renderWithI18n } from '../../test/render.tsx';
-import { isPlayable, type PlayableGame } from '../games.ts';
 import { GameSetupScreen } from './GameSetupScreen.tsx';
 
-function playable(id: string): PlayableGame {
-  const game = GAMES.find((candidate) => candidate.id === id);
-  if (!game || !isPlayable(game)) throw new Error(`${id} is not playable`);
-  return game;
-}
-
-const FLAG_A = playable('FLAG-A');
+const FLAG_A = playableGame('FLAG-A');
 
 function renderSetup(onStart = vi.fn<(settings: RoundSettings) => void>(), onBack = vi.fn()) {
   renderWithI18n(<GameSetupScreen game={FLAG_A} onStart={onStart} onBack={onBack} />);

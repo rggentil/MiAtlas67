@@ -110,6 +110,23 @@ describe('RoundScreen · FLAG-B', () => {
 
     expect(within(cardItem(wrong)).getByRole('img', { name: 'Incorrecta' })).toBeVisible();
     expect(within(cardItem(correct)).getByRole('img', { name: 'Correcta' })).toBeVisible();
+    // Exactly those two marks: the other two cards stay unmarked.
+    expect(
+      within(answers())
+        .getAllByRole('img')
+        .map((mark) => mark.getAttribute('aria-label')),
+    ).toEqual(
+      FIRST.options.flatMap((option) =>
+        option === FIRST.entity
+          ? ['Correcta']
+          : option === wrongOption(FIRST)
+            ? ['Incorrecta']
+            : [],
+      ),
+    );
+    expect(
+      within(screen.getByRole('status')).getByRole('img', { name: 'Incorrecta' }),
+    ).toBeVisible();
     expect(screen.getByRole('status')).toHaveTextContent(
       `¡Casi! La bandera de ${FIRST.entity.name.es} es la marcada con ✓`,
     );
@@ -144,7 +161,7 @@ describe('RoundScreen · FLAG-B', () => {
     expect(namesAndAltTexts().filter(tellsACountry)).toEqual([]);
   });
 
-  it('FLAG-B the round speaks English when English is chosen', async () => {
+  it('FLAG-B NFR-06 the round speaks English when English is chosen', async () => {
     localStorage.setItem('miatlas67.language', 'en');
     renderRound();
 

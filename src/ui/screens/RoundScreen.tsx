@@ -152,7 +152,9 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
                 <span className="font-body text-lg font-extrabold text-ink-muted">
                   {t('round.FLAG-B.prompt')}
                 </span>{' '}
-                <span className="text-4xl">{question.entity.name[language]}?</span>
+                <span className="text-4xl">
+                  {t('round.FLAG-B.country', { name: question.entity.name[language] })}
+                </span>
               </ScreenTitle>
               <ul
                 ref={optionsRef}
@@ -274,7 +276,7 @@ function FlagOption({
 
 /**
  * ✓ or ✗ mark: feedback never relies on colour alone (RND-04, NFR-05). As a badge it sits outside the option's
- * button, so the button's name stays the country; as a tile it heads the feedback panel.
+ * button, so the button keeps its name (the country, or "Opción N"); as a tile it heads the feedback panel.
  */
 function AnswerMark({ correct, variant }: { correct: boolean; variant: 'badge' | 'tile' }) {
   const { t } = useI18n();

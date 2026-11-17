@@ -3,6 +3,7 @@ import type { Entity } from '../../src/domain/entity.ts';
 import type { Question } from '../../src/domain/questions.ts';
 import { flagFile } from '../../src/test/flags.ts';
 import { expectedRound, questionAt, wrongOption } from './expected.ts';
+import { isOnTop } from './layout.ts';
 import { expect, test } from './fixtures.ts';
 import { GameSetupPage } from './pages/GameSetupPage.ts';
 import { HomePage } from './pages/HomePage.ts';
@@ -46,11 +47,13 @@ test.describe('Play a FLAG-B round', () => {
         );
       }
       const boxes = await Promise.all(cards.map((option) => option.boundingBox()));
-      const [first, second, third] = boxes;
+      const [first, second, third, fourth] = boxes;
       expect(second?.y).toBe(first?.y);
       expect(second?.x ?? 0).toBeGreaterThan(first?.x ?? 0);
       expect(third?.x).toBe(first?.x);
       expect(third?.y ?? 0).toBeGreaterThan(first?.y ?? 0);
+      expect(fourth?.x).toBe(second?.x);
+      expect(fourth?.y).toBe(third?.y);
       for (const box of boxes) {
         expect(box?.width ?? 0).toBeGreaterThanOrEqual(120);
         expect(box?.height ?? 0).toBeGreaterThanOrEqual(90);
@@ -65,7 +68,7 @@ test.describe('Play a FLAG-B round', () => {
       await round.answer(card(FIRST, FIRST.entity));
 
       await expect(round.feedback).toHaveText('¡Correcto!');
-      await expect(round.feedback.getByRole('img', { name: 'Correcta' })).toBeVisible();
+      await expect(round.feedbackMark('Correcta')).toBeVisible();
       await expect(round.mark(card(FIRST, FIRST.entity), 'Correcta')).toBeVisible();
       await expect(round.score).toHaveText('Aciertos: 1');
     },
@@ -113,6 +116,34 @@ test.describe('Play a FLAG-B round', () => {
     { tag: '@NFR-05' },
     async ({ makeAxeBuilder }) => {
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
+    },
+  );
+});
+
+test.describe('A tall grid of flags on a short screen', () => {
+  // Level Difícil has 6 flags in 3 rows: on a phone the grid goes below the feedback panel.
+  const HARD = questionAt(expectedRound({ topic: 'flags', region: 'europe', level: 3 }), 0);
+
+  test(
+    'RND-04 after answering a flag, the ✓ and the ✗ are not hidden behind the feedback panel',
+    { tag: ['@FLAG-B', '@RND-04'] },
+    async ({ page }) => {
+      const home = new HomePage(page);
+      const setup = new GameSetupPage(page);
+      const round = new RoundPage(page);
+      await home.goto('?seed=42');
+      await home.openGame('País → Bandera');
+      await setup.chooseRegion('Europa');
+      await setup.chooseLevel('Difícil');
+      await expect(round.options).toHaveCount(6);
+
+      const last = HARD.options.at(-1);
+      const tapped = last && last.code !== HARD.entity.code ? last : wrongOption(HARD);
+      await round.answer(card(HARD, tapped));
+
+      await expect(round.nextButton).toBeFocused();
+      expect(await isOnTop(round.mark(card(HARD, tapped), 'Incorrecta'))).toBe(true);
+      expect(await isOnTop(round.mark(card(HARD, HARD.entity), 'Correcta'))).toBe(true);
     },
   );
 });

@@ -1,6 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { flagFile } from '../../src/test/flags.ts';
 import { expectedRound, questionAt, wrongOption } from './expected.ts';
+import { isOnTop } from './layout.ts';
 import { expect, test } from './fixtures.ts';
 import { GameSetupPage } from './pages/GameSetupPage.ts';
 import { HomePage } from './pages/HomePage.ts';
@@ -30,18 +31,6 @@ async function expectLargeButtons(buttons: Locator): Promise<void> {
     expect(box?.width ?? 0).toBeGreaterThanOrEqual(48);
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(48);
   }
-}
-
-/**
- * True when the element is on screen and nothing covers its centre, as it is now: without scrolling it
- * first, which is what Playwright's actions would do.
- */
-async function isOnTop(element: Locator): Promise<boolean> {
-  return element.evaluate((target) => {
-    const box = target.getBoundingClientRect();
-    const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
-    return hit !== null && target.contains(hit);
-  });
 }
 
 test.describe('Play a FLAG-A round', () => {
@@ -81,7 +70,7 @@ test.describe('Play a FLAG-A round', () => {
       await round.answer(FIRST.entity.name.es);
 
       await expect(round.feedback).toHaveText('¡Correcto!');
-      await expect(round.feedback.getByRole('img', { name: 'Correcta' })).toBeVisible();
+      await expect(round.feedbackMark('Correcta')).toBeVisible();
       await expect(round.mark(FIRST.entity.name.es, 'Correcta')).toBeVisible();
       await expect(round.score).toHaveText('Aciertos: 1');
     },
@@ -177,7 +166,7 @@ test.describe('Play a FLAG-A round', () => {
     async () => {
       await round.answer(FIRST.entity.name.es);
 
-      const tile = round.feedback.getByRole('img', { name: 'Correcta' });
+      const tile = round.feedbackMark('Correcta');
       await expect(tile).toBeVisible();
       expect(await tile.evaluate((element) => element.getAnimations().length)).toBe(0);
     },
@@ -211,7 +200,7 @@ test.describe('With animations on', () => {
 
       await round.answer(FIRST.entity.name.es);
 
-      const tile = round.feedback.getByRole('img', { name: 'Correcta' });
+      const tile = round.feedbackMark('Correcta');
       await expect(tile).toBeVisible();
       expect(await tile.evaluate((element) => element.getAnimations().length)).toBeGreaterThan(0);
     },
