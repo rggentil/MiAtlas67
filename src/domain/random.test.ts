@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createRng, parseSeed, resolveSeed, type Rng } from './random.ts';
+import { createRng, parseSeed, resolveSeed, shuffle, type Rng } from './random.ts';
 
 function take(rng: Rng, count: number): number[] {
   return Array.from({ length: count }, () => rng.next());
@@ -67,5 +67,30 @@ describe('resolveSeed', () => {
 
   it('NFR-07 ignores the URL seed in production', () => {
     expect(resolveSeed('?seed=42', { allowUrlSeed: false, randomSeed })).toBe(999);
+  });
+});
+
+describe('shuffle', () => {
+  it('RND-02 returns a permutation and leaves the input untouched', () => {
+    const input = [1, 2, 3, 4, 5, 6, 7, 8];
+    const output = shuffle(input, createRng(5));
+    expect(input).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect([...output].sort((a, b) => a - b)).toEqual(input);
+  });
+
+  it('NFR-07 the same seed gives the same order', () => {
+    const input = ['a', 'b', 'c', 'd', 'e', 'f'];
+    expect(shuffle(input, createRng(42))).toEqual(shuffle(input, createRng(42)));
+  });
+
+  it('RND-02 every element can end up in every position', () => {
+    const rng = createRng(3);
+    const positions = new Set<string>();
+    for (let i = 0; i < 200; i++) {
+      shuffle(['a', 'b', 'c'], rng).forEach((value, index) =>
+        positions.add(`${value}${String(index)}`),
+      );
+    }
+    expect(positions.size).toBe(9);
   });
 });

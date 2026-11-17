@@ -57,3 +57,13 @@ export function resolveSeed(search: string, options: SeedOptions): number {
   const urlSeed = options.allowUrlSeed ? parseSeed(search) : null;
   return urlSeed ?? options.randomSeed();
 }
+
+/** A shuffled copy of `items`: each step draws a random remaining item. The input is left untouched. */
+export function shuffle<T>(items: readonly T[], rng: Rng): T[] {
+  const remaining = [...items];
+  const result: T[] = [];
+  while (remaining.length > 0) {
+    result.push(...remaining.splice(rng.int(remaining.length), 1));
+  }
+  return result;
+}
