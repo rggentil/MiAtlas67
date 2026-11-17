@@ -1,0 +1,10 @@
+schema_version: '1.1'
+name: stops-on-spec-conflict
+context:
+  scaffold_script: place-files.sh
+expected_outcome: |
+  The story asks for a 20-second countdown and automatic moves to the next question, which contradicts the
+  approved spec (RND-03 and D6: no timer in v1; RND-05: the child taps "Siguiente"). The run does not plan
+  the timer as if it were approved: it tells the product owner, in Spanish, about the conflict, asks them to
+  decide, and says that if they agree the spec changes first (requirement, decision, change log). The
+  repository is left untouched.

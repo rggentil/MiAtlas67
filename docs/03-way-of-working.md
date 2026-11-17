@@ -84,9 +84,9 @@ FigJam (the Figma connector is available) stays as an option for brainstorming o
 | Item | When | Purpose |
 |---|---|---|
 | `CLAUDE.md` | Phase 1 | Commands, conventions, Definition of Done and where the specs live, so every session starts with the same rules |
-| Skill `implement-story` | First story, once the pattern is proven | Read story + spec → plan → tests from acceptance criteria → implement → run all layers → update the board |
+| Skill `implement-story` | Phase 3 (#25), in `.claude/skills/implement-story` with its evals | Read story + spec → plan → tests from acceptance criteria → implement → run all layers → update the board. Also plans a story without touching anything (dry run) |
 | Skill `traceability` | Phase 2–3 | Report which requirement IDs have no test yet |
-| Subagent `qa-reviewer` | Phase 3 | Independent review of the tests against the acceptance criteria (missing edge cases, weak assertions) |
+| Subagent `qa-reviewer` | Phase 3 (#25), in `.claude/agents/qa-reviewer.md` | Independent, read-only review of the tests against the acceptance criteria (missing scenarios, weak assertions, flaky patterns) |
 | Playwright MCP | Already installed | Claude opens the running app, clicks through it and takes screenshots (exploratory checks). This is separate from the Playwright test suite |
 | Figma MCP | Already connected | Optional: mockups, FigJam board |
 | Hooks | Later, if useful | For example, automatic typecheck and lint after edits |
