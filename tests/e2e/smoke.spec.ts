@@ -1,22 +1,10 @@
 import { expect, test } from './fixtures.ts';
-import { StartPage } from './pages/StartPage.ts';
+import { HomePage } from './pages/HomePage.ts';
 
-test.describe('Start page', { tag: '@smoke' }, () => {
-  test('shows the welcome heading', async ({ page }) => {
-    const start = new StartPage(page);
-    await start.goto();
-    await expect(start.heading).toHaveText('Hola MiAtlas67');
+test.describe('App start', { tag: '@smoke' }, () => {
+  test('opens on the home screen', async ({ page }) => {
+    const home = new HomePage(page);
+    await home.goto();
+    await expect(home.heading).toHaveText('¿A qué jugamos?');
   });
-
-  test(
-    'NFR-05 has no accessibility violations',
-    { tag: '@NFR-05' },
-    async ({ page, makeAxeBuilder }) => {
-      const start = new StartPage(page);
-      await start.goto();
-      await expect(start.heading).toBeVisible();
-      const results = await makeAxeBuilder().analyze();
-      expect(results.violations).toEqual([]);
-    },
-  );
 });

@@ -1,18 +1,18 @@
 import { expect, test } from './fixtures.ts';
 import { ShowcasePage } from './pages/ShowcasePage.ts';
-import { StartPage } from './pages/StartPage.ts';
+import { HomePage } from './pages/HomePage.ts';
 
 test.describe('Theme «Bloques»', () => {
   test(
     'D11 applies the «Bloques» background, text colour and fonts',
     { tag: '@D11' },
     async ({ page }) => {
-      const start = new StartPage(page);
-      await start.goto();
+      const home = new HomePage(page);
+      await home.goto();
 
       await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(207, 230, 255)');
       await expect(page.locator('body')).toHaveCSS('color', 'rgb(26, 26, 46)');
-      await expect(start.heading).toHaveCSS('font-family', /Lilita One/);
+      await expect(home.heading).toHaveCSS('font-family', /Lilita One/);
 
       const loadedFaces = await page.evaluate(async () => {
         const display = await document.fonts.load('16px "Lilita One"');
@@ -31,9 +31,9 @@ test.describe('Theme «Bloques»', () => {
       const requested: string[] = [];
       page.on('request', (request) => requested.push(request.url()));
 
-      const start = new StartPage(page);
-      await start.goto();
-      await expect(start.heading).toBeVisible();
+      const home = new HomePage(page);
+      await home.goto();
+      await expect(home.heading).toBeVisible();
       await page.evaluate(() => document.fonts.ready);
 
       const appOrigin = new URL(page.url()).origin;

@@ -17,8 +17,8 @@ describe('dictionaries', () => {
   it('NFR-06 a dictionary with a missing key does not typecheck', () => {
     // Compile-time check: if Dictionary ever stopped requiring every key, the
     // expect-error directive below would become unused and "npm run typecheck" would fail.
-    // @ts-expect-error 'app.tagline' and the other keys are missing
-    const incomplete: Dictionary = { 'app.greeting': 'Hi' };
+    // @ts-expect-error 'home.soon' and the other keys are missing
+    const incomplete: Dictionary = { 'home.title': 'Hi' };
     expect(incomplete).toBeDefined();
   });
 });
