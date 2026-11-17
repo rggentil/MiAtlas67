@@ -2,11 +2,24 @@ import type { Language } from './languages.ts';
 
 /** Spanish is the source dictionary: every key must exist here first. */
 const es = {
-  'app.greeting': 'Hola',
-  'app.tagline': 'Banderas, capitales y siluetas del mundo',
+  'home.title': '¿A qué jugamos?',
+  'home.soon': 'Pronto',
   'topic.flags': 'Banderas',
   'topic.capitals': 'Capitales',
   'topic.shapes': 'Siluetas',
+  'game.FLAG-A.name': 'Bandera → País',
+  'game.FLAG-A.question': '¿De qué país es?',
+  'game.FLAG-B.name': 'País → Bandera',
+  'game.FLAG-B.question': '¿Cuál es su bandera?',
+  'game.CAP-A.name': 'País → Capital',
+  'game.CAP-A.question': '¿Cuál es su capital?',
+  'game.CAP-B.name': 'Capital → País',
+  'game.CAP-B.question': '¿De qué país es?',
+  'game.SHAPE-A.name': 'Silueta → País',
+  'game.SHAPE-A.question': '¿Qué país es?',
+  'game.SHAPE-B.name': 'País → Silueta',
+  'game.SHAPE-B.question': '¿Cuál es su forma?',
+  'nav.back': 'Volver',
   'settings.language': 'Idioma',
 } as const;
 
@@ -16,11 +29,24 @@ export type MessageKey = keyof typeof es;
 export type Dictionary = Record<MessageKey, string>;
 
 const en: Dictionary = {
-  'app.greeting': 'Hello',
-  'app.tagline': 'Flags, capitals and shapes of the world',
+  'home.title': 'What shall we play?',
+  'home.soon': 'Soon',
   'topic.flags': 'Flags',
   'topic.capitals': 'Capitals',
   'topic.shapes': 'Shapes',
+  'game.FLAG-A.name': 'Flag → Country',
+  'game.FLAG-A.question': 'Which country is it?',
+  'game.FLAG-B.name': 'Country → Flag',
+  'game.FLAG-B.question': 'Which one is its flag?',
+  'game.CAP-A.name': 'Country → Capital',
+  'game.CAP-A.question': 'What is its capital?',
+  'game.CAP-B.name': 'Capital → Country',
+  'game.CAP-B.question': 'Which country is it?',
+  'game.SHAPE-A.name': 'Shape → Country',
+  'game.SHAPE-A.question': 'Which country is it?',
+  'game.SHAPE-B.name': 'Country → Shape',
+  'game.SHAPE-B.question': 'Which one is its shape?',
+  'nav.back': 'Back',
   'settings.language': 'Language',
 };
 
