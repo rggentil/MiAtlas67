@@ -5,7 +5,7 @@ test.describe('Start page', { tag: '@smoke' }, () => {
   test('shows the welcome heading', async ({ page }) => {
     const start = new StartPage(page);
     await start.goto();
-    await expect(start.heading).toBeVisible();
+    await expect(start.heading).toHaveText('Hola MiAtlas67');
   });
 
   test(

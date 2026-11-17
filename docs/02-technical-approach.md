@@ -16,7 +16,7 @@
 | Country shapes | **d3-geo + topojson-client**, **Natural Earth** data | Renders silhouettes as SVG; the same base serves the future map mode |
 | Flags | **flag-icons** SVGs (MIT); the few missing ones (e.g. Abjasia, Puntland) from **Wikimedia Commons** | Every country, crisp at any size, works offline. Source and licence recorded per file |
 | Fonts | **Lilita One** + **Nunito**, self-hosted via **@fontsource** (SIL OFL) | No runtime call to Google Fonts (NFR-04); works offline |
-| Local persistence | **IndexedDB via Dexie**, behind a repository interface | Robust on-device storage; the interface lets us plug in a cloud backend later |
+| Local persistence | **IndexedDB via Dexie**, behind a repository interface. Per-device preferences (language) in `localStorage`, with every access guarded | Robust on-device storage; the interface lets us plug in a cloud backend later. If storage is blocked, the app still works with defaults |
 | Offline / installable | **vite-plugin-pwa** | Service worker + web app manifest |
 | Native app (later) | **Capacitor** | Wraps the same web app as an Android/iOS app, with no rewrite |
 | Unit + component tests | **Vitest + React Testing Library** (+ fake-indexeddb) | Fast and Vite-native |
