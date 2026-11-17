@@ -70,7 +70,8 @@ scripts/         Data build scripts and repo tooling (board.sh)
    `main` is protected: it requires the checks "Typecheck, lint, format, unit + component tests" and
    "E2E (mobile-chrome, mobile-safari, desktop-chrome)". If you rename a CI job, update the branch protection too.
 7. After merging, CI deploys to <https://rggentil.github.io/MiAtlas67/>:
-   - chore: closed automatically → *Done*;
+   - chore: the merge closes the issue; then `bash scripts/board.sh <issue> Done` (the board does not move
+     closed issues by itself);
    - story: `bash scripts/board.sh <issue> "In review"`; the product owner tries it on the phone, then you close it.
 
 **Git safety:** run state-changing git/gh steps one at a time and check each result before the next. Never chain a
