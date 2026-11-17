@@ -21,9 +21,13 @@ Product spec  ──►  Technical approach  ──►  Backlog                 
 1. Move the story to *In progress* on the board.
 2. Claude proposes a short implementation plan, and you approve or adjust it.
 3. Acceptance criteria (Given/When/Then) become tests first: E2E, plus component/unit tests where relevant.
-4. Implement until every test is green.
-5. Demo: you try it on desktop and on your phone. Feedback leads to fixes.
-6. Commit; move the story to *Done*.
+4. Implement until every test is green; open a pull request.
+5. When CI is green (required on `main`), Claude merges and CI deploys to GitHub Pages.
+   - **Chores** (tooling, CI, docs) are then *Done*.
+   - **Stories** move to *In review*.
+6. Demo: you try the story on the deployed version, on desktop and on your phone.
+   - If you accept it, it goes to *Done*.
+   - If not, your feedback becomes fixes.
 
 **Story format (example)**
 
@@ -105,14 +109,8 @@ checks plus our own TypeScript Playwright suite.
 
 ## 6. Learning Playwright along the way
 
-In phase 1, Claude writes `docs/playwright-notes.md`: **Playwright for Selenium users**. It covers:
-- auto-waiting instead of explicit waits;
-- role-based locators;
-- browser contexts and isolation;
-- fixtures;
-- projects and devices;
-- `npx playwright test --ui`;
-- the trace viewer;
-- `codegen`.
+[Playwright for Selenium users](04-playwright-for-selenium-users.md) lists the differences that matter in this
+project: auto-waiting, lazy role-based locators, browser contexts, projects and devices, fixtures, the trace viewer,
+tags, UI mode and `codegen`.
 
 The tests are written to read as living documentation of the game's behaviour.
