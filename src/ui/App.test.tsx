@@ -1,21 +1,39 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { App } from './App.tsx';
 
+function heading(): HTMLElement {
+  return screen.getByRole('heading', { level: 1 });
+}
+
+function roundSettings(name: string): (string | null)[] {
+  return within(screen.getByRole('list', { name }))
+    .getAllByRole('listitem')
+    .map((item) => item.textContent);
+}
+
 describe('App', () => {
+  // A fixed seed, so every run plays the same rounds (NFR-07); jsdom would otherwise pick a random one.
+  beforeEach(() => {
+    window.history.replaceState(null, '', '/?seed=42');
+  });
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+  });
+
   it('SET-01 opens on the home screen, in Spanish by default', () => {
     render(<App />);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('¿A qué jugamos?');
+    expect(heading()).toHaveTextContent('¿A qué jugamos?');
     expect(screen.getByRole('radio', { name: 'Español' })).toBeChecked();
     expect(document.documentElement.lang).toBe('es');
   });
 
-  it('SET-01 switches every visible text to English', async () => {
+  it('SET-01 switches the home screen to English', async () => {
     render(<App />);
     await userEvent.click(screen.getByRole('radio', { name: 'English' }));
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('What shall we play?');
+    expect(heading()).toHaveTextContent('What shall we play?');
     expect(screen.getByRole('heading', { name: 'Flags' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Capitals' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Shapes' })).toBeInTheDocument();
@@ -27,9 +45,51 @@ describe('App', () => {
     render(<App />);
 
     await userEvent.click(screen.getByRole('button', { name: /^País → Bandera/ }));
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('País → Bandera');
+    expect(heading()).toHaveTextContent('País → Bandera');
 
     await userEvent.click(screen.getByRole('button', { name: 'Volver' }));
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('¿A qué jugamos?');
+    expect(heading()).toHaveTextContent('¿A qué jugamos?');
+  });
+
+  it('NFR-05 the title of each new screen takes the focus', async () => {
+    render(<App />);
+
+    await userEvent.click(screen.getByRole('button', { name: /^Bandera → País/ }));
+    expect(heading()).toHaveTextContent('Bandera → País');
+    expect(heading()).toHaveFocus();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Volver' }));
+    expect(heading()).toHaveTextContent('¿A qué jugamos?');
+    expect(heading()).toHaveFocus();
+  });
+
+  it('LVL-01 choosing region Europa and level Fácil starts a Flags round of Europa · Fácil', async () => {
+    render(<App />);
+
+    await userEvent.click(screen.getByRole('button', { name: /^Bandera → País/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Europa' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Fácil' }));
+
+    expect(heading()).toHaveTextContent('¿De qué país es?');
+    expect(heading()).toHaveFocus();
+    expect(roundSettings('Esta partida')).toEqual(['Banderas', 'Europa', 'Fácil']);
+    expect(screen.getByRole('progressbar', { name: 'Progreso de la partida' })).toHaveAttribute(
+      'aria-valuenow',
+      '1',
+    );
+    expect(screen.getByText('1/10')).toBeVisible();
+  });
+
+  it('LVL-01 the round screen speaks English when English is chosen', async () => {
+    render(<App />);
+    await userEvent.click(screen.getByRole('radio', { name: 'English' }));
+
+    await userEvent.click(screen.getByRole('button', { name: /^Country → Flag/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Europe' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Easy' }));
+
+    expect(heading()).toHaveTextContent('Which one is its flag?');
+    expect(roundSettings('This round')).toEqual(['Flags', 'Europe', 'Easy']);
+    expect(screen.getByRole('progressbar', { name: 'Round progress' })).toBeInTheDocument();
   });
 });

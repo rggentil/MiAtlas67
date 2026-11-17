@@ -9,9 +9,14 @@ test.describe('Home screen', { tag: '@GAME-01' }, () => {
 
     await expect(home.heading).toHaveText('¿A qué jugamos?');
     await expect(home.topics).toHaveCount(3);
-    for (const topic of ['Banderas', 'Capitales', 'Siluetas']) {
-      await expect(home.topic(topic)).toBeVisible();
-      await expect(home.topic(topic).getByRole('button')).toHaveCount(2);
+    const games = {
+      Banderas: [/^Bandera → País/, /^País → Bandera/],
+      Capitales: [/^País → Capital/, /^Capital → País/],
+      Siluetas: [/^Silueta → País/, /^País → Silueta/],
+    };
+    for (const [topic, names] of Object.entries(games)) {
+      await expect(home.topic(topic).getByRole('heading', { level: 2 })).toHaveText(topic);
+      await expect(home.topic(topic).getByRole('button')).toHaveText(names);
     }
   });
 
