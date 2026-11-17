@@ -9,6 +9,29 @@ Spanish UI by default, English available. No accounts, no ads, no tracking: ever
 
 > **Status:** specification approved, development starting (phase 1, walking skeleton).
 
+**Play it:** <https://rggentil.github.io/MiAtlas67/>. Every commit on `main` that passes CI is deployed there.
+
+## Development
+
+Requires Node 22 LTS (see `.nvmrc`).
+
+```bash
+npm ci                          # install exact dependency versions
+npx playwright install chromium webkit   # browsers for the E2E tests (first time only)
+npm run dev                     # http://localhost:5173
+npm run check                   # every quality gate: typecheck, lint, format, tests, coverage, E2E
+```
+
+### Try it on your phone
+
+1. **Deployed version (HTTPS):** open <https://rggentil.github.io/MiAtlas67/> on the phone.
+   HTTPS is required for the future offline/install features.
+2. **Your local changes, same Wi-Fi:** run `npm run dev -- --host`. Vite prints a *Network* URL such as
+   `http://192.168.1.23:5173`; open it on the phone.
+   - Windows asks to allow Node.js through the firewall the first time: allow it on **private** networks only.
+   - It does not work on guest or corporate Wi-Fi networks that isolate devices from each other.
+3. **Quick check without a phone:** browser DevTools (F12) → device toolbar.
+
 ## Documentation
 
 The project is built spec-first with Claude Code. The specs are the source of truth:
