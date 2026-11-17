@@ -1,0 +1,9 @@
+dist
+dev-dist
+coverage
+playwright-report
+test-results
+blob-report
+package-lock.json
+# Markdown is written by hand (tables, specs); Prettier only formats code
+*.md
