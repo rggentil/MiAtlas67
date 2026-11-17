@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { countries } from '../data/countries.ts';
+import { relations } from '../data/relations.ts';
 import type { Entity, Region, Tier } from './entity.ts';
 import {
   generateRound,
@@ -16,7 +17,7 @@ import { createRng } from './random.ts';
 const SEEDS = Array.from({ length: 50 }, (_, index) => index + 1);
 
 function rounds(settings: RoundSettings, entities: readonly Entity[] = countries): Question[][] {
-  return SEEDS.map((seed) => generateRound(entities, settings, createRng(seed)));
+  return SEEDS.map((seed) => generateRound(entities, settings, createRng(seed), relations));
 }
 
 function questionsOf(settings: RoundSettings, entities: readonly Entity[] = countries): Question[] {
@@ -105,11 +106,57 @@ describe('generateRound', () => {
     }
   });
 
-  it('D14 at level 3 in "Mundo" the wrong options are from the same region as the answer', () => {
+  it('LVL-06 at level 3 the wrong options are similar flags first, then neighbours, then the same region', () => {
     for (const question of questionsOf({ topic: 'flags', region: 'world', level: 3 })) {
-      for (const wrong of wrongOptions(question)) {
-        expect(wrong.region).toBe(question.entity.region);
+      const similar = relations.similarFlags.get(question.entity.code) ?? [];
+      const neighbours = (relations.neighbours.get(question.entity.code) ?? []).filter(
+        (code) => !similar.includes(code),
+      );
+      const wrong = wrongOptions(question);
+      const similarShown = wrong.filter((option) => similar.includes(option.code));
+      const neighboursShown = wrong.filter((option) => neighbours.includes(option.code));
+      expect(similarShown).toHaveLength(Math.min(5, similar.length));
+      expect(neighboursShown).toHaveLength(Math.min(5 - similarShown.length, neighbours.length));
+      for (const option of wrong) {
+        if (!similar.includes(option.code) && !neighbours.includes(option.code)) {
+          expect(option.region).toBe(question.entity.region);
+        }
       }
+    }
+  });
+
+  it('LVL-06 Capitals games at level 3 use neighbours, then the same region, but not similar flags', () => {
+    for (const question of questionsOf({ topic: 'capitals', region: 'world', level: 3 })) {
+      const neighbours = relations.neighbours.get(question.entity.code) ?? [];
+      const wrong = wrongOptions(question);
+      const neighboursShown = wrong.filter((option) => neighbours.includes(option.code));
+      expect(neighboursShown).toHaveLength(Math.min(5, neighbours.length));
+      for (const option of wrong) {
+        if (!neighbours.includes(option.code)) expect(option.region).toBe(question.entity.region);
+      }
+    }
+  });
+
+  it('LVL-06 the flags of Rumanía, Andorra and Moldavia are wrong options for the flag of Chad', () => {
+    const aboutChad = Array.from({ length: 400 }, (_, index) => index + 1)
+      .flatMap((seed) =>
+        generateRound(
+          countries,
+          { topic: 'flags', region: 'world', level: 3 },
+          createRng(seed),
+          relations,
+        ),
+      )
+      .filter((question) => question.entity.code === 'TD');
+    expect(aboutChad.length).toBeGreaterThan(0);
+    for (const question of aboutChad) {
+      expect(codes(question.options)).toEqual(expect.arrayContaining(['RO', 'AD', 'MD']));
+    }
+  });
+
+  it('LVL-06 a region round at level 3 only offers countries of that region', () => {
+    for (const question of questionsOf({ topic: 'flags', region: 'africa', level: 3 })) {
+      expect(question.options.every((option) => option.region === 'africa')).toBe(true);
     }
   });
 
@@ -200,14 +247,19 @@ describe('generateRound', () => {
 
   it('NFR-07 the same seed produces the same round', () => {
     const settings: RoundSettings = { topic: 'capitals', region: 'world', level: 2 };
-    const first = generateRound(countries, settings, createRng(42));
-    const second = generateRound(countries, settings, createRng(42));
+    const first = generateRound(countries, settings, createRng(42), relations);
+    const second = generateRound(countries, settings, createRng(42), relations);
     expect(first.map((q) => codes(q.options))).toEqual(second.map((q) => codes(q.options)));
   });
 
   it('RND-01 refuses to build a round from fewer than 10 eligible entities', () => {
     expect(() =>
-      generateRound(fixture(9), { topic: 'flags', region: 'europe', level: 1 }, createRng(1)),
+      generateRound(
+        fixture(9),
+        { topic: 'flags', region: 'europe', level: 1 },
+        createRng(1),
+        relations,
+      ),
     ).toThrow(/10 entities/);
   });
 
@@ -215,7 +267,12 @@ describe('generateRound', () => {
     // One Oceanía entity among European ones: at level 2 it has no same-region wrong options.
     const entities = [...fixture(9), entity('OC', { region: 'oceania' })];
     expect(() =>
-      generateRound(entities, { topic: 'flags', region: 'world', level: 2 }, createRng(1)),
+      generateRound(
+        entities,
+        { topic: 'flags', region: 'world', level: 2 },
+        createRng(1),
+        relations,
+      ),
     ).toThrow(/wrong options/);
   });
 });
@@ -226,7 +283,12 @@ describe('generateRound with the bundled countries', () => {
       for (const region of REGION_CHOICES) {
         for (const level of LEVELS) {
           for (const seed of SEEDS.slice(0, 20)) {
-            const round = generateRound(countries, { topic, region, level }, createRng(seed));
+            const round = generateRound(
+              countries,
+              { topic, region, level },
+              createRng(seed),
+              relations,
+            );
             expect(new Set(codes(round.map((q) => q.entity))).size).toBe(QUESTIONS_PER_ROUND);
             for (const question of round) {
               expect(new Set(codes(question.options)).size).toBe(OPTIONS_PER_LEVEL[level]);

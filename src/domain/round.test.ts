@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { countries } from '../data/countries.ts';
+import { relations } from '../data/relations.ts';
 import { generateRound, type Question } from './questions.ts';
 import { createRng } from './random.ts';
 import {
@@ -19,6 +20,7 @@ const questions = generateRound(
   countries,
   { topic: 'flags', region: 'world', level: 1 },
   createRng(42),
+  relations,
 );
 
 function questionAt(index: number): Question {
