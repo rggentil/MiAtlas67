@@ -59,7 +59,18 @@ function Screens() {
       );
     case 'round':
       return (
-        <RoundScreen game={screen.game} settings={screen.settings} questions={screen.questions} />
+        <RoundScreen
+          game={screen.game}
+          settings={screen.settings}
+          questions={screen.questions}
+          onQuit={() => {
+            setScreen(HOME);
+          }}
+          onFinish={() => {
+            // The round summary arrives with #24; until then a finished round goes back home.
+            setScreen(HOME);
+          }}
+        />
       );
   }
 }

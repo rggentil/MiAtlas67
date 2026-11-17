@@ -17,7 +17,7 @@ test.describe('Choose region and level', () => {
       await setup.chooseRegion('Europa');
       await setup.chooseLevel('Fácil');
 
-      await expect(round.heading).toHaveText('¿De qué país es?');
+      await expect(round.heading).toHaveText('¿De qué país es esta bandera?');
       await expect(round.settings).toHaveText(['Banderas', 'Europa', 'Fácil']);
       await expect(round.progressText).toHaveText('1/10');
       await expect(round.progressBar).toHaveAttribute('aria-valuenow', '1');
