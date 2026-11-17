@@ -1,6 +1,6 @@
 # MiAtlas67 — Product Specification
 
-> **Status: APPROVED v1.0** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
+> **Status: APPROVED v1.1** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
 > [§18 Change log](#18-change-log).
 > Last updated: 2026-11-17
 
@@ -79,7 +79,8 @@ Each topic is played in both directions, which makes **six games**:
 - **SHAPE-04** Entities without a reliable, undisputed open geometry (e.g. Puntland, whose boundary with
   Somalilandia is disputed) are excluded from Shapes games.
 - **CAP-02** Entities without a meaningful capital (e.g. Hong Kong, Macao, Gibraltar) are excluded from Capitals
-  games (`capitalEligible` in the data).
+  games (`capitalEligible` in the data). All 195 countries have a quiz capital (D13): a city-state's capital is
+  the country itself (Mónaco, Singapur, Ciudad del Vaticano) and Nauru uses its de facto capital, Yaren.
 - **CAP-03** No two entities share a quiz capital. When they would (Chipre and Chipre del Norte → Nicosia;
   Reino Unido and Inglaterra → Londres; Aruba and San Eustaquio → Oranjestad), the extended entity is excluded
   from Capitals games.
@@ -90,6 +91,8 @@ Each of the 195 countries has a curated, editable **familiarity tier**:
 - **Tier 1**: very well known (~40 countries, e.g. España, Francia, Brasil, Japón, Estados Unidos)
 - **Tier 2**: reasonably known (~70)
 - **Tier 3**: the rest (~85)
+
+The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82).
 
 | Level | Entities asked | Options per question | Distractors (wrong options) |
 |---|---|---|---|
@@ -171,8 +174,9 @@ Each of the 195 countries has a curated, editable **familiarity tier**:
   Extended entities belong to the region where they are located (e.g. Puntland → África, Bonaire → América).
 - **DATA-05** All data is bundled with the app (no runtime API calls). It uses openly licensed sources, which are
   listed on an "Acerca de" screen (flags: *flag-icons*, MIT; shapes: *Natural Earth*, public domain).
-  Flags missing from *flag-icons* (e.g. Abjasia, Puntland) come from *Wikimedia Commons*; the source and licence
-  of each such file are recorded in the data.
+  Flags missing from *flag-icons* (e.g. Abjasia, Puntland), or shown there differently from the flag in de facto
+  use (Afganistán, D13), come from *Wikimedia Commons*; the source and licence of each such file are recorded in
+  the data.
 - **DATA-06** Data integrity is checked by automated tests: all fields present in both languages, unique codes
   and names, and every flag and shape file exists.
 
@@ -245,11 +249,14 @@ Each of the 195 countries has a curated, editable **familiarity tier**:
 | D10 | Repository and hosting | ✅ Public repo `rggentil/MiAtlas67`; HTTPS preview on GitHub Pages |
 | D11 | Visual theme | ✅ Theme C «Bloques» (chosen from Pasaporte, Galaxia and Bloques in the [design canvas](https://claude.ai/artifact/SDHWBLStMoj1Xg2eNdF3PX)) |
 | D12 | Extended entity list | ✅ Appendix A, including de facto states and autonomous regions. The data story verifies each entity (DATA-07) |
+| D13 | Country data review (#15) | ✅ Tiers reviewed one by one. Flags show the flag in de facto use (Afganistán: the Islamic Emirate flag). Every country has a quiz capital: city-states → the country itself, Nauru → Yaren (de facto), Israel → Jerusalén, Palestina → Jerusalén Este (Ramala as extra info), so CAP-03 still holds. Sahara Occidental → El Aaiún |
 
 No open questions.
 
 ## 18. Change log
 
+- **v1.1** (2026-11-17): country data review (D13) · every country has a quiz capital (CAP-02) · de facto flags
+  allowed from Wikimedia Commons (DATA-05) · Sahara Occidental gets its capital, El Aaiún (Appendix A.1).
 - **v1.0** (2026-11-17): approved. Extended set completed with de facto states and autonomous regions
   (Abjasia, Osetia del Sur, Transnistria, Chipre del Norte, Somalilandia, Puntland, Jubalandia, Gagauzia…) and
   reorganized by category (Appendix A) · category `partially-recognized` renamed to `limited-recognition` ·
@@ -272,7 +279,7 @@ fills in codes, capitals and sources, and may drop an entity that fails DATA-07.
 |---|---|
 | Kosovo | |
 | Taiwán | |
-| Sahara Occidental *(Western Sahara)* | Not in Capitals games (capital disputed) |
+| Sahara Occidental *(Western Sahara)* | Capital: El Aaiún *(Laayoune)*, as proclaimed (D13) |
 | Abjasia *(Abkhazia)* | Flag from Wikimedia Commons |
 | Osetia del Sur *(South Ossetia)* | Flag from Wikimedia Commons |
 | Transnistria | Flag from Wikimedia Commons |
