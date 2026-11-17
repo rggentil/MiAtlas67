@@ -81,8 +81,8 @@ tests/
 - **Isolation**: every Playwright test gets a fresh browser context, so IndexedDB starts empty and no cleanup is needed.
 - **Animations**: E2E runs with `reducedMotion: 'reduce'` to avoid flakiness.
 - **Traceability**: test titles carry requirement IDs (`test('RND-02 options never contain duplicates', ...)`),
-  plus Playwright tags (`@smoke`, `@FLAG-01`) to run subsets. A small script can report which requirements
-  have no test.
+  plus Playwright tags (`@smoke`, `@FLAG-01`) to run subsets. `npm run trace` reports which requirements
+  have no test and highlights the gaps of the current phase (also in the CI job summary).
 - **Page Object Model** for E2E, the same pattern as in Selenium.
 
 **Quality gates**: typecheck, lint, all three layers green, ≥ 90% coverage of `domain/`, CI green.
