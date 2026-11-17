@@ -18,3 +18,8 @@ The project is built spec-first with Claude Code. The specs are the source of tr
 | [Way of working](docs/03-way-of-working.md) | Spec-driven flow, roadmap, board, Definition of Done |
 
 Work is tracked on the GitHub Project board linked to this repository.
+
+## License
+
+[MIT](LICENSE): free to use, copy and adapt. Flag and map data keep their own open licences (see the
+"Acerca de" screen in the app).
