@@ -60,6 +60,9 @@ scripts/         Data build scripts and repo tooling (board.sh)
 
 ## Story loop and git
 
+The `implement-story` skill (`.claude/skills/implement-story`) runs this loop, and the `qa-reviewer` subagent
+(`.claude/agents/qa-reviewer.md`) reviews a story's tests against its acceptance criteria before the pull request.
+
 1. Move the story to *In progress*: `bash scripts/board.sh <issue> "In progress"`.
 2. Branch `<issue>-<short-slug>` from `main`.
 3. Tests from the acceptance criteria → implementation → `npm run check`.

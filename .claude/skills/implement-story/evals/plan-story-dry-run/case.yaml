@@ -1,0 +1,7 @@
+schema_version: '1.1'
+name: plan-story-dry-run
+expected_outcome: |
+  A plan.md for story #23 (FLAG-B round) that follows the story loop: story type with "Refs #23" and
+  "In review" after merging, a branch named 23-..., one or more tests per Gherkin scenario with titles that
+  start with requirement IDs, E2E with seed 42, a page object, getByRole and an axe scan, and the gates and
+  board commands. The repository is left untouched.
