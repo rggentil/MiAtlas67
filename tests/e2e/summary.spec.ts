@@ -39,7 +39,7 @@ test.describe('Round summary', () => {
         questionAt(FIRST_ROUND, 1).entity.name.es,
         questionAt(FIRST_ROUND, 6).entity.name.es,
       ]);
-      await expect(summary.missed.first().locator('img')).toHaveAttribute(
+      await expect(summary.missedFlag(0)).toHaveAttribute(
         'src',
         flagFile(questionAt(FIRST_ROUND, 1).entity.code),
       );
@@ -67,6 +67,10 @@ test.describe('Round summary', () => {
     'RND-08 "Jugar otra vez" starts a new Flags round of Europa · Fácil',
     { tag: '@RND-08' },
     async () => {
+      // With this seed the second round starts differently, so the same round cannot pass for a new one.
+      expect(questionAt(SECOND_ROUND, 0).entity.code).not.toBe(
+        questionAt(FIRST_ROUND, 0).entity.code,
+      );
       await round.playRound(FIRST_ROUND, [0]);
       await summary.playAgainButton.click();
 

@@ -25,8 +25,8 @@ function wrongName(question: Question): string {
   return wrong.name.es;
 }
 
-async function startFlagsRound(): Promise<void> {
-  await userEvent.click(screen.getByRole('button', { name: /^Bandera → País/ }));
+async function startFlagsRound(game = /^Bandera → País/): Promise<void> {
+  await userEvent.click(screen.getByRole('button', { name: game }));
   await userEvent.click(screen.getByRole('button', { name: 'Europa' }));
   await userEvent.click(screen.getByRole('button', { name: 'Fácil' }));
 }
@@ -86,5 +86,25 @@ describe('App · round summary', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Menú' }));
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('¿A qué jugamos?');
+  }, 30_000);
+
+  it('RND-08 FLAG-B "Jugar otra vez" after a "País → Bandera" round starts FLAG-B again', async () => {
+    const [first, second] = firstTwoRounds();
+    render(<App />);
+    await startFlagsRound(/^País → Bandera/);
+
+    for (const question of first) {
+      const card = `Opción ${String(question.options.indexOf(question.entity) + 1)}`;
+      await userEvent.click(screen.getByRole('button', { name: card }));
+      await userEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
+    }
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('¡Perfecto!');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Jugar otra vez' }));
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      `¿Cuál es la bandera de ${second[0]?.entity.name.es ?? ''}?`,
+    );
+    expect(screen.getByText('1/10')).toBeVisible();
   }, 30_000);
 });

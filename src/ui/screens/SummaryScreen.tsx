@@ -102,9 +102,13 @@ export function SummaryScreen({ game, settings, result, onPlayAgain, onMenu }: S
 /** 0–3 stars (SCR-02), read out as one image: "2 de 3 estrellas". */
 function StarRating({ stars, label }: { stars: Stars; label: string }) {
   return (
-    <p role="img" aria-label={label} className="flex gap-2">
+    <p
+      role="img"
+      aria-label={label}
+      className="flex gap-2 rounded-full border-3 border-ink bg-ink px-4 py-2 shadow-block-sm"
+    >
       {[1, 2, 3].map((star) => (
-        <StarIcon key={star} size={44} filled={star <= stars} />
+        <StarIcon key={star} size={40} filled={star <= stars} />
       ))}
     </p>
   );

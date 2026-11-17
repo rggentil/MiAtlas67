@@ -24,6 +24,11 @@ export class SummaryPage {
     this.menuButton = page.getByRole('button', { name: 'Menú' });
   }
 
+  /** The flag of the n-th missed entity (from 0). Its alt text is empty, next to the name, so it has no role. */
+  missedFlag(index: number): Locator {
+    return this.missed.nth(index).locator('img');
+  }
+
   /** The score, e.g. "8/10" (SCR-01). */
   score(text: string): Locator {
     return this.page.getByText(text, { exact: true });

@@ -30,6 +30,12 @@ function resultWith(wrongAt: readonly number[]): RoundResult {
   return roundResult(state);
 }
 
+/** Which of the three stars are drawn filled, left to right. */
+function filledStars(): boolean[] {
+  const stars = screen.getByRole('img', { name: /de 3 estrellas$/ });
+  return [...stars.querySelectorAll('svg')].map((star) => star.dataset.filled === 'true');
+}
+
 function renderSummary(result: RoundResult) {
   const onPlayAgain = vi.fn();
   const onMenu = vi.fn();
@@ -57,11 +63,30 @@ describe('SummaryScreen', () => {
 
     expect(screen.getByText('8/10')).toBeVisible();
     expect(screen.getByRole('img', { name: '2 de 3 estrellas' })).toBeVisible();
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('¡Muy bien!');
+    expect(filledStars()).toEqual([true, true, false]);
     expect(
-      within(screen.getByRole('list', { name: 'Esta partida' })).getAllByRole('listitem'),
-    ).toHaveLength(3);
+      within(screen.getByRole('list', { name: 'Esta partida' }))
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual(['Banderas', 'Europa', 'Fácil']);
   });
+
+  it.each([
+    { wrong: [0, 1, 2, 3, 4, 5], score: '4/10', stars: 0, title: '¡A seguir practicando!' },
+    { wrong: [0, 1, 2, 3, 4], score: '5/10', stars: 1, title: '¡Bien hecho!' },
+    { wrong: [3, 7], score: '8/10', stars: 2, title: '¡Muy bien!' },
+    { wrong: [], score: '10/10', stars: 3, title: '¡Perfecto!' },
+  ])(
+    'SCR-02 $score gives $stars stars and an encouraging title: $title',
+    ({ wrong, score, stars, title }) => {
+      renderSummary(resultWith(wrong));
+
+      expect(screen.getByText(score)).toBeVisible();
+      expect(screen.getByRole('img', { name: `${String(stars)} de 3 estrellas` })).toBeVisible();
+      expect(filledStars().filter(Boolean)).toHaveLength(stars);
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(title);
+    },
+  );
 
   it('RND-08 lists the 2 missed entities with their correct answers', () => {
     renderSummary(resultWith([3, 7]));
@@ -88,26 +113,30 @@ describe('SummaryScreen', () => {
     expect(screen.getByText('10/10')).toBeVisible();
     expect(screen.getByRole('img', { name: '3 de 3 estrellas' })).toBeVisible();
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('¡Perfecto!');
-    expect(screen.getByRole('img', { name: '¡Ronda perfecta!' })).toBeVisible();
+    const celebration = screen.getByRole('img', { name: '¡Ronda perfecta!' });
+    expect(celebration).toBeVisible();
+    expect(celebration.children.length).toBeGreaterThan(0);
     expect(screen.queryByRole('list', { name: 'Para repasar' })).not.toBeInTheDocument();
   });
 
-  it('SCR-02 a round below 5 correct answers has no stars and still encourages', () => {
+  it('SCR-02 a round below 5 correct answers lists every missed country and has no celebration', () => {
     renderSummary(resultWith([0, 1, 2, 3, 4, 5]));
 
-    expect(screen.getByText('4/10')).toBeVisible();
-    expect(screen.getByRole('img', { name: '0 de 3 estrellas' })).toBeVisible();
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('¡A seguir practicando!');
     expect(screen.queryByRole('img', { name: '¡Ronda perfecta!' })).not.toBeInTheDocument();
     expect(
       within(screen.getByRole('list', { name: 'Para repasar' })).getAllByRole('listitem'),
     ).toHaveLength(6);
   });
 
+  it('NFR-05 the summary title takes the focus when the summary opens', () => {
+    renderSummary(resultWith([3, 7]));
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
+  });
+
   it('RND-08 "Jugar otra vez" and "Menú" are the two ways on', async () => {
     const { onPlayAgain, onMenu } = renderSummary(resultWith([3, 7]));
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
     await userEvent.click(screen.getByRole('button', { name: 'Jugar otra vez' }));
     expect(onPlayAgain).toHaveBeenCalledOnce();
     expect(onMenu).not.toHaveBeenCalled();
