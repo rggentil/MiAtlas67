@@ -16,6 +16,7 @@ The project is built spec-first with Claude Code. The specs are the source of tr
 | [Product specification](docs/01-product-spec.md) | What the game does: games, levels, rounds, profiles, data rules |
 | [Technical approach](docs/02-technical-approach.md) | Stack, architecture, testing strategy, design tokens |
 | [Way of working](docs/03-way-of-working.md) | Spec-driven flow, roadmap, board, Definition of Done |
+| [Playwright for Selenium users](docs/04-playwright-for-selenium-users.md) | The differences that matter, as applied here |
 
 Work is tracked on the GitHub Project board linked to this repository.
 
