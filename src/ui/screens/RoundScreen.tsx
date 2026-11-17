@@ -48,7 +48,7 @@ function optionState(option: Entity, question: Question, chosen: string | null):
  * when ready (RND-05): there is no timer (RND-03). Progress and score are always visible (RND-06).
  */
 export function RoundScreen({ game, settings, questions, onQuit, onFinish }: RoundScreenProps) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [state, setState] = useState(() => startRound(questions));
   const [quitting, setQuitting] = useState(false);
   const quitRef = useRef<HTMLButtonElement>(null);
@@ -146,12 +146,38 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
               </ul>
             </>
           ) : (
-            // FLAG-B, a grid of flags, is story #23.
-            <ScreenTitle className="text-2xl">{t(`game.${game.id}.question`)}</ScreenTitle>
+            <>
+              {/* FLAG-B: the country's name is the question, large, as in the «Bloques» mockup. */}
+              <ScreenTitle className="flex flex-col gap-1">
+                <span className="font-body text-lg font-extrabold text-ink-muted">
+                  {t('round.FLAG-B.prompt')}
+                </span>{' '}
+                <span className="text-4xl">
+                  {t('round.FLAG-B.country', { name: question.entity.name[language] })}
+                </span>
+              </ScreenTitle>
+              <ul
+                ref={optionsRef}
+                aria-label={t('round.options')}
+                className="grid scroll-mb-56 grid-cols-2 gap-4"
+              >
+                {question.options.map((option, index) => (
+                  <FlagOption
+                    key={option.code}
+                    option={option}
+                    label={t('round.option', { n: index + 1 })}
+                    state={optionState(option, question, chosen)}
+                    onChoose={() => {
+                      setState(answer(state, option.code));
+                    }}
+                  />
+                ))}
+              </ul>
+            </>
           )}
         </main>
 
-        <Feedback question={question} chosen={chosen} nextRef={nextRef} onNext={goOn} />
+        <Feedback game={game} question={question} chosen={chosen} nextRef={nextRef} onNext={goOn} />
       </div>
 
       {quitting && (
@@ -210,8 +236,47 @@ function TextOption({
 }
 
 /**
+ * A flag as a large card (GAME-03), named only by its position, "Opción 2": its name and alt text never tell
+ * the country, or the question would answer itself (FLAG-B).
+ */
+function FlagOption({
+  option,
+  label,
+  state,
+  onChoose,
+}: {
+  option: Entity;
+  label: string;
+  state: OptionState;
+  onChoose: () => void;
+}) {
+  return (
+    <li className="relative">
+      <button
+        type="button"
+        aria-label={label}
+        disabled={state !== 'open'}
+        onClick={onChoose}
+        className={[
+          'block w-full p-2.5',
+          'rounded-block border-3 border-ink',
+          'motion-safe:transition-[translate,box-shadow] motion-safe:duration-75',
+          'focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-accent',
+          OPTION_TONES[state],
+        ].join(' ')}
+      >
+        <FlagImage entity={option} alt="" />
+      </button>
+      {(state === 'correct' || state === 'wrong') && (
+        <AnswerMark correct={state === 'correct'} variant="badge" />
+      )}
+    </li>
+  );
+}
+
+/**
  * ✓ or ✗ mark: feedback never relies on colour alone (RND-04, NFR-05). As a badge it sits outside the option's
- * button, so the button's name stays the country; as a tile it heads the feedback panel.
+ * button, so the button keeps its name (the country, or "Opción N"); as a tile it heads the feedback panel.
  */
 function AnswerMark({ correct, variant }: { correct: boolean; variant: 'badge' | 'tile' }) {
   const { t } = useI18n();
@@ -240,6 +305,7 @@ function AnswerMark({ correct, variant }: { correct: boolean; variant: 'badge' |
 }
 
 interface FeedbackProps {
+  game: PlayableGame;
   question: Question;
   chosen: string | null;
   nextRef: Ref<HTMLButtonElement>;
@@ -250,10 +316,14 @@ interface FeedbackProps {
  * The answer's feedback and "Siguiente" (RND-04, RND-05). The status region is always there, empty while
  * the question is open, so screen readers announce the feedback when it appears.
  */
-function Feedback({ question, chosen, nextRef, onNext }: FeedbackProps) {
+function Feedback({ game, question, chosen, nextRef, onNext }: FeedbackProps) {
   const { t, language } = useI18n();
   const answered = chosen !== null;
   const correct = chosen === question.entity.code;
+  const name = question.entity.name[language];
+  // FLAG-A names the right country; in FLAG-B the country is the question, so it points at the ✓ flag.
+  const almost =
+    game.direction === 'A' ? t('round.almost', { name }) : t('round.almostFlag', { name });
 
   return (
     <section
@@ -268,10 +338,10 @@ function Feedback({ question, chosen, nextRef, onNext }: FeedbackProps) {
           {answered && (
             <>
               <AnswerMark correct={correct} variant="tile" />
-              <p className="font-display text-3xl leading-tight">
-                {correct
-                  ? t('round.correct')
-                  : t('round.almost', { name: question.entity.name[language] })}
+              <p
+                className={`font-display leading-tight ${correct || game.direction === 'A' ? 'text-3xl' : 'text-2xl'}`}
+              >
+                {correct ? t('round.correct') : almost}
               </p>
             </>
           )}

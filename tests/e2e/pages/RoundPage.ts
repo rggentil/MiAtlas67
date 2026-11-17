@@ -13,6 +13,8 @@ export class RoundPage {
   readonly score: Locator;
   /** The flag to guess (FLAG-A). */
   readonly flag: Locator;
+  /** The list of answers ("Respuestas"). */
+  readonly answers: Locator;
   /** The answer buttons, in the order they are shown. */
   readonly options: Locator;
   /** The feedback after answering: "¡Correcto!" or "¡Casi! Era …" (RND-04). */
@@ -30,7 +32,8 @@ export class RoundPage {
     this.progressText = page.getByText(/^\d+\/\d+$/);
     this.score = page.getByText(/^Aciertos: \d+$/);
     this.flag = page.getByRole('img', { name: 'La bandera que hay que adivinar' });
-    this.options = page.getByRole('list', { name: 'Respuestas' }).getByRole('button');
+    this.answers = page.getByRole('list', { name: 'Respuestas' });
+    this.options = this.answers.getByRole('button');
     this.feedback = page.getByRole('status');
     this.nextButton = page.getByRole('button', { name: 'Siguiente' });
     this.quitButton = page.getByRole('button', { name: 'Salir de la partida' });
@@ -47,7 +50,12 @@ export class RoundPage {
     return this.page
       .getByRole('listitem')
       .filter({ has: this.option(optionName) })
-      .getByRole('img', { name: mark });
+      .getByRole('img', { name: mark, exact: true });
+  }
+
+  /** The ✓ or ✗ tile of the feedback panel. */
+  feedbackMark(mark: 'Correcta' | 'Incorrecta'): Locator {
+    return this.feedback.getByRole('img', { name: mark, exact: true });
   }
 
   async answer(name: string): Promise<void> {

@@ -4,23 +4,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { countries } from '../../data/countries.ts';
 import { relations } from '../../data/relations.ts';
 import type { Entity } from '../../domain/entity.ts';
-import { GAMES } from '../../domain/games.ts';
 import { generateRound, type Question, type RoundSettings } from '../../domain/questions.ts';
 import { createRng } from '../../domain/random.ts';
 import type { RoundResult } from '../../domain/round.ts';
 import { flagFile } from '../../test/flags.ts';
+import { playableGame } from '../../test/games.ts';
 import { renderWithI18n } from '../../test/render.tsx';
-import { isPlayable, type PlayableGame } from '../games.ts';
 import { RoundScreen } from './RoundScreen.tsx';
 
 const SETTINGS: RoundSettings = { topic: 'flags', region: 'europe', level: 1 };
 const QUESTIONS = generateRound(countries, SETTINGS, createRng(42), relations);
-
-function playable(id: string): PlayableGame {
-  const game = GAMES.find((candidate) => candidate.id === id);
-  if (!game || !isPlayable(game)) throw new Error(`${id} is not playable`);
-  return game;
-}
 
 function questionAt(index: number): Question {
   const question = QUESTIONS[index];
@@ -39,7 +32,7 @@ function renderRound() {
   const onFinish = vi.fn<(result: RoundResult) => void>();
   renderWithI18n(
     <RoundScreen
-      game={playable('FLAG-A')}
+      game={playableGame('FLAG-A')}
       settings={SETTINGS}
       questions={QUESTIONS}
       onQuit={onQuit}
