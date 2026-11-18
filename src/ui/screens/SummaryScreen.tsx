@@ -3,6 +3,7 @@ import { formatProgress } from '../../domain/progress.ts';
 import type { RoundSettings } from '../../domain/questions.ts';
 import type { RoundResult, Stars } from '../../domain/round.ts';
 import { useI18n } from '../../i18n/context.ts';
+import { useOnBack } from '../navigation/useOnBack.ts';
 import type { MessageKey } from '../../i18n/dictionaries.ts';
 import { Button } from '../components/Button.tsx';
 import { Chip } from '../components/Chip.tsx';
@@ -36,6 +37,8 @@ const TITLES: Record<Stars, MessageKey> = {
 export function SummaryScreen({ game, settings, result, onPlayAgain, onMenu }: SummaryScreenProps) {
   const { t, language } = useI18n();
   const reviewId = useId();
+  // The phone's back button goes home, like "Menú" (NAV-01).
+  useOnBack(onMenu);
   const perfect = result.score === result.total;
 
   return (

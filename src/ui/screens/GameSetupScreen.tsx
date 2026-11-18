@@ -7,6 +7,7 @@ import {
   type RoundSettings,
 } from '../../domain/questions.ts';
 import { useI18n } from '../../i18n/context.ts';
+import { useOnBack } from '../navigation/useOnBack.ts';
 import { Button } from '../components/Button.tsx';
 import { Chip } from '../components/Chip.tsx';
 import { IconButton } from '../components/IconButton.tsx';
@@ -39,17 +40,17 @@ export function GameSetupScreen({ game, onBack, onStart }: GameSetupScreenProps)
     setStep(next);
   }
 
+  // "Volver" and the phone's back button (NAV-01) go back one step.
+  function back() {
+    if (step.name === 'level') goTo({ name: 'region' });
+    else onBack();
+  }
+  useOnBack(back);
+
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-5 px-4 pt-5 pb-6">
       <header className="flex items-center gap-3">
-        <IconButton
-          label={t('nav.back')}
-          icon={<BackIcon />}
-          onClick={() => {
-            if (step.name === 'level') goTo({ name: 'region' });
-            else onBack();
-          }}
-        />
+        <IconButton label={t('nav.back')} icon={<BackIcon />} onClick={back} />
         <Chip tone={game.topic}>{t(`topic.${game.topic}`)}</Chip>
       </header>
       <main className="flex flex-col gap-5">

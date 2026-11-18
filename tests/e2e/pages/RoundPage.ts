@@ -24,6 +24,10 @@ export class RoundPage {
   readonly nextButton: Locator;
   readonly quitButton: Locator;
   readonly quitDialog: Locator;
+  /** "Seguir jugando" in the quit question. */
+  readonly stayButton: Locator;
+  /** "Sí, salir" in the quit question. */
+  readonly confirmQuitButton: Locator;
   private readonly page: Page;
 
   constructor(page: Page) {
@@ -40,6 +44,8 @@ export class RoundPage {
     this.nextButton = page.getByRole('button', { name: 'Siguiente' });
     this.quitButton = page.getByRole('button', { name: 'Salir de la partida' });
     this.quitDialog = page.getByRole('dialog', { name: '¿Salir de la partida?' });
+    this.stayButton = this.quitDialog.getByRole('button', { name: 'Seguir jugando' });
+    this.confirmQuitButton = this.quitDialog.getByRole('button', { name: 'Sí, salir' });
   }
 
   /** The answer button with exactly this name. */
@@ -79,6 +85,6 @@ export class RoundPage {
   /** "Salir de la partida", then "Sí, salir" in the confirmation (RND-07). */
   async quit(): Promise<void> {
     await this.quitButton.click();
-    await this.quitDialog.getByRole('button', { name: 'Sí, salir' }).click();
+    await this.confirmQuitButton.click();
   }
 }

@@ -5,6 +5,7 @@ import { generateRound, type Question, type RoundSettings } from '../domain/ques
 import { createRng } from '../domain/random.ts';
 import type { RoundResult } from '../domain/round.ts';
 import { I18nProvider } from '../i18n/I18nProvider.tsx';
+import { BackButtonProvider } from './navigation/BackButtonProvider.tsx';
 import { getGameSeed } from './gameSeed.ts';
 import type { PlayableGame } from './games.ts';
 import { GameSetupScreen } from './screens/GameSetupScreen.tsx';
@@ -39,7 +40,7 @@ const HOME: Screen = { name: 'home' };
 /**
  * Moves between the screens. The URL does not change, so `?seed=` stays for the whole visit: the first
  * round with `?seed=42` is `generateRound(…, createRng(42), …)`, and later rounds go on with the same
- * generator (NFR-07).
+ * generator (NFR-07). Away from home, the back button goes back inside the game (NAV-01).
  */
 function Screens() {
   const [screen, setScreen] = useState<Screen>(HOME);
@@ -51,6 +52,20 @@ function Screens() {
     setScreen({ name: 'round', game, settings, questions, number });
   }
 
+  return (
+    <BackButtonProvider away={screen.name !== 'home'}>
+      <CurrentScreen screen={screen} setScreen={setScreen} startRound={startRound} />
+    </BackButtonProvider>
+  );
+}
+
+interface CurrentScreenProps {
+  screen: Screen;
+  setScreen: (screen: Screen) => void;
+  startRound: (game: PlayableGame, settings: RoundSettings, number: number) => void;
+}
+
+function CurrentScreen({ screen, setScreen, startRound }: CurrentScreenProps) {
   switch (screen.name) {
     case 'home':
       return (
