@@ -23,6 +23,7 @@ interface Shown {
   lastPlayerId?: number | null;
   onChoose?: (player: Player) => void;
   onNewPlayer?: () => void;
+  onEdit?: (player: Player) => void;
 }
 
 function renderPlayers({
@@ -30,6 +31,7 @@ function renderPlayers({
   lastPlayerId = null,
   onChoose = vi.fn(),
   onNewPlayer = vi.fn(),
+  onEdit = vi.fn(),
 }: Shown = {}) {
   renderWithI18n(
     <PlayersScreen
@@ -37,13 +39,45 @@ function renderPlayers({
       lastPlayerId={lastPlayerId}
       onChoose={onChoose}
       onNewPlayer={onNewPlayer}
+      onEdit={onEdit}
     />,
   );
 }
 
+/** A player's own button, not its "Editar a …" one. */
+const isPlayerName = (name: string) => !name.startsWith('Editar a ');
+
 const newPlayerButton = () => screen.queryByRole('button', { name: 'Nuevo jugador' });
 
 describe('PlayersScreen', () => {
+  it('PRF-04 every player has its own "Editar" button, next to it in the list', async () => {
+    const onEdit = vi.fn<(player: Player) => void>();
+    const onChoose = vi.fn();
+    renderPlayers({ onEdit, onChoose });
+
+    const items = within(screen.getByRole('list')).getAllByRole('listitem');
+    for (const [index, nickname] of ['Lucía', 'Pablo'].entries()) {
+      const item = within(items[index] ?? document.body);
+      expect(item.getAllByRole('button')).toEqual([
+        item.getByRole('button', { name: nickname }),
+        item.getByRole('button', { name: `Editar a ${nickname}` }),
+      ]);
+    }
+
+    await userEvent.click(screen.getByRole('button', { name: 'Editar a Lucía' }));
+
+    expect(onEdit).toHaveBeenCalledExactlyOnceWith(LUCIA);
+    expect(onChoose).not.toHaveBeenCalled();
+  });
+
+  it('PRF-04 NFR-06 the "Editar" button speaks English too', async () => {
+    renderPlayers();
+
+    await userEvent.click(screen.getByRole('radio', { name: 'English' }));
+
+    expect(screen.getByRole('button', { name: 'Edit Pablo' })).toBeVisible();
+  });
+
   it('PRF-01 the first time on a device, "¿Quién juega?" has only the button "Nuevo jugador"', () => {
     renderPlayers({ players: [] });
 
@@ -58,7 +92,7 @@ describe('PlayersScreen', () => {
     const list = screen.getByRole('list', { name: 'Jugadores' });
     expect(
       within(list)
-        .getAllByRole('button')
+        .getAllByRole('button', { name: isPlayerName })
         .map((button) => button.textContent),
     ).toEqual(['Lucía', 'Pablo']);
     expect(newPlayerButton()).toBeVisible();
@@ -107,7 +141,10 @@ describe('PlayersScreen', () => {
 
     expect(newPlayerButton()).not.toBeInTheDocument();
     expect(screen.getByText('En este dispositivo caben 8 jugadores como mucho.')).toBeVisible();
-    expect(within(screen.getByRole('list')).getAllByRole('button')).toHaveLength(8);
+    expect(
+      within(screen.getByRole('list')).getAllByRole('button', { name: isPlayerName }),
+    ).toHaveLength(8);
+    expect(screen.getAllByRole('button', { name: /^Editar a / })).toHaveLength(8);
   });
 
   it('PRF-05 with 7 players there is still room for one more', () => {

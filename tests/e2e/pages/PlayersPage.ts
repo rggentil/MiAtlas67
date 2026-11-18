@@ -6,6 +6,8 @@ export class PlayersPage {
   readonly heading: Locator;
   /** The list of the players, "Jugadores". */
   readonly list: Locator;
+  /** The players' own buttons in the list, without their "Editar a …" buttons. */
+  readonly playerButtons: Locator;
   /** "Nuevo jugador": only while fewer than 8 players fit (PRF-05). */
   readonly newPlayerButton: Locator;
   /** The note shown instead of "Nuevo jugador" with 8 players (PRF-05). */
@@ -20,6 +22,7 @@ export class PlayersPage {
     this.page = page;
     this.heading = page.getByRole('heading', { level: 1 });
     this.list = page.getByRole('list', { name: 'Jugadores' });
+    this.playerButtons = this.list.getByRole('button', { name: /^(?!Editar a )/ });
     this.newPlayerButton = page.getByRole('button', { name: 'Nuevo jugador' });
     this.fullNote = page.getByText('En este dispositivo caben 8 jugadores como mucho.');
     this.exitDialog = this.exitDialogNamed('¿Salir del juego?');
@@ -38,6 +41,11 @@ export class PlayersPage {
    */
   player(nickname: string): Locator {
     return this.page.getByRole('button', { name: nickname, exact: true });
+  }
+
+  /** "Editar a Lucía": the pencil next to a player (PRF-04). */
+  editButton(nickname: string): Locator {
+    return this.page.getByRole('button', { name: `Editar a ${nickname}`, exact: true });
   }
 
   async choose(nickname: string): Promise<void> {

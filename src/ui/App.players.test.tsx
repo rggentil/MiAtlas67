@@ -135,7 +135,7 @@ describe('App · who plays (PRF-01, PRF-02, PRF-05)', () => {
     }));
     await renderApp(await deviceWith({ players }));
 
-    expect(screen.getAllByRole('button')).toHaveLength(8);
+    expect(screen.getAllByRole('button', { name: /^Jugador \d$/ })).toHaveLength(8);
     expect(screen.queryByRole('button', { name: 'Nuevo jugador' })).not.toBeInTheDocument();
     expect(screen.getByText('En este dispositivo caben 8 jugadores como mucho.')).toBeVisible();
   });

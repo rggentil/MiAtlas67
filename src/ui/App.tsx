@@ -12,7 +12,7 @@ import { getGameSeed } from './gameSeed.ts';
 import type { PlayableGame } from './games.ts';
 import { GameSetupScreen } from './screens/GameSetupScreen.tsx';
 import { HomeScreen } from './screens/HomeScreen.tsx';
-import { NewPlayerScreen } from './screens/NewPlayerScreen.tsx';
+import { PlayerFormScreen } from './screens/PlayerFormScreen.tsx';
 import { PlayersScreen } from './screens/PlayersScreen.tsx';
 import { RoundScreen } from './screens/RoundScreen.tsx';
 import { SummaryScreen } from './screens/SummaryScreen.tsx';
@@ -23,6 +23,7 @@ const Showcase = import.meta.env.DEV ? lazy(() => import('./dev/Showcase.tsx')) 
 type Screen =
   | { readonly name: 'players' }
   | { readonly name: 'newPlayer' }
+  | { readonly name: 'editPlayer'; readonly player: Player }
   | { readonly name: 'home' }
   | { readonly name: 'setup'; readonly game: PlayableGame }
   | {
@@ -41,8 +42,8 @@ type Screen =
       readonly number: number;
     };
 
-/** The screens that need a player: all but "¿Quién juega?" and "Nuevo jugador". */
-type GameScreen = Exclude<Screen, { readonly name: 'players' | 'newPlayer' }>;
+/** The screens that need a player: all but "¿Quién juega?" and the player form. */
+type GameScreen = Exclude<Screen, { readonly name: 'players' | 'newPlayer' | 'editPlayer' }>;
 
 const PLAYERS: Screen = { name: 'players' };
 const HOME: Screen = { name: 'home' };
@@ -130,6 +131,33 @@ function Screens({ givenStore }: { givenStore: GameStore | undefined }) {
     play(created, [...roster.players, created]);
   }
 
+  /** Saves the new nickname and avatar of `edited`; its rounds stay with it (PRF-04). */
+  async function updatePlayer(edited: Player, data: PlayerData): Promise<void> {
+    if (!store || !roster) throw new Error('The players are not read yet');
+    const updated: Player = { ...edited, ...data };
+    await store.players.update(updated);
+    setRoster({
+      ...roster,
+      players: roster.players.map((other) => (other.id === updated.id ? updated : other)),
+    });
+    setScreen(PLAYERS);
+  }
+
+  /** Deletes `deleted` and its rounds from the device (PRF-04, NFR-04). */
+  async function deletePlayer(deleted: Player): Promise<void> {
+    if (!store || !roster) throw new Error('The players are not read yet');
+    await store.players.delete(deleted.id);
+    setRoster({
+      players: roster.players.filter((other) => other.id !== deleted.id),
+      lastPlayerId: roster.lastPlayerId === deleted.id ? null : roster.lastPlayerId,
+    });
+    setScreen(PLAYERS);
+  }
+
+  function backToPlayers() {
+    setScreen(PLAYERS);
+  }
+
   return (
     <BackButtonProvider away={screen.name !== 'players'}>
       {screen.name === 'players' ? (
@@ -142,14 +170,23 @@ function Screens({ givenStore }: { givenStore: GameStore | undefined }) {
           onNewPlayer={() => {
             setScreen({ name: 'newPlayer' });
           }}
+          onEdit={(edited) => {
+            setScreen({ name: 'editPlayer', player: edited });
+          }}
         />
       ) : screen.name === 'newPlayer' ? (
-        <NewPlayerScreen
+        <PlayerFormScreen
           players={roster?.players ?? []}
-          onBack={() => {
-            setScreen(PLAYERS);
-          }}
-          onCreate={createPlayer}
+          onBack={backToPlayers}
+          onSave={createPlayer}
+        />
+      ) : screen.name === 'editPlayer' ? (
+        <PlayerFormScreen
+          players={roster?.players ?? []}
+          editing={screen.player}
+          onBack={backToPlayers}
+          onSave={(data) => updatePlayer(screen.player, data)}
+          onDelete={() => deletePlayer(screen.player)}
         />
       ) : (
         player && (
