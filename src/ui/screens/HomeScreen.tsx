@@ -3,7 +3,7 @@ import { GAME_TOPICS, gamesOfTopic, type Game, type GameTopic } from '../../doma
 import { useI18n } from '../../i18n/context.ts';
 import type { Player } from '../../storage/store.ts';
 import { AvatarImage } from '../components/AvatarImage.tsx';
-import { CapitalIcon, FlagIcon, ShapeIcon } from '../components/icons.tsx';
+import { CapitalIcon, FlagIcon, ShapeIcon, SwitchIcon } from '../components/icons.tsx';
 import { LanguageSwitch } from '../components/LanguageSwitch.tsx';
 import { Logo } from '../components/Logo.tsx';
 import { ScreenTitle } from '../components/ScreenTitle.tsx';
@@ -15,6 +15,8 @@ interface HomeScreenProps {
   /** Who plays (PRF-01). */
   player: Player;
   onOpenGame: (game: PlayableGame) => void;
+  /** The player button: "¿Quién juega?", to hand the phone to someone else (PRF-03). */
+  onSwitchPlayer: () => void;
   /** The phone's back button: back to "¿Quién juega?" (NAV-01, D22). */
   onBack: () => void;
 }
@@ -26,9 +28,10 @@ const TOPIC_ICONS: Record<GameTopic, ComponentType<{ size?: number }>> = {
 };
 
 /**
- * Home screen: who plays, and the six games grouped by topic (GAME-01). Back goes to "¿Quién juega?" (D22).
+ * Home screen: who plays, and the six games grouped by topic (GAME-01). The player button switches player
+ * (PRF-03); Back goes to "¿Quién juega?" too (D22).
  */
-export function HomeScreen({ player, onOpenGame, onBack }: HomeScreenProps) {
+export function HomeScreen({ player, onOpenGame, onSwitchPlayer, onBack }: HomeScreenProps) {
   const { t } = useI18n();
 
   useOnBack(onBack);
@@ -37,7 +40,7 @@ export function HomeScreen({ player, onOpenGame, onBack }: HomeScreenProps) {
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 px-4 pt-5 pb-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <Logo />
-        <CurrentPlayer player={player} />
+        <CurrentPlayer player={player} onSwitch={onSwitchPlayer} />
       </header>
       <main className="flex flex-col gap-4">
         <ScreenTitle className="mt-2 text-3xl">{t('home.title')}</ScreenTitle>
@@ -52,21 +55,43 @@ export function HomeScreen({ player, onOpenGame, onBack }: HomeScreenProps) {
   );
 }
 
-/** Who plays: the avatar, named after its animal, and the nickname. */
-function CurrentPlayer({ player }: { player: Player }) {
+/**
+ * Who plays: a button with the avatar, named after its animal, the nickname and the switch arrows (PRF-03).
+ * Its name is the nickname written on it; "Cambiar de jugador" is its description, kept out of the "Jugador"
+ * group so the group's text is the nickname alone.
+ */
+function CurrentPlayer({ player, onSwitch }: { player: Player; onSwitch: () => void }) {
   const { t } = useI18n();
+  const nicknameId = useId();
+  const hintId = useId();
 
   return (
-    <div
-      role="group"
-      aria-label={t('player.current')}
-      className="flex min-w-0 items-center gap-2 rounded-full border-3 border-ink bg-paper py-1 pr-4 pl-1 shadow-block-sm"
-    >
-      <AvatarImage avatar={player.avatar} size={36} />
-      <span className="min-w-0 font-display text-xl leading-tight break-words">
-        {player.nickname}
+    <>
+      <div role="group" aria-label={t('player.current')} className="min-w-0">
+        <button
+          type="button"
+          aria-labelledby={nicknameId}
+          aria-describedby={hintId}
+          onClick={onSwitch}
+          className={[
+            'flex min-h-12 min-w-0 items-center gap-2 py-1 pr-3 pl-1 text-left',
+            'rounded-full border-3 border-ink bg-paper shadow-block-sm',
+            'motion-safe:transition-[translate,box-shadow] motion-safe:duration-75',
+            'active:translate-x-0.5 active:translate-y-0.5 active:shadow-none',
+            'focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-accent',
+          ].join(' ')}
+        >
+          <AvatarImage avatar={player.avatar} size={36} />
+          <span id={nicknameId} className="min-w-0 font-display text-xl leading-tight break-words">
+            {player.nickname}
+          </span>
+          <SwitchIcon size={18} className="flex-none" />
+        </button>
+      </div>
+      <span id={hintId} hidden>
+        {t('player.switch')}
       </span>
-    </div>
+    </>
   );
 }
 

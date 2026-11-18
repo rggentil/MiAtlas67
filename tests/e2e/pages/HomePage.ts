@@ -10,6 +10,8 @@ export class HomePage {
   readonly topics: Locator;
   /** Who plays: the avatar, named after its animal, and the nickname (PRF-01). */
   readonly currentPlayer: Locator;
+  /** The player button in it, named after the nickname: it opens «¿Quién juega?» (PRF-03). */
+  readonly switchPlayerButton: Locator;
   private readonly page: Page;
 
   constructor(page: Page) {
@@ -17,6 +19,7 @@ export class HomePage {
     this.heading = page.getByRole('heading', { level: 1 });
     this.topics = page.getByRole('region');
     this.currentPlayer = page.getByRole('group', { name: 'Jugador' });
+    this.switchPlayerButton = this.currentPlayer.getByRole('button');
   }
 
   /**
