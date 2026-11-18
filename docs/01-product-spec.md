@@ -1,6 +1,6 @@
 # MiAtlas67 — Product Specification
 
-> **Status: APPROVED v1.9** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
+> **Status: APPROVED v1.10** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
 > [§18 Change log](#18-change-log).
 > Last updated: 2026-11-18
 
@@ -290,12 +290,13 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 | D21 | Avatars | ✅ 11 animals drawn by *OpenMoji* (CC BY-SA 4.0, credited on "Acerca de", DATA-05), chosen in the [review page](https://claude.ai/artifact/PzZrMTSrdtRNzHJMXRv3hi) over the flat *Fluent Emoji* style, because their black outline matches «Bloques»: Zorro, Panda, Rana, León, Pingüino, Pulpo, Unicornio, Dinosaurio, Gato, Perro and Búho. Two players may have the same avatar: the nickname tells them apart, and nobody loses their favourite animal (PRF-02) |
 | D22 | Back on the home screen | ✅ The game opens on "¿Quién juega?", so Back on the home screen goes there, and "¿Quién juega?" is the screen that asks "¿Salir del juego?" (NAV-01, NAV-02, story #61). Back always goes to the screen before. This moves the question of D20 to another screen; the rest of D20 stays |
 | D23 | "¡Nuevo récord!" | ✅ Only when a round beats the player's best score in the same game, region and level. A tie is not a record, and neither is the first round there: it would show very often at first, with 36 combinations in "Banderas" alone (RND-08, story #66) |
-| D24 | Devices | ⏳ The family plays on Android and on iPhone. Safari on iPhone and iPad deletes the data of a website after 7 days of Safari use without opening it, so players and history would be lost; a game added to the home screen keeps them (NFR-02, planned for epic 7). Open: whether to bring that part forward |
+| D24 | Devices | ✅ The family plays on Android and on iPhone. Safari on iPhone and iPad deletes the data of a website after 7 days of Safari use without opening it; a game added to the home screen keeps it. Not urgent for the product owner: a small story adds the home screen install in a later epic (#74), before the offline PWA of epic 7 (NFR-02) |
 
-Open: D24.
+No open questions.
 
 ## 18. Change log
 
+- **v1.10** (2026-11-18): D24 decided: the home screen install comes as a small story in a later epic (#74), so iPhone keeps the players and history.
 - **v1.9** (2026-11-18): decisions of the epic 4 review page: the avatars are 11 OpenMoji animals, and two
   players may share one (PRF-02, DATA-05, D21) · Back on the home screen goes to "¿Quién juega?", which now asks
   "¿Salir del juego?" (NAV-01, NAV-02, D22) · "¡Nuevo récord!" only when a previous best is beaten (RND-08, D23) ·
