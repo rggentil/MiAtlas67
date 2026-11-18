@@ -140,6 +140,29 @@ describe('App · who plays (PRF-01, PRF-02, PRF-05)', () => {
     expect(screen.getByText('En este dispositivo caben 8 jugadores como mucho.')).toBeVisible();
   });
 
+  it('PRF-02 a double tap on "Crear" while the player is being saved creates only one', async () => {
+    const store = await deviceWith({ players: [] });
+    const save = store.players.create.bind(store.players);
+    let finishSaving: () => void = () => undefined;
+    store.players.create = (data) =>
+      new Promise((resolve) => {
+        finishSaving = () => {
+          resolve(save(data));
+        };
+      });
+    await renderApp(store);
+    await userEvent.click(screen.getByRole('button', { name: 'Nuevo jugador' }));
+    await userEvent.type(screen.getByRole('textbox', { name: 'Nombre' }), 'Pablo');
+
+    await userEvent.dblClick(screen.getByRole('button', { name: 'Crear' }));
+    finishSaving();
+
+    await waitFor(() => {
+      expect(heading()).toHaveTextContent('¿A qué jugamos?');
+    });
+    expect(await store.players.list()).toEqual([{ id: 1, nickname: 'Pablo', avatar: 'fox' }]);
+  });
+
   it('PRF-02 a second player is added after the first one, and goes home as who plays', async () => {
     const store = await renderApp();
 

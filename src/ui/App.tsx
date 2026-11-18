@@ -124,8 +124,8 @@ function Screens({ givenStore }: { givenStore: GameStore | undefined }) {
     void store?.players.setLastPlayerId(chosen.id);
   }
 
-  async function createPlayer(data: PlayerData) {
-    if (!store || !roster) return;
+  async function createPlayer(data: PlayerData): Promise<void> {
+    if (!store || !roster) throw new Error('The players are not read yet');
     const created = await store.players.create(data);
     play(created, [...roster.players, created]);
   }
@@ -149,9 +149,7 @@ function Screens({ givenStore }: { givenStore: GameStore | undefined }) {
           onBack={() => {
             setScreen(PLAYERS);
           }}
-          onCreate={(data) => {
-            void createPlayer(data);
-          }}
+          onCreate={createPlayer}
         />
       ) : (
         player && (

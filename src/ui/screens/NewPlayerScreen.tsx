@@ -22,7 +22,8 @@ interface NewPlayerScreenProps {
   /** The players already on the device: their nicknames are taken (PRF-02). */
   players: readonly Player[];
   onBack: () => void;
-  onCreate: (data: PlayerData) => void;
+  /** Saves the player; it settles once saved, or rejects when saving failed. */
+  onCreate: (data: PlayerData) => Promise<void>;
 }
 
 const PROBLEM_MESSAGES: Record<NicknameProblem, MessageKey> = {
@@ -45,11 +46,14 @@ export function NewPlayerScreen({ players, onBack, onCreate }: NewPlayerScreenPr
     firstFreeAvatar(players.map((player) => player.avatar)),
   );
   const [problem, setProblem] = useState<NicknameProblem | null>(null);
+  // A player is being saved: a second tap on "Crear" must not save the same nickname twice (PRF-02).
+  const saving = useRef(false);
 
   useOnBack(onBack);
 
   function create(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
+    if (saving.current) return;
     const found = nicknameProblem(
       nickname,
       players.map((player) => player.nickname),
@@ -59,7 +63,11 @@ export function NewPlayerScreen({ players, onBack, onCreate }: NewPlayerScreenPr
       input.current?.focus();
       return;
     }
-    onCreate({ nickname: cleanNickname(nickname), avatar });
+    saving.current = true;
+    onCreate({ nickname: cleanNickname(nickname), avatar }).catch(() => {
+      // Not saved: "Crear" can be tapped again.
+      saving.current = false;
+    });
   }
 
   return (

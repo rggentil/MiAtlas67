@@ -21,13 +21,24 @@ const AVATAR_NAMES = [
   'Búho',
 ];
 
+type Create = (data: PlayerData) => Promise<void>;
+
+/** What "Crear" calls: it saves the player, by default at once. */
+function creator(saved: () => Promise<void> = () => Promise.resolve()) {
+  return vi.fn<Create>(saved);
+}
+
 interface Shown {
   players?: readonly Player[];
   onBack?: () => void;
-  onCreate?: (data: PlayerData) => void;
+  onCreate?: Create;
 }
 
-function renderNewPlayer({ players = [LUCIA], onBack = vi.fn(), onCreate = vi.fn() }: Shown = {}) {
+function renderNewPlayer({
+  players = [LUCIA],
+  onBack = vi.fn(),
+  onCreate = creator(),
+}: Shown = {}) {
   return renderWithI18n(<NewPlayerScreen players={players} onBack={onBack} onCreate={onCreate} />);
 }
 
@@ -60,7 +71,7 @@ describe('NewPlayerScreen', () => {
   });
 
   it('PRF-02 creates the player with the nickname typed and the animal chosen', async () => {
-    const onCreate = vi.fn<(data: PlayerData) => void>();
+    const onCreate = creator();
     renderNewPlayer({ onCreate });
 
     await userEvent.type(nickname(), 'Pablo');
@@ -71,7 +82,7 @@ describe('NewPlayerScreen', () => {
   });
 
   it('PRF-02 spaces at both ends of the nickname are not kept', async () => {
-    const onCreate = vi.fn<(data: PlayerData) => void>();
+    const onCreate = creator();
     renderNewPlayer({ onCreate });
 
     await userEvent.type(nickname(), '  Pablo ');
@@ -81,7 +92,7 @@ describe('NewPlayerScreen', () => {
   });
 
   it('PRF-02 Enter on the keyboard creates the player too', async () => {
-    const onCreate = vi.fn<(data: PlayerData) => void>();
+    const onCreate = creator();
     renderNewPlayer({ onCreate });
 
     await userEvent.type(nickname(), 'Pablo{Enter}');
@@ -90,7 +101,7 @@ describe('NewPlayerScreen', () => {
   });
 
   it('PRF-02 an avatar another player already has can be chosen too (D21)', async () => {
-    const onCreate = vi.fn<(data: PlayerData) => void>();
+    const onCreate = creator();
     renderNewPlayer({ onCreate });
 
     await userEvent.type(nickname(), 'Pablo');
@@ -134,13 +145,15 @@ describe('NewPlayerScreen', () => {
   ])(
     'PRF-02 the nickname "%s" cannot be used: it says "%s" and creates nobody',
     async (typed, message) => {
-      const onCreate = vi.fn();
+      const onCreate = creator();
       renderNewPlayer({ onCreate });
 
       if (typed !== '') await userEvent.type(nickname(), typed);
       await userEvent.click(create());
 
       expect(screen.getByText(message)).toBeVisible();
+      // With a ✗, not only colour (NFR-05).
+      expect(screen.getByText('✗')).toBeVisible();
       expect(nickname()).toHaveAccessibleDescription(message);
       expect(nickname()).toBeInvalid();
       expect(nickname()).toHaveFocus();
@@ -148,8 +161,31 @@ describe('NewPlayerScreen', () => {
     },
   );
 
+  it('PRF-02 a double tap on "Crear" creates the player only once', async () => {
+    // Saving takes a moment, as on the phone: the form is still there when the second tap comes.
+    const onCreate = creator(() => new Promise(() => undefined));
+    renderNewPlayer({ onCreate });
+    await userEvent.type(nickname(), 'Pablo');
+
+    await userEvent.dblClick(create());
+    await userEvent.type(nickname(), '{Enter}');
+
+    expect(onCreate).toHaveBeenCalledOnce();
+  });
+
+  it('PRF-02 when saving fails, "Crear" can be tapped again', async () => {
+    const onCreate = creator(() => Promise.reject(new Error('Storage is full')));
+    renderNewPlayer({ onCreate });
+    await userEvent.type(nickname(), 'Pablo');
+
+    await userEvent.click(create());
+    await userEvent.click(create());
+
+    expect(onCreate).toHaveBeenCalledTimes(2);
+  });
+
   it('PRF-02 once the nickname is fixed, the player is created', async () => {
-    const onCreate = vi.fn<(data: PlayerData) => void>();
+    const onCreate = creator();
     renderNewPlayer({ onCreate });
     await userEvent.type(nickname(), 'lucia');
     await userEvent.click(create());
@@ -163,7 +199,7 @@ describe('NewPlayerScreen', () => {
   });
 
   it('PRF-02 a nickname of 12 letters is accepted', async () => {
-    const onCreate = vi.fn<(data: PlayerData) => void>();
+    const onCreate = creator();
     renderNewPlayer({ onCreate });
 
     await userEvent.type(nickname(), 'Mariaisabela');
@@ -175,7 +211,7 @@ describe('NewPlayerScreen', () => {
 
   it('NAV-01 "Volver" goes back without creating anybody', async () => {
     const onBack = vi.fn();
-    const onCreate = vi.fn();
+    const onCreate = creator();
     renderNewPlayer({ onBack, onCreate });
     await userEvent.type(nickname(), 'Pablo');
 

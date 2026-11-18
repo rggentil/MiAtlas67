@@ -57,6 +57,12 @@ describe('nickname rules', () => {
     expect(sameNickname('Lucía', 'Lucas')).toBe(false);
     expect(sameNickname('Ana', 'Anna')).toBe(false);
   });
+
+  it('PRF-02 ñ is a letter of its own, not an n with an accent: "Nino" and "Niño" are different nicknames', () => {
+    expect(sameNickname('Niño', 'Nino')).toBe(false);
+    expect(sameNickname('Niño', 'NIÑO')).toBe(true);
+    expect(nicknameProblem('Nino', ['Niño'])).toBeNull();
+  });
 });
 
 describe('number of players', () => {

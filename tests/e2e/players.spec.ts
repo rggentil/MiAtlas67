@@ -117,8 +117,8 @@ test.describe('«¿Quién juega?»: create a player and choose who plays', () =>
     ['lucia', 'Ya hay un jugador que se llama así'],
   ] as const) {
     test(
-      `PRF-02 the nickname "${nickname}" says "${message}" and no player is created`,
-      { tag: '@PRF-02' },
+      `PRF-02 NFR-05 the nickname "${nickname}" says "${message}" and no player is created`,
+      { tag: ['@PRF-02', '@NFR-05'] },
       async ({ page, makeAxeBuilder }) => {
         await addPlayer(page, 'Lucía', 'Zorro');
         await players.newPlayerButton.click();
@@ -138,8 +138,8 @@ test.describe('«¿Quién juega?»: create a player and choose who plays', () =>
   }
 
   test(
-    'PRF-02 NAV-01 "Volver" or the back button goes back to "¿Quién juega?" and no player is created',
-    { tag: ['@PRF-02', '@NAV-01'] },
+    'PRF-02 NAV-01 NAV-02 "Volver" or the back button goes back to "¿Quién juega?", no player is created, and Back then asks before leaving',
+    { tag: ['@PRF-02', '@NAV-01', '@NAV-02'] },
     async ({ page }) => {
       await players.newPlayerButton.click();
       await newPlayer.nicknameInput.fill('Pablo');
@@ -153,6 +153,12 @@ test.describe('«¿Quién juega?»: create a player and choose who plays', () =>
       await expect(players.heading).toHaveText('¿Quién juega?');
       await expect(players.exitDialog).toBeHidden();
       await expect(players.list).toBeHidden();
+      await players.onlyOwnEntryLeft();
+
+      // Back again is Back on «¿Quién juega?»: it asks before leaving (NAV-02, D22).
+      await page.goBack();
+      await expect(players.exitDialog).toBeVisible();
+      await players.exitStayButton.click();
 
       await page.reload();
       await expect(players.newPlayerButton).toBeVisible();
@@ -161,11 +167,12 @@ test.describe('«¿Quién juega?»: create a player and choose who plays', () =>
   );
 
   test(
-    'PRF-01 tapping "Pablo" goes home with him, and he is marked as the last player, with a label',
-    { tag: '@PRF-01' },
+    'PRF-01 PRF-02 tapping "Pablo" goes home with him, and he is marked as the last player, with a label',
+    { tag: ['@PRF-01', '@PRF-02'] },
     async ({ page }) => {
       await addPlayer(page, 'Lucía', 'Zorro');
-      await addPlayer(page, 'Pablo', 'Búho');
+      // The avatar Lucía has can be chosen too (D21).
+      await addPlayer(page, 'Pablo', 'Zorro');
       await page.reload();
       await expect(players.list.getByRole('button')).toHaveText([/^Lucía/, /^Pablo/]);
 
@@ -175,7 +182,7 @@ test.describe('«¿Quién juega?»: create a player and choose who plays', () =>
       await players.choose('Pablo');
       await expect(home.heading).toHaveText('¿A qué jugamos?');
       await expect(home.currentPlayer).toHaveText('Pablo');
-      await expect(home.currentPlayer.getByRole('img', { name: 'Búho' })).toBeVisible();
+      await expect(home.currentPlayer.getByRole('img', { name: 'Zorro' })).toBeVisible();
 
       await page.reload();
       await expect(players.player('Pablo')).toHaveAccessibleDescription('Jugó la última vez');
@@ -200,16 +207,19 @@ test.describe('«¿Quién juega?»: create a player and choose who plays', () =>
       await expect(players.list.getByRole('button')).toHaveCount(8);
       await expect(players.newPlayerButton).toHaveCount(0);
       await expect(players.fullNote).toBeVisible();
+      for (const player of await players.list.getByRole('button').all()) {
+        await expectTouchTarget(player);
+      }
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
     },
   );
 
   test(
-    'PRF-01 NFR-05 NFR-06 "¿Quién juega?" and "Nuevo jugador" in English have no axe violations',
-    { tag: ['@PRF-01', '@NFR-05', '@NFR-06'] },
+    'PRF-01 PRF-02 NFR-05 NFR-06 "¿Quién juega?" and "Nuevo jugador" in English have no axe violations',
+    { tag: ['@PRF-01', '@PRF-02', '@NFR-05', '@NFR-06'] },
     async ({ page, makeAxeBuilder }) => {
       await addPlayer(page, 'Lucía', 'Zorro');
-      await page.getByText('English', { exact: true }).click();
+      await home.chooseLanguage('English');
       await expect(players.heading).toHaveText("Who's playing?");
       await expect(page.getByRole('button', { name: 'Lucía' })).toHaveAccessibleDescription(
         'Played last',
