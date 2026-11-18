@@ -57,6 +57,9 @@ tests/
 - Game rules live in `domain/` as pure functions: easy to unit test and independent of the UI.
 - The UI depends on the domain, and storage is hidden behind interfaces (IndexedDB now, maybe cloud later).
 - All assets (flags, shapes, data) are bundled, so nothing is fetched at runtime.
+- Navigation between screens is React state: the URL never changes, so `?seed=` stays for the whole visit.
+  Away from home the game keeps one history entry of its own, so the phone's back button goes back inside the
+  game instead of leaving it (NAV-01, `src/ui/navigation/`).
 - The data build script generates `countries.json` and simplified shapes once. The output is committed to the
   repo, and integrity tests guard it.
 

@@ -13,6 +13,7 @@ import {
   type RoundResult,
 } from '../../domain/round.ts';
 import { useI18n } from '../../i18n/context.ts';
+import { useOnBack } from '../navigation/useOnBack.ts';
 import { Button } from '../components/Button.tsx';
 import { Chip } from '../components/Chip.tsx';
 import { FlagImage } from '../components/FlagImage.tsx';
@@ -76,6 +77,18 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
     backFromDialog.current = false;
     quitRef.current?.focus();
   }, [quitting]);
+
+  // The phone's back button asks before quitting, like "Salir de la partida" (NAV-01, RND-07); pressed
+  // again, it closes the question and the round goes on.
+  useOnBack(() => {
+    if (quitting) stay();
+    else setQuitting(true);
+  });
+
+  function stay() {
+    backFromDialog.current = true;
+    setQuitting(false);
+  }
 
   function goOn() {
     if (number === total) onFinish(roundResult(state));
@@ -180,15 +193,7 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
         <Feedback game={game} question={question} chosen={chosen} nextRef={nextRef} onNext={goOn} />
       </div>
 
-      {quitting && (
-        <QuitDialog
-          onStay={() => {
-            backFromDialog.current = true;
-            setQuitting(false);
-          }}
-          onQuit={onQuit}
-        />
-      )}
+      {quitting && <QuitDialog onStay={stay} onQuit={onQuit} />}
     </>
   );
 }
