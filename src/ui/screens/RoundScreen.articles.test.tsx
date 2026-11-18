@@ -43,8 +43,10 @@ function renderRound(game: GameId, code: string) {
 const heading = () => screen.getByRole('heading', { level: 1 });
 const feedback = () => screen.getByRole('status');
 
-/** In FLAG-B the cards are "Opción N" / "Option N", by their position: Francia is the second card. */
-const FRANCE_CARD = { es: 'Opción 2', en: 'Option 2' };
+/** In FLAG-B the cards are "Opción N" / "Option N", by their position: the card of Francia. */
+function franceCard(code: string, prefix: 'Opción' | 'Option'): string {
+  return `${prefix} ${String(questionAbout(code).options.indexOf(FRANCE) + 1)}`;
+}
 
 describe('RoundScreen · names with their article (DATA-09)', () => {
   afterEach(() => {
@@ -69,11 +71,12 @@ describe('RoundScreen · names with their article (DATA-09)', () => {
     ['GB', 'Which one is the flag of the United Kingdom?'],
     ['NL', 'Which one is the flag of the Netherlands?'],
     ['FR', 'Which one is the flag of France?'],
-  ])('DATA-09 FLAG-B NFR-06 asks about %s in English: "%s"', (code, question) => {
+  ])('DATA-09 SET-01 FLAG-B asks about %s in English: "%s"', (code, question) => {
     localStorage.setItem('miatlas67.language', 'en');
     renderRound('FLAG-B', code);
 
     expect(heading()).toHaveTextContent(question);
+    expect(within(heading()).getByText(`${byCode(code).name.en}?`)).toBeVisible();
   });
 
   it('DATA-09 RND-04 FLAG-A a wrong answer names "el Reino Unido"; the options show the name alone', async () => {
@@ -97,28 +100,33 @@ describe('RoundScreen · names with their article (DATA-09)', () => {
   it('DATA-09 RND-04 FLAG-B a wrong answer points at the flag "del Reino Unido"', async () => {
     renderRound('FLAG-B', 'GB');
 
-    await userEvent.click(screen.getByRole('button', { name: FRANCE_CARD.es }));
+    await userEvent.click(screen.getByRole('button', { name: franceCard('GB', 'Opción') }));
 
     expect(feedback()).toHaveTextContent('¡Uy! La bandera del Reino Unido es la marcada con ✓');
   });
 
-  it('DATA-09 RND-04 NFR-06 the wrong answer names "the United Kingdom" in English, in both games', async () => {
+  it('DATA-09 RND-04 SET-01 FLAG-A in English a wrong answer names "the United Kingdom"; the options show the name alone', async () => {
     localStorage.setItem('miatlas67.language', 'en');
     renderRound('FLAG-A', 'GB');
+    expect(screen.getByRole('button', { name: 'United Kingdom' })).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: FRANCE.name.en }));
     expect(feedback()).toHaveTextContent('Oops! It was the United Kingdom');
   });
 
-  it('DATA-09 RND-04 NFR-06 FLAG-B in English points at the flag "of the United Kingdom"', async () => {
+  it('DATA-09 RND-04 SET-01 FLAG-B in English points at the flag "of the United Kingdom"', async () => {
     localStorage.setItem('miatlas67.language', 'en');
     renderRound('FLAG-B', 'GB');
-    await userEvent.click(screen.getByRole('button', { name: FRANCE_CARD.en }));
+    await userEvent.click(screen.getByRole('button', { name: franceCard('GB', 'Option') }));
     expect(feedback()).toHaveTextContent(
       'Oops! The flag of the United Kingdom is the one marked ✓',
     );
   });
 
-  it('DATA-09 RND-08 "Para repasar" lists the name alone: "Reino Unido"', () => {
+  it.each([
+    ['es', 'Para repasar', 'Reino Unido'],
+    ['en', 'To review', 'United Kingdom'],
+  ])('DATA-09 RND-08 SET-01 in "%s", "%s" lists the name alone: "%s"', (language, list, name) => {
+    localStorage.setItem('miatlas67.language', language);
     let state = startRound([questionAbout('GB')]);
     state = next(answer(state, 'FR'));
     renderWithI18n(
@@ -131,9 +139,7 @@ describe('RoundScreen · names with their article (DATA-09)', () => {
       />,
     );
 
-    const missed = within(screen.getByRole('list', { name: 'Para repasar' })).getAllByRole(
-      'listitem',
-    );
-    expect(missed.map((item) => item.textContent)).toEqual(['Reino Unido']);
+    const missed = within(screen.getByRole('list', { name: list })).getAllByRole('listitem');
+    expect(missed.map((item) => item.textContent)).toEqual([name]);
   });
 });

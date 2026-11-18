@@ -23,14 +23,15 @@ async function startRound(page: Page, game: string): Promise<RoundPage> {
   return new RoundPage(page);
 }
 
-/** The same round in English: the setup steps are tapped by their English names. */
+/** The same round in English (SET-01). */
 async function startRoundInEnglish(page: Page, game: string): Promise<RoundPage> {
   const home = new HomePage(page);
+  const setup = new GameSetupPage(page, 'en');
   await home.goto(`?seed=${String(SEED)}`);
   await home.chooseLanguage('English');
   await home.openGame(game);
-  await page.getByRole('button', { name: 'Europe', exact: true }).click();
-  await page.getByRole('button', { name: 'Easy', exact: true }).click();
+  await setup.chooseRegion('Europe');
+  await setup.chooseLevel('Easy');
   return new RoundPage(page);
 }
 
@@ -69,8 +70,8 @@ test.describe('Names with their article in sentences', () => {
   );
 
   test(
-    'DATA-09 NFR-06 in English: "Which one is the flag of the United Kingdom?" and "Oops! It was the United Kingdom"',
-    { tag: ['@DATA-09', '@NFR-06'] },
+    'DATA-09 SET-01 in English: "Which one is the flag of the United Kingdom?" and "Oops! It was the United Kingdom"',
+    { tag: ['@DATA-09', '@SET-01', '@FLAG-A', '@FLAG-B', '@RND-04'] },
     async ({ page }) => {
       const flagB = await startRoundInEnglish(page, 'Country → Flag');
       await expect(flagB.heading).toHaveText('Which one is the flag of the United Kingdom?');
@@ -80,6 +81,7 @@ test.describe('Names with their article in sentences', () => {
       );
 
       const flagA = await startRoundInEnglish(page, 'Flag → Country');
+      await expect(flagA.option('United Kingdom')).toBeVisible();
       await flagA.answer(WRONG.name.en);
       await expect(flagA.feedback).toHaveText('Oops! It was the United Kingdom');
     },
