@@ -13,6 +13,7 @@ import {
   type RoundResult,
 } from '../../domain/round.ts';
 import { useI18n } from '../../i18n/context.ts';
+import { nameInSentence, ofName, ofWords } from '../../i18n/names.ts';
 import { useOnBack } from '../navigation/useOnBack.ts';
 import { Button } from '../components/Button.tsx';
 import { Chip } from '../components/Chip.tsx';
@@ -163,7 +164,7 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
               {/* FLAG-B: the country's name is the question, large, as in the «Bloques» mockup. */}
               <ScreenTitle className="flex flex-col gap-1">
                 <span className="font-body text-lg font-extrabold text-ink-muted">
-                  {t('round.FLAG-B.prompt')}
+                  {t('round.FLAG-B.prompt', { of: ofWords(question.entity, language) })}
                 </span>{' '}
                 <span className="text-4xl">
                   {t('round.FLAG-B.country', { name: question.entity.name[language] })}
@@ -325,9 +326,12 @@ function Feedback({ game, question, chosen, nextRef, onNext }: FeedbackProps) {
   const { t, language } = useI18n();
   const answered = chosen !== null;
   const correct = chosen === question.entity.code;
-  const name = question.entity.name[language];
   // FLAG-A names the right country; in FLAG-B the country is the question, so it points at the ✓ flag.
-  const miss = game.direction === 'A' ? t('round.wrong', { name }) : t('round.wrongFlag', { name });
+  // Both keep the article the name takes (DATA-09): «Era el Reino Unido», «La bandera del Reino Unido».
+  const miss =
+    game.direction === 'A'
+      ? t('round.wrong', { name: nameInSentence(question.entity, language) })
+      : t('round.wrongFlag', { ofName: ofName(question.entity, language) });
 
   return (
     <section

@@ -5,6 +5,7 @@ import { countries } from '../data/countries.ts';
 import { relations } from '../data/relations.ts';
 import { generateRound, type Question, type RoundSettings } from '../domain/questions.ts';
 import { createRng } from '../domain/random.ts';
+import { ofName } from '../i18n/names.ts';
 import { flagFile } from '../test/flags.ts';
 import { App } from './App.tsx';
 
@@ -103,7 +104,7 @@ describe('App · round summary', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Jugar otra vez' }));
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      `¿Cuál es la bandera de ${second[0]?.entity.name.es ?? ''}?`,
+      `¿Cuál es la bandera ${second[0] ? ofName(second[0].entity, 'es') : ''}?`,
     );
     expect(screen.getByText('1/10')).toBeVisible();
   }, 30_000);

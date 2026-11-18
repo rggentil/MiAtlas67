@@ -32,3 +32,11 @@ export function wrongOption(question: Question): Entity {
   if (!wrong) throw new Error('A question always has wrong options');
   return wrong;
 }
+
+/** The first seed whose first round in `settings` asks about `code` first: to play a given country. */
+export function seedAskingFirst(settings: RoundSettings, code: string): number {
+  for (let seed = 1; seed <= 10_000; seed += 1) {
+    if (expectedRound(settings, seed)[0]?.entity.code === code) return seed;
+  }
+  throw new Error(`No seed asks about ${code} first`);
+}

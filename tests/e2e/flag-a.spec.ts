@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
+import { nameInSentence } from '../../src/i18n/names.ts';
 import { flagFile } from '../../src/test/flags.ts';
 import { expectedRound, questionAt, wrongOption } from './expected.ts';
 import { isOnTop } from './layout.ts';
@@ -85,7 +86,7 @@ test.describe('Play a FLAG-A round', () => {
 
       await expect(round.mark(wrong.name.es, 'Incorrecta')).toBeVisible();
       await expect(round.mark(FIRST.entity.name.es, 'Correcta')).toBeVisible();
-      await expect(round.feedback).toHaveText(`¡Uy! Era ${FIRST.entity.name.es}`);
+      await expect(round.feedback).toHaveText(`¡Uy! Era ${nameInSentence(FIRST.entity, 'es')}`);
       await expect(round.score).toHaveText('Aciertos: 0');
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
     },

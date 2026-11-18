@@ -1,6 +1,7 @@
 import { countries } from '../../src/data/countries.ts';
 import type { Entity } from '../../src/domain/entity.ts';
 import type { Question } from '../../src/domain/questions.ts';
+import { ofName } from '../../src/i18n/names.ts';
 import { flagFile } from '../../src/test/flags.ts';
 import { expectedRound, questionAt, wrongOption } from './expected.ts';
 import { isOnTop } from './layout.ts';
@@ -35,7 +36,7 @@ test.describe('Play a FLAG-B round', () => {
     'FLAG-B GAME-03 asks for the flag of a country, with 4 flags as large cards in a grid',
     { tag: ['@FLAG-B', '@GAME-03'] },
     async () => {
-      await expect(round.heading).toHaveText(`¿Cuál es la bandera de ${FIRST.entity.name.es}?`);
+      await expect(round.heading).toHaveText(`¿Cuál es la bandera ${ofName(FIRST.entity, 'es')}?`);
       await expect(round.options).toHaveText(['', '', '', '']);
 
       const cards = await round.options.all();
@@ -84,7 +85,7 @@ test.describe('Play a FLAG-B round', () => {
       await expect(round.mark(wrong, 'Incorrecta')).toBeVisible();
       await expect(round.mark(card(FIRST, FIRST.entity), 'Correcta')).toBeVisible();
       await expect(round.feedback).toHaveText(
-        `¡Uy! La bandera de ${FIRST.entity.name.es} es la marcada con ✓`,
+        `¡Uy! La bandera ${ofName(FIRST.entity, 'es')} es la marcada con ✓`,
       );
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
     },
