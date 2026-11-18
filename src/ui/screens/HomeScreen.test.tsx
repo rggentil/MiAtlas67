@@ -15,11 +15,46 @@ function game(name: string): HTMLElement {
   return screen.getByRole('button', { name: (accessibleName) => accessibleName.startsWith(name) });
 }
 
-function renderHome(onOpenGame: (game: PlayableGame) => void = vi.fn(), player = LUCIA) {
-  renderWithI18n(<HomeScreen player={player} onOpenGame={onOpenGame} onBack={vi.fn()} />);
+function renderHome(
+  onOpenGame: (game: PlayableGame) => void = vi.fn(),
+  player = LUCIA,
+  onSwitchPlayer: () => void = vi.fn(),
+) {
+  renderWithI18n(
+    <HomeScreen
+      player={player}
+      onOpenGame={onOpenGame}
+      onSwitchPlayer={onSwitchPlayer}
+      onBack={vi.fn()}
+    />,
+  );
 }
 
 describe('HomeScreen', () => {
+  it('PRF-03 the player "Lucía" is a button, described as "Cambiar de jugador", that switches player', async () => {
+    const onSwitchPlayer = vi.fn();
+    renderHome(vi.fn(), LUCIA, onSwitchPlayer);
+
+    const button = within(screen.getByRole('group', { name: 'Jugador' })).getByRole('button');
+    expect(button).toHaveAccessibleName('Lucía');
+    expect(button).toHaveAccessibleDescription('Cambiar de jugador');
+    expect(within(button).getByRole('img', { name: 'Zorro' })).toBeVisible();
+
+    await userEvent.click(button);
+
+    expect(onSwitchPlayer).toHaveBeenCalledOnce();
+  });
+
+  it('PRF-03 NFR-06 the player button says "Switch player" in English', async () => {
+    renderHome();
+
+    await userEvent.click(screen.getByRole('radio', { name: 'English' }));
+
+    expect(screen.getByRole('button', { name: 'Lucía' })).toHaveAccessibleDescription(
+      'Switch player',
+    );
+  });
+
   it('PRF-01 shows who plays: the nickname and the avatar, named after its animal', () => {
     renderHome();
 

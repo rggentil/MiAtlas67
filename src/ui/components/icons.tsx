@@ -86,6 +86,18 @@ export function CheckIcon(props: IconProps) {
   );
 }
 
+/** Two arrows going opposite ways: change who plays (PRF-03). */
+export function SwitchIcon(props: IconProps) {
+  return (
+    <StrokeIcon strokeWidth={2.8} {...props}>
+      <path d="M4 8h15" />
+      <path d="m15 4 4 4-4 4" />
+      <path d="M20 16H5" />
+      <path d="m9 12-4 4 4 4" />
+    </StrokeIcon>
+  );
+}
+
 export function NextIcon(props: IconProps) {
   return (
     <StrokeIcon strokeWidth={3.2} {...props}>

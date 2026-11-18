@@ -181,6 +181,9 @@ function CurrentScreen({ screen, player, setScreen, startRound }: CurrentScreenP
           onOpenGame={(game) => {
             setScreen({ name: 'setup', game });
           }}
+          onSwitchPlayer={() => {
+            setScreen(PLAYERS);
+          }}
           onBack={() => {
             setScreen(PLAYERS);
           }}
