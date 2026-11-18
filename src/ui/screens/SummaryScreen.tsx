@@ -17,6 +17,8 @@ interface SummaryScreenProps {
   game: PlayableGame;
   settings: RoundSettings;
   result: RoundResult;
+  /** The score beats the player's best in this game, region and level (RND-08, D23). It may arrive a moment later. */
+  newRecord: boolean;
   onPlayAgain: () => void;
   onMenu: () => void;
 }
@@ -30,11 +32,18 @@ const TITLES: Record<Stars, MessageKey> = {
 };
 
 /**
- * End of a round (RND-08): the score (SCR-01), the stars (SCR-02), what to review — each missed entity with
- * its correct answer — and the way on: "Jugar otra vez" or "Menú". "New personal best" and "level unlocked"
- * arrive with epics 4 and 6.
+ * End of a round (RND-08): the score (SCR-01), the stars (SCR-02), "¡Nuevo récord!" when the player beat their
+ * best (D23), what to review — each missed entity with its correct answer — and the way on: "Jugar otra vez"
+ * or "Menú". "Level unlocked" arrives with epic 6.
  */
-export function SummaryScreen({ game, settings, result, onPlayAgain, onMenu }: SummaryScreenProps) {
+export function SummaryScreen({
+  game,
+  settings,
+  result,
+  newRecord,
+  onPlayAgain,
+  onMenu,
+}: SummaryScreenProps) {
   const { t, language } = useI18n();
   const reviewId = useId();
   // The phone's back button goes home, like "Menú" (NAV-01).
@@ -48,6 +57,18 @@ export function SummaryScreen({ game, settings, result, onPlayAgain, onMenu }: S
           {perfect && <Celebration label={t('summary.perfect')} />}
           <ScreenTitle className="text-4xl">{t(TITLES[result.stars])}</ScreenTitle>
           <StarRating stars={result.stars} label={t('summary.stars', { n: result.stars })} />
+          {/*
+            A live region from the start, in the accessibility tree even while empty (only visually hidden), so
+            screen readers announce the record found a moment after the summary opens.
+          */}
+          <p role="status" className="empty:sr-only">
+            {newRecord && (
+              <span className="inline-flex items-center gap-2 rounded-full border-3 border-ink bg-paper px-4 py-1 font-display text-xl shadow-block-sm">
+                <StarIcon size={22} filled />
+                {t('summary.record')}
+              </span>
+            )}
+          </p>
           <p className="flex items-baseline gap-2">
             <span className="font-display text-6xl leading-none">
               {formatProgress(result.score, result.total)}

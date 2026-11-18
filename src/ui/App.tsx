@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { countries } from '../data/countries.ts';
 import { relations } from '../data/relations.ts';
 import { generateRound, type Question, type RoundSettings } from '../domain/questions.ts';
+import { isNewRecord } from '../domain/playerProgress.ts';
 import { createRng } from '../domain/random.ts';
 import type { RoundResult } from '../domain/round.ts';
 import { I18nProvider } from '../i18n/I18nProvider.tsx';
@@ -50,6 +51,8 @@ type Screen =
       readonly settings: RoundSettings;
       readonly result: RoundResult;
       readonly number: number;
+      /** The round beat the player's best there (RND-08, D23); known a moment after the summary opens. */
+      readonly newRecord: boolean;
     };
 
 /** The screens that need a player: all but "¿Quién juega?" and the player form. */
@@ -124,8 +127,17 @@ function Screens({ givenStore }: { givenStore: GameStore | undefined }) {
   // The round being saved: the history waits for it, so a round just played is always listed.
   const saving = useRef<Promise<unknown>>(Promise.resolve());
 
-  /** Saves a completed round of the player who plays (HIS-01); a quit round never gets here (RND-07). */
-  function saveRound(game: PlayableGame, settings: RoundSettings, result: RoundResult) {
+  /**
+   * Saves a completed round of the player who plays (HIS-01); a quit round never gets here (RND-07). First it
+   * compares it with the player's earlier rounds: a new best shows "¡Nuevo récord!" on the summary of round
+   * `number` (RND-08, D23).
+   */
+  function saveRound(
+    game: PlayableGame,
+    settings: RoundSettings,
+    result: RoundResult,
+    number: number,
+  ) {
     if (!store || !player) return;
     const played = {
       playerId: player.id,
@@ -134,7 +146,21 @@ function Screens({ givenStore }: { givenStore: GameStore | undefined }) {
       region: settings.region,
       level: settings.level,
     };
-    saving.current = store.rounds.add(roundToSave(played, result)).catch(() => undefined);
+    saving.current = saving.current
+      // Without the earlier rounds there is no record to show, but the round is still saved.
+      .then(() => store.rounds.listByPlayer(played.playerId).catch(() => []))
+      .then((previous) => {
+        // The record is decided before the round is saved: a test that waits for the save knows it.
+        if (isNewRecord(previous, game.id, settings.region, settings.level, result.score)) {
+          setScreen((current) =>
+            current.name === 'summary' && current.number === number
+              ? { ...current, newRecord: true }
+              : current,
+          );
+        }
+        return store.rounds.add(roundToSave(played, result));
+      })
+      .catch(() => undefined);
   }
 
   const loadRounds = useCallback(async (): Promise<readonly SavedRound[]> => {
@@ -239,7 +265,12 @@ interface CurrentScreenProps {
   player: Player;
   setScreen: (screen: Screen) => void;
   startRound: (game: PlayableGame, settings: RoundSettings, number: number) => void;
-  saveRound: (game: PlayableGame, settings: RoundSettings, result: RoundResult) => void;
+  saveRound: (
+    game: PlayableGame,
+    settings: RoundSettings,
+    result: RoundResult,
+    number: number,
+  ) => void;
   loadRounds: () => Promise<readonly SavedRound[]>;
 }
 
@@ -314,8 +345,8 @@ function CurrentScreen({
             setScreen(HOME);
           }}
           onFinish={(result) => {
-            saveRound(screen.game, screen.settings, result);
-            setScreen({ ...screen, name: 'summary', result });
+            setScreen({ ...screen, name: 'summary', result, newRecord: false });
+            saveRound(screen.game, screen.settings, result, screen.number);
           }}
         />
       );
@@ -325,6 +356,7 @@ function CurrentScreen({
           game={screen.game}
           settings={screen.settings}
           result={screen.result}
+          newRecord={screen.newRecord}
           onPlayAgain={() => {
             startRound(screen.game, screen.settings, screen.number + 1);
           }}

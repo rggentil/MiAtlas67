@@ -52,6 +52,22 @@ export function bestResult(
   return best;
 }
 
+/**
+ * Whether `score` is a new personal best in `game`, `region` and `level` (RND-08, D23): it beats the best of the
+ * `previous` rounds of the player there. A tie is not a record, and neither is the first round there, which
+ * has nothing to beat.
+ */
+export function isNewRecord(
+  previous: readonly PlayedResult[],
+  game: GameId,
+  region: RegionChoice,
+  level: Level,
+  score: number,
+): boolean {
+  const best = bestResult(previous, game, region, level);
+  return best !== null && score > best.score;
+}
+
 /** The best stars of every region and level of each of `games` (HIS-03): one table per game. */
 export function progressOf(
   rounds: readonly PlayedResult[],
