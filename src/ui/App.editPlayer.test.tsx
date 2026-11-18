@@ -142,6 +142,7 @@ describe('App · edit and delete a player (PRF-04, NFR-04)', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
     expect(heading()).toHaveTextContent('Editar jugador');
+    expect(screen.getByRole('button', { name: 'Borrar jugador' })).toHaveFocus();
     expect(await store.rounds.listByPlayer(LUCIA_ID)).toHaveLength(3);
 
     window.history.back();
@@ -152,7 +153,28 @@ describe('App · edit and delete a player (PRF-04, NFR-04)', () => {
     expect(await store.players.list()).toHaveLength(2);
   });
 
-  it('PRF-04 deleting the player who played last leaves nobody marked; deleting who plays now needs a new choice', async () => {
+  it('PRF-04 renaming the player who played last keeps the mark on the new nickname', async () => {
+    const store = await renderApp(await deviceWithRounds(0));
+    await userEvent.click(screen.getByRole('button', { name: 'Lucía' }));
+    await userEvent.click(
+      within(screen.getByRole('group', { name: 'Jugador' })).getByRole('button'),
+    );
+    await editLucia();
+
+    await userEvent.clear(screen.getByRole('textbox', { name: 'Nombre' }));
+    await userEvent.type(screen.getByRole('textbox', { name: 'Nombre' }), 'Lu');
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() => {
+      expect(heading()).toHaveTextContent('¿Quién juega?');
+    });
+    expect(screen.getByRole('button', { name: 'Lu' })).toHaveAccessibleDescription(
+      'Jugó la última vez',
+    );
+    expect(await store.players.lastPlayerId()).toBe(LUCIA_ID);
+  });
+
+  it('PRF-04 deleting the player who plays now and played last: nobody is marked, and someone must be chosen again', async () => {
     const store = await renderApp(await deviceWithRounds(1));
     await userEvent.click(screen.getByRole('button', { name: 'Lucía' }));
     await userEvent.click(
@@ -168,6 +190,11 @@ describe('App · edit and delete a player (PRF-04, NFR-04)', () => {
     });
     expect(screen.queryByText('Jugó la última vez')).not.toBeInTheDocument();
     expect(await store.players.lastPlayerId()).toBeNull();
+    // Back on "¿Quién juega?" asks before leaving: no screen goes on with the deleted player.
+    window.history.back();
+    expect(await screen.findByRole('dialog', { name: '¿Salir del juego?' })).toBeVisible();
+    expect(screen.queryByRole('group', { name: 'Jugador' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Seguir jugando' }));
     await userEvent.click(screen.getByRole('button', { name: 'Pablo' }));
     expect(screen.getByRole('group', { name: 'Jugador' })).toHaveTextContent('Pablo');
   });

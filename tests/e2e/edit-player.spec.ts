@@ -89,6 +89,8 @@ test.describe('Edit and delete a player', () => {
       await expect(dialog).toContainText('También se borra el historial de Lucía.');
       await expect(dialog.getByRole('button')).toHaveText(['No, volver', 'Sí, borrar']);
       await expect(dialog.getByRole('button', { name: 'No, volver' })).toBeFocused();
+      await expectTouchTarget(dialog.getByRole('button', { name: 'No, volver' }));
+      await expectTouchTarget(dialog.getByRole('button', { name: 'Sí, borrar' }));
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
 
       await dialog.getByRole('button', { name: 'Sí, borrar' }).click();
@@ -124,6 +126,7 @@ test.describe('Edit and delete a player', () => {
       await page.goBack();
       await expect(dialog).toBeHidden();
       await expect(form.heading).toHaveText('Editar jugador');
+      await expect(form.deleteButton).toBeFocused();
 
       await page.goBack();
       await expect(players.playerButtons).toHaveText([/^Lucía/, /^Pablo/]);

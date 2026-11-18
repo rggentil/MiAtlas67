@@ -307,17 +307,49 @@ describe('PlayerFormScreen · edit a player', () => {
     expect(onSave).toHaveBeenCalledExactlyOnceWith({ nickname: 'Lu', avatar: 'panda' });
   });
 
-  it('PRF-04 the player may keep their own nickname, or change only its capitals', async () => {
+  it('PRF-04 the player may keep their own nickname: it is not taken by themselves', async () => {
     const onSave = creator();
     renderEditLucia({ onSave });
 
+    await userEvent.click(screen.getByRole('radio', { name: 'Gato' }));
     await userEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    expect(screen.queryByText('Ya hay un jugador que se llama así')).not.toBeInTheDocument();
+    expect(onSave).toHaveBeenCalledExactlyOnceWith({ nickname: 'Lucía', avatar: 'cat' });
+  });
+
+  it('PRF-04 the player may change only the capitals of their own nickname', async () => {
+    const onSave = creator();
+    renderEditLucia({ onSave });
+
     await userEvent.clear(nickname());
     await userEvent.type(nickname(), 'LUCÍA');
     await userEvent.click(screen.getByRole('button', { name: 'Guardar' }));
 
     expect(screen.queryByText('Ya hay un jugador que se llama así')).not.toBeInTheDocument();
-    expect(onSave).toHaveBeenCalledWith({ nickname: 'Lucía', avatar: 'fox' });
+    expect(onSave).toHaveBeenCalledExactlyOnceWith({ nickname: 'LUCÍA', avatar: 'fox' });
+  });
+
+  it('PRF-04 when saving fails, "Guardar" can be tapped again', async () => {
+    const onSave = creator(() => Promise.reject(new Error('Storage is full')));
+    renderEditLucia({ onSave });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    expect(onSave).toHaveBeenCalledTimes(2);
+  });
+
+  it('PRF-04 when deleting fails, the question stays open and "Sí, borrar" can be tapped again', async () => {
+    const onDelete = vi.fn<Delete>(() => Promise.reject(new Error('Storage is blocked')));
+    renderEditLucia({ onDelete });
+    await userEvent.click(deleteButton());
+
+    await userEvent.click(screen.getByRole('button', { name: 'Sí, borrar' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Sí, borrar' }));
+
+    expect(onDelete).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole('dialog', { name: '¿Borrar a Lucía?' })).toBeVisible();
   });
 
   it.each([
@@ -335,6 +367,7 @@ describe('PlayerFormScreen · edit a player', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Guardar' }));
 
       expect(screen.getByText(message)).toBeVisible();
+      expect(screen.getByText('✗')).toBeVisible();
       expect(nickname()).toHaveAccessibleDescription(message);
       expect(onSave).not.toHaveBeenCalled();
     },
