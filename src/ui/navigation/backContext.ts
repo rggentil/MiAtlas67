@@ -11,3 +11,6 @@ export const BackContext = createContext<(handler: BackHandler | null) => void>(
  * pressed this many times in a row (e.g. in a round: ask, close the question, ask again) before it leaves.
  */
 export const GAME_ENTRIES = 3;
+
+/** On the home screen the game keeps one: Back asks "¿Salir del juego?", and Back again leaves (NAV-02). */
+export const HOME_ENTRIES = 1;

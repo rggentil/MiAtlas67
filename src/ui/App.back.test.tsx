@@ -6,7 +6,7 @@ import { relations } from '../data/relations.ts';
 import { generateRound } from '../domain/questions.ts';
 import { createRng } from '../domain/random.ts';
 import { App } from './App.tsx';
-import { GAME_ENTRIES } from './navigation/backContext.ts';
+import { GAME_ENTRIES, HOME_ENTRIES } from './navigation/backContext.ts';
 
 /** The first round of a visit with ?seed=42 in "Europa · Fácil". */
 const FIRST_ROUND = generateRound(
@@ -79,7 +79,7 @@ describe('App · the back button (NAV-01)', () => {
     expect(screen.getByRole('button', { name: 'Salir de la partida' })).toHaveFocus();
   });
 
-  it('NAV-01 RND-07 "Sí, salir" after Back goes home and takes the game\'s history entry away', async () => {
+  it('NAV-01 RND-07 "Sí, salir" after Back goes home and takes the round\'s history entries away', async () => {
     render(<App />);
     await startRound();
 
@@ -87,9 +87,9 @@ describe('App · the back button (NAV-01)', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Sí, salir' }));
 
     expect(heading()).toHaveTextContent('¿A qué jugamos?');
-    // The entry the game added is gone, so the next Back leaves the game.
+    // Only the home screen's own entry is left: the next Back asks before leaving (NAV-02).
     await waitFor(() => {
-      expect(window.history.state).toBeNull();
+      expect(window.history.state).toEqual({ miatlas: HOME_ENTRIES });
     });
   });
 
@@ -106,9 +106,9 @@ describe('App · the back button (NAV-01)', () => {
     await waitFor(() => {
       expect(heading()).toHaveTextContent('¿A qué jugamos?');
     });
-    // The game removes its entries a moment after going home.
+    // The game removes the round's entries a moment after going home; the home screen keeps its own.
     await waitFor(() => {
-      expect(window.history.state).toBeNull();
+      expect(window.history.state).toEqual({ miatlas: HOME_ENTRIES });
     });
   }, 30_000);
 

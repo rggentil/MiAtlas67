@@ -6,12 +6,18 @@ export class HomePage {
   readonly heading: Locator;
   /** Every topic section (Banderas, Capitales, Siluetas). */
   readonly topics: Locator;
+  /** "¿Salir del juego?": Back on the home screen asks first (NAV-02). */
+  readonly exitDialog: Locator;
+  /** "Seguir jugando" in that question. */
+  readonly exitStayButton: Locator;
   private readonly page: Page;
 
   constructor(page: Page) {
     this.page = page;
     this.heading = page.getByRole('heading', { level: 1 });
     this.topics = page.getByRole('region');
+    this.exitDialog = page.getByRole('dialog', { name: '¿Salir del juego?' });
+    this.exitStayButton = this.exitDialog.getByRole('button', { name: 'Seguir jugando' });
   }
 
   /** Opens the app; `query` such as "?seed=42" is kept while playing. */

@@ -61,6 +61,9 @@ const es = {
   'quit.text': 'Si sales ahora, esta partida no se guarda.',
   'quit.stay': 'Seguir jugando',
   'quit.confirm': 'Sí, salir',
+  'exit.title': '¿Salir del juego?',
+  'exit.text': 'Pulsa atrás otra vez para salir.',
+  'exit.stay': 'Seguir jugando',
   'settings.language': 'Idioma',
 } as const;
 
@@ -129,6 +132,9 @@ const en: Dictionary = {
   'quit.text': 'If you quit now, this round is not saved.',
   'quit.stay': 'Keep playing',
   'quit.confirm': 'Yes, quit',
+  'exit.title': 'Leave the game?',
+  'exit.text': 'Press Back again to leave.',
+  'exit.stay': 'Keep playing',
   'settings.language': 'Language',
 };
 
