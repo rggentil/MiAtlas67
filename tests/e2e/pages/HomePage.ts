@@ -1,43 +1,33 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { NewPlayerPage } from './NewPlayerPage.ts';
+import { PlayersPage } from './PlayersPage.ts';
 
-/** Page object for the home screen: the six games grouped by topic (GAME-01). */
+/** Page object for the home screen: who plays, and the six games grouped by topic (GAME-01). */
 export class HomePage {
   /** "¿A qué jugamos?" / "What shall we play?" */
   readonly heading: Locator;
   /** Every topic section (Banderas, Capitales, Siluetas). */
   readonly topics: Locator;
-  /** "¿Salir del juego?": Back on the home screen asks first (NAV-02). */
-  readonly exitDialog: Locator;
-  /** "Seguir jugando" in that question. */
-  readonly exitStayButton: Locator;
+  /** Who plays: the avatar, named after its animal, and the nickname (PRF-01). */
+  readonly currentPlayer: Locator;
   private readonly page: Page;
 
   constructor(page: Page) {
     this.page = page;
     this.heading = page.getByRole('heading', { level: 1 });
     this.topics = page.getByRole('region');
-    this.exitDialog = this.exitDialogNamed('¿Salir del juego?');
-    this.exitStayButton = this.exitDialog.getByRole('button', { name: 'Seguir jugando' });
-  }
-
-  /** The question "¿Salir del juego?" by its name, e.g. "Leave the game?" in English. */
-  exitDialogNamed(name: string): Locator {
-    return this.page.getByRole('dialog', { name });
+    this.currentPlayer = page.getByRole('group', { name: 'Jugador' });
   }
 
   /**
-   * Waits until the game keeps only the home screen's own history entry: it trims the others a moment
-   * after going home (NAV-02).
+   * Opens the game and creates the player "Lucía" with "Zorro", as a child does the first time, so the test
+   * starts on the home screen. `query` such as "?seed=42" is kept while playing.
    */
-  async onlyHomeEntryLeft(): Promise<void> {
-    await expect
-      .poll(() => this.page.evaluate(() => window.history.state as unknown))
-      .toEqual({ miatlas: 1 });
-  }
-
-  /** Opens the app; `query` such as "?seed=42" is kept while playing. */
   async goto(query = ''): Promise<void> {
-    await this.page.goto(`/${query}`);
+    await new PlayersPage(this.page).goto(query);
+    await new PlayersPage(this.page).newPlayerButton.click();
+    await new NewPlayerPage(this.page).create('Lucía', 'Zorro');
+    await expect(this.heading).toHaveText('¿A qué jugamos?');
   }
 
   topic(name: string): Locator {

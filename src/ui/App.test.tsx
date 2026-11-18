@@ -1,7 +1,7 @@
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { App } from './App.tsx';
+import { renderApp, renderAppAsLucia } from '../test/app.tsx';
 
 function heading(): HTMLElement {
   return screen.getByRole('heading', { level: 1 });
@@ -22,15 +22,15 @@ describe('App', () => {
     window.history.replaceState(null, '', '/');
   });
 
-  it('SET-01 opens on the home screen, in Spanish by default', () => {
-    render(<App />);
-    expect(heading()).toHaveTextContent('¿A qué jugamos?');
+  it('SET-01 PRF-01 opens on "¿Quién juega?", in Spanish by default', async () => {
+    await renderApp();
+    expect(heading()).toHaveTextContent('¿Quién juega?');
     expect(screen.getByRole('radio', { name: 'Español' })).toBeChecked();
     expect(document.documentElement.lang).toBe('es');
   });
 
   it('SET-01 switches the home screen to English', async () => {
-    render(<App />);
+    await renderAppAsLucia();
     await userEvent.click(screen.getByRole('radio', { name: 'English' }));
 
     expect(heading()).toHaveTextContent('What shall we play?');
@@ -42,7 +42,7 @@ describe('App', () => {
   });
 
   it('GAME-01 a Flags game opens its own screen, and "Volver" goes back home', async () => {
-    render(<App />);
+    await renderAppAsLucia();
 
     await userEvent.click(screen.getByRole('button', { name: /^País → Bandera/ }));
     expect(heading()).toHaveTextContent('País → Bandera');
@@ -52,7 +52,7 @@ describe('App', () => {
   });
 
   it('NFR-05 the title of each new screen takes the focus', async () => {
-    render(<App />);
+    await renderAppAsLucia();
 
     await userEvent.click(screen.getByRole('button', { name: /^Bandera → País/ }));
     expect(heading()).toHaveTextContent('Bandera → País');
@@ -64,7 +64,7 @@ describe('App', () => {
   });
 
   it('LVL-01 choosing region Europa and level Fácil starts a Flags round of Europa · Fácil', async () => {
-    render(<App />);
+    await renderAppAsLucia();
 
     await userEvent.click(screen.getByRole('button', { name: /^Bandera → País/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Europa' }));
@@ -81,7 +81,7 @@ describe('App', () => {
   });
 
   it('LVL-01 the round screen speaks English when English is chosen', async () => {
-    render(<App />);
+    await renderAppAsLucia();
     await userEvent.click(screen.getByRole('radio', { name: 'English' }));
 
     await userEvent.click(screen.getByRole('button', { name: /^Country → Flag/ }));

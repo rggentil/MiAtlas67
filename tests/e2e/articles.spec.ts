@@ -79,8 +79,8 @@ test.describe('Names with their article in sentences', () => {
   );
 
   test(
-    'DATA-09 SET-01 in English: "Which one is the flag of the United Kingdom?" and "Oops! It was the United Kingdom"',
-    { tag: ['@DATA-09', '@SET-01', '@FLAG-A', '@FLAG-B', '@RND-04'] },
+    'DATA-09 SET-01 FLAG-B in English: "Which one is the flag of the United Kingdom?", and a miss points at "the flag of the United Kingdom"',
+    { tag: ['@DATA-09', '@SET-01', '@FLAG-B', '@RND-04'] },
     async ({ page }) => {
       const flagB = await startRoundInEnglish(page, 'Country → Flag');
       await expect(flagB.heading).toHaveText('Which one is the flag of the United Kingdom?');
@@ -88,7 +88,13 @@ test.describe('Names with their article in sentences', () => {
       await expect(flagB.feedback).toHaveText(
         'Oops! The flag of the United Kingdom is the one marked ✓',
       );
+    },
+  );
 
+  test(
+    'DATA-09 SET-01 FLAG-A in English: the options show "United Kingdom" alone, and a miss says "Oops! It was the United Kingdom"',
+    { tag: ['@DATA-09', '@SET-01', '@FLAG-A', '@RND-04'] },
+    async ({ page }) => {
       const flagA = await startRoundInEnglish(page, 'Flag → Country');
       await expect(flagA.option('United Kingdom')).toBeVisible();
       await flagA.answer(WRONG.name.en);

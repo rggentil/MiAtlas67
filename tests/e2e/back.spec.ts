@@ -3,6 +3,7 @@ import { expectedRounds, questionAt } from './expected.ts';
 import { expect, test } from './fixtures.ts';
 import { GameSetupPage } from './pages/GameSetupPage.ts';
 import { HomePage } from './pages/HomePage.ts';
+import { PlayersPage } from './pages/PlayersPage.ts';
 import { RoundPage } from './pages/RoundPage.ts';
 import { SummaryPage } from './pages/SummaryPage.ts';
 
@@ -15,25 +16,38 @@ const GAME_ADDRESS = /\/\?seed=42$/;
 const PAGE_BEFORE = /\/\?before$/;
 
 test.describe('The back button goes back inside the game', () => {
+  let players: PlayersPage;
   let home: HomePage;
   let setup: GameSetupPage;
   let round: RoundPage;
   let summary: SummaryPage;
 
-  /** Home is where Back leaves the game: it asks "¿Salir del juego?" first (NAV-02), and Back again leaves. */
+  /**
+   * «¿Quién juega?» is where Back leaves the game: it asks "¿Salir del juego?" first (NAV-02, D22), and Back
+   * again leaves.
+   */
   async function backAsksThenLeaves(page: Page): Promise<void> {
-    await home.onlyHomeEntryLeft();
-    // Going home does not open the question by itself: only the player's Back does.
-    await expect(home.exitDialog).toBeHidden();
+    await expect(players.heading).toHaveText('¿Quién juega?');
+    await players.onlyOwnEntryLeft();
+    // Coming here does not open the question by itself: only the player's Back does.
+    await expect(players.exitDialog).toBeHidden();
     await page.goBack();
-    await expect(home.exitDialog).toBeVisible();
+    await expect(players.exitDialog).toBeVisible();
     await expect(page).toHaveURL(GAME_ADDRESS);
 
     await page.goBack();
     await expect(page).toHaveURL(PAGE_BEFORE);
   }
 
+  /** From the home screen, Back goes to «¿Quién juega?» (D22), and from there it asks before leaving. */
+  async function backFromHomeAsksThenLeaves(page: Page): Promise<void> {
+    await expect(home.heading).toHaveText('¿A qué jugamos?');
+    await page.goBack();
+    await backAsksThenLeaves(page);
+  }
+
   test.beforeEach(async ({ page }) => {
+    players = new PlayersPage(page);
     home = new HomePage(page);
     setup = new GameSetupPage(page);
     round = new RoundPage(page);
@@ -59,19 +73,19 @@ test.describe('The back button goes back inside the game', () => {
 
       await page.goBack();
       await expect(home.heading).toHaveText('¿A qué jugamos?');
-      await expect(home.exitDialog).toBeHidden();
+      await expect(players.exitDialog).toBeHidden();
       await expect(page).toHaveURL(GAME_ADDRESS);
     },
   );
 
   test(
-    'NAV-01 NAV-02 after "Volver" to the home screen, Back asks before leaving the game',
+    'NAV-01 NAV-02 after "Volver" to the home screen, Back goes to «¿Quién juega?» and then asks before leaving the game',
     { tag: ['@NAV-01', '@NAV-02'] },
     async ({ page }) => {
       await setup.backButton.click();
       await expect(home.heading).toHaveText('¿A qué jugamos?');
 
-      await backAsksThenLeaves(page);
+      await backFromHomeAsksThenLeaves(page);
     },
   );
 
@@ -103,7 +117,7 @@ test.describe('The back button goes back inside the game', () => {
   );
 
   test(
-    'NAV-01 RND-07 NAV-02 confirming "Sí, salir" after Back goes home, and Back then asks before leaving',
+    'NAV-01 RND-07 NAV-02 confirming "Sí, salir" after Back goes home, and Back then goes to «¿Quién juega?» and asks before leaving',
     { tag: ['@NAV-01', '@RND-07', '@NAV-02'] },
     async ({ page }) => {
       await setup.chooseRegion('Europa');
@@ -114,7 +128,7 @@ test.describe('The back button goes back inside the game', () => {
       await expect(home.heading).toHaveText('¿A qué jugamos?');
 
       // Nothing of the round is left behind.
-      await backAsksThenLeaves(page);
+      await backFromHomeAsksThenLeaves(page);
     },
   );
 
@@ -130,39 +144,38 @@ test.describe('The back button goes back inside the game', () => {
 
       await page.goBack();
       await expect(home.heading).toHaveText('¿A qué jugamos?');
-      await expect(home.exitDialog).toBeHidden();
+      await expect(players.exitDialog).toBeHidden();
       await expect(page).toHaveURL(GAME_ADDRESS);
 
-      await backAsksThenLeaves(page);
+      await backFromHomeAsksThenLeaves(page);
     },
   );
 
   test(
-    'NAV-01 NAV-02 a reload in the middle of the game opens home, and Back then asks before leaving',
-    { tag: ['@NAV-01', '@NAV-02'] },
+    'NAV-01 NAV-02 PRF-01 a reload in the middle of the game opens «¿Quién juega?», and Back then asks before leaving',
+    { tag: ['@NAV-01', '@NAV-02', '@PRF-01'] },
     async ({ page }) => {
       await setup.chooseRegion('Europa');
 
       await page.reload();
-      await expect(home.heading).toHaveText('¿A qué jugamos?');
+      await expect(players.player('Lucía')).toBeVisible();
 
       await backAsksThenLeaves(page);
     },
   );
 
   test(
-    'NAV-01 NAV-02 Forward after going home with Back stays home, and Back then asks before leaving',
+    'NAV-01 NAV-02 Forward after going home with Back stays home, and Back then goes to «¿Quién juega?» and asks before leaving',
     { tag: ['@NAV-01', '@NAV-02'] },
     async ({ page }) => {
       await page.goBack();
       await expect(home.heading).toHaveText('¿A qué jugamos?');
-      await home.onlyHomeEntryLeft();
 
       await page.goForward();
       await expect(home.heading).toHaveText('¿A qué jugamos?');
       await expect(page).toHaveURL(GAME_ADDRESS);
 
-      await backAsksThenLeaves(page);
+      await backFromHomeAsksThenLeaves(page);
     },
   );
 });

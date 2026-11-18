@@ -4,7 +4,7 @@ import { ModalDialog } from './ModalDialog.tsx';
 import { useFocusOnMount } from './useFocusOnMount.ts';
 
 /**
- * "¿Salir del juego?" (NAV-02): Back on the home screen asks first, and Back again leaves. There is no
+ * "¿Salir del juego?" (NAV-02): Back on "¿Quién juega?" asks first (D22), and Back again leaves. There is no
  * "Sí, salir": a web page cannot close itself, and there may be no page before the game to go to (D20).
  * "Seguir jugando" has the focus; Escape also closes the question.
  */

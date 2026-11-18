@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { BackContext, GAME_ENTRIES, HOME_ENTRIES, type BackHandler } from './backContext.ts';
+import {
+  BackContext,
+  GAME_ENTRIES,
+  FIRST_SCREEN_ENTRIES,
+  type BackHandler,
+} from './backContext.ts';
 
 /** How deep in the game's own entries a history entry is: 0 is the page's own entry. */
 function depthOf(state: unknown): number {
@@ -13,9 +18,10 @@ function depthOf(state: unknown): number {
  * The phone's back button (or back gesture, or the browser's Back) inside the game (NAV-01, NAV-02).
  *
  * The game keeps a few history entries of its own above the page (the address stays the same): three away
- * from home, one on the home screen. Back moves down one of them, and the current screen does what its own
- * way back does (registered with `useOnBack`); on the home screen that is asking "¿Salir del juego?". Going
- * home removes the entries above the home one, so from the question Back leaves the game.
+ * from the first screen, "¿Quién juega?", and one on it. Back moves down one of them, and the current screen
+ * does what its own way back does (registered with `useOnBack`); on the first screen that is asking
+ * "¿Salir del juego?" (D22). Going back to the first screen removes the entries above its own, so from the
+ * question Back leaves the game.
  *
  * Entries are only added after a tap or a key press, never on their own after a Back: Chrome's back
  * button skips every entry of a page that adds entries without a user action (history manipulation
@@ -41,7 +47,7 @@ export function BackButtonProvider({ away, children }: { away: boolean; children
 
   const topUp = useCallback(() => {
     if (!acted.current || leaving.current || held.current) return;
-    const entries = awayNow.current ? GAME_ENTRIES : HOME_ENTRIES;
+    const entries = awayNow.current ? GAME_ENTRIES : FIRST_SCREEN_ENTRIES;
     while (depth.current < entries) {
       depth.current += 1;
       window.history.pushState({ miatlas: depth.current }, '');
@@ -90,10 +96,10 @@ export function BackButtonProvider({ away, children }: { away: boolean; children
 
   useEffect(() => {
     if (leaving.current) return;
-    if (!away && depth.current > HOME_ENTRIES) {
-      // Home: the entries above the home one go, also after a reload or a Forward into them.
+    if (!away && depth.current > FIRST_SCREEN_ENTRIES) {
+      // The first screen: the entries above its own go, also after a reload or a Forward into them.
       leaving.current = true;
-      window.history.go(HOME_ENTRIES - depth.current);
+      window.history.go(FIRST_SCREEN_ENTRIES - depth.current);
     } else {
       topUp();
     }
