@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App.tsx';
@@ -10,6 +10,11 @@ function pressBack(): void {
 }
 
 const heading = () => screen.getByRole('heading', { level: 1 });
+
+/** Lets every pending effect run before a negative check, so it does not depend on React's scheduling. */
+async function settle(): Promise<void> {
+  await act(() => Promise.resolve());
+}
 
 /** A tap in the game that stays on the home screen: the title. */
 async function tapTheTitle(): Promise<void> {
@@ -61,6 +66,7 @@ describe('App · Back on the home screen asks first (NAV-02)', () => {
 
     pressBack();
     await screen.findByRole('dialog', { name: '¿Salir del juego?' });
+    await settle();
 
     expect(pushState).not.toHaveBeenCalled();
     expect(window.history.state).toBeNull();
@@ -87,11 +93,36 @@ describe('App · Back on the home screen asks first (NAV-02)', () => {
     await tapTheTitle();
     pressBack();
     await screen.findByRole('dialog');
+    const pushState = vi.spyOn(window.history, 'pushState');
 
     await userEvent.keyboard('{Escape}');
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(heading()).toHaveFocus();
+    // Escape is not a tap for the browser, so it adds no entry: Back then leaves without asking (D20).
+    await settle();
+    expect(pushState).not.toHaveBeenCalled();
+    expect(window.history.state).toBeNull();
+  });
+
+  it('NAV-02 a tap in the open question, not on "Seguir jugando", adds no entry: Back still leaves', async () => {
+    render(<App />);
+    await tapTheTitle();
+    pressBack();
+    const dialog = await screen.findByRole('dialog', { name: '¿Salir del juego?' });
+    const pushState = vi.spyOn(window.history, 'pushState');
+
+    await userEvent.click(within(dialog).getByText('Pulsa atrás otra vez para salir.'));
+    await userEvent.tab();
+    await settle();
+
+    expect(pushState).not.toHaveBeenCalled();
+    expect(window.history.state).toBeNull();
+    expect(screen.getByRole('dialog', { name: '¿Salir del juego?' })).toBeVisible();
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Seguir jugando' }));
+    expect(pushState).toHaveBeenCalledTimes(HOME_ENTRIES);
+    expect(window.history.state).toEqual({ miatlas: HOME_ENTRIES });
   });
 
   it('NAV-02 SET-01 NFR-06 the question speaks English when English is chosen', async () => {

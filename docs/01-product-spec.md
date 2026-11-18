@@ -234,8 +234,9 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 - **NAV-02** On the home screen, Back asks "¿Salir del juego?" with "Pulsa atrás otra vez para salir." and one
   button, "Seguir jugando", which closes the question. Back again leaves the game. There is no "Sí, salir": a web
   page cannot close itself, and when the game was opened from the phone's home screen or in a new tab there is no
-  page before it to go to. Back before the first tap after opening the game leaves without asking, because the
-  browser's back button skips the history entries a page adds without a tap (D20).
+  page before it to go to. While the question is open, only "Seguir jugando" keeps the player in the game: a tap
+  anywhere else does not stop Back from leaving. Back before the first tap after opening the game leaves without
+  asking, because the browser's back button skips the history entries a page adds without a tap (D20).
 
 ## 16. Non-functional requirements
 
@@ -276,7 +277,7 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 | D17 | Flag proportions | ✅ Flags are shown in a 4:3 frame (*flag-icons* 4×3 set), so two flags that differ only in their proportions look the same there: Indonesia (2:3) and Mónaco (4:5) can meet in a level 3 "Mundo" round. Accepted for now. Showing each flag in its real proportions (Suiza square, Nepal not a rectangle, Mongolia and Sri Lanka longer) needs a study of every flag; planned as a Could in epic 7. Chad and Rumanía have the same proportions and differ only in the shade of blue, in reality too: they stay a level 3 challenge (D15) |
 | D18 | Names with an article | ✅ Sentences use the article a name takes (DATA-09). Reviewed in a [review page](https://claude.ai/artifact/5gzVsZBQpAhGjhhjWPSj4P) (story #52). Spanish: «el» Reino Unido and Líbano; «la» República Dominicana, República Centroafricana, República del Congo and República Democrática del Congo. Every other name goes without one: plural names too («de Países Bajos», «de Bahamas», «de Islas Marshall»), and Estados Unidos, India, Ciudad del Vaticano and the South American countries («de Perú», «de Argentina»). English: «the» United Kingdom, United States, Netherlands, United Arab Emirates, Philippines, Bahamas, Gambia, Maldives, Marshall Islands, Solomon Islands, Comoros, Central African Republic, Dominican Republic, Democratic Republic of the Congo and Republic of the Congo. For articles this choice takes precedence over the RAE usage of DATA-02, which writes «los Países Bajos» |
 | D19 | Back button | ✅ The phone's back button goes back inside the game instead of leaving it (NAV-01, story #51) |
-| D20 | Leaving from the home screen | ✅ Back on the home screen asks "¿Salir del juego?" first; Back again leaves (NAV-02, story #55). Chosen over a "Sí, salir" button, which could not leave when there is no page before the game, and over an Android-style notice at the bottom |
+| D20 | Leaving from the home screen | ✅ Back on the home screen asks "¿Salir del juego?" first; Back again leaves (NAV-02, story #55). Chosen over a "Sí, salir" button, which could not leave when there is no page before the game, and over an Android-style notice at the bottom. Escape closes the question too, like "¿Salir de la partida?"; Escape is not a tap for the browser, so after it Back leaves without asking until the next tap |
 
 No open questions.
 

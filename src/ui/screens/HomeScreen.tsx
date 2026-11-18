@@ -8,6 +8,7 @@ import { Logo } from '../components/Logo.tsx';
 import { ScreenTitle } from '../components/ScreenTitle.tsx';
 import { toneClasses } from '../components/tones.ts';
 import { isPlayable, type PlayableGame } from '../games.ts';
+import { useHoldEntries } from '../navigation/useHoldEntries.ts';
 import { useOnBack } from '../navigation/useOnBack.ts';
 
 interface HomeScreenProps {
@@ -35,6 +36,8 @@ export function HomeScreen({ onOpenGame }: HomeScreenProps) {
   useOnBack(() => {
     setExiting(true);
   });
+  // With the question open, Back always leaves: only "Seguir jugando" brings the entry back.
+  useHoldEntries(exiting);
 
   useEffect(() => {
     if (exiting || !backFromDialog.current) return;

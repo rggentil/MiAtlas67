@@ -1,4 +1,4 @@
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /** Page object for the home screen: the six games grouped by topic (GAME-01). */
 export class HomePage {
@@ -16,8 +16,23 @@ export class HomePage {
     this.page = page;
     this.heading = page.getByRole('heading', { level: 1 });
     this.topics = page.getByRole('region');
-    this.exitDialog = page.getByRole('dialog', { name: '¿Salir del juego?' });
+    this.exitDialog = this.exitDialogNamed('¿Salir del juego?');
     this.exitStayButton = this.exitDialog.getByRole('button', { name: 'Seguir jugando' });
+  }
+
+  /** The question "¿Salir del juego?" by its name, e.g. "Leave the game?" in English. */
+  exitDialogNamed(name: string): Locator {
+    return this.page.getByRole('dialog', { name });
+  }
+
+  /**
+   * Waits until the game keeps only the home screen's own history entry: it trims the others a moment
+   * after going home (NAV-02).
+   */
+  async onlyHomeEntryLeft(): Promise<void> {
+    await expect
+      .poll(() => this.page.evaluate(() => window.history.state as unknown))
+      .toEqual({ miatlas: 1 });
   }
 
   /** Opens the app; `query` such as "?seed=42" is kept while playing. */

@@ -3,7 +3,7 @@ import { BackContext, type BackHandler } from './backContext.ts';
 
 /** What the back button does on the current screen (NAV-01): the same as the screen's own way back. */
 export function useOnBack(onBack: BackHandler): void {
-  const register = useContext(BackContext);
+  const { register } = useContext(BackContext);
   const latest = useRef(onBack);
 
   useEffect(() => {

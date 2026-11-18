@@ -14,14 +14,6 @@ const FIRST = questionAt(FIRST_ROUND, 0);
 const GAME_ADDRESS = /\/\?seed=42$/;
 const PAGE_BEFORE = /\/\?before$/;
 
-/** Waits until the game keeps only the home screen's own history entry (it trims the others a moment after
- * going home). */
-async function onlyHomeEntryLeft(page: Page): Promise<void> {
-  await expect
-    .poll(() => page.evaluate(() => window.history.state as unknown))
-    .toEqual({ miatlas: 1 });
-}
-
 test.describe('The back button goes back inside the game', () => {
   let home: HomePage;
   let setup: GameSetupPage;
@@ -30,7 +22,9 @@ test.describe('The back button goes back inside the game', () => {
 
   /** Home is where Back leaves the game: it asks "¿Salir del juego?" first (NAV-02), and Back again leaves. */
   async function backAsksThenLeaves(page: Page): Promise<void> {
-    await onlyHomeEntryLeft(page);
+    await home.onlyHomeEntryLeft();
+    // Going home does not open the question by itself: only the player's Back does.
+    await expect(home.exitDialog).toBeHidden();
     await page.goBack();
     await expect(home.exitDialog).toBeVisible();
     await expect(page).toHaveURL(GAME_ADDRESS);
@@ -162,7 +156,7 @@ test.describe('The back button goes back inside the game', () => {
     async ({ page }) => {
       await page.goBack();
       await expect(home.heading).toHaveText('¿A qué jugamos?');
-      await onlyHomeEntryLeft(page);
+      await home.onlyHomeEntryLeft();
 
       await page.goForward();
       await expect(home.heading).toHaveText('¿A qué jugamos?');

@@ -91,6 +91,8 @@ describe('App · the back button (NAV-01)', () => {
     await waitFor(() => {
       expect(window.history.state).toEqual({ miatlas: HOME_ENTRIES });
     });
+    // Going home does not open "¿Salir del juego?" by itself: only the player's Back does.
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('NAV-01 Back on the summary goes home, like "Menú"', async () => {
@@ -110,6 +112,8 @@ describe('App · the back button (NAV-01)', () => {
     await waitFor(() => {
       expect(window.history.state).toEqual({ miatlas: HOME_ENTRIES });
     });
+    // Going home does not open "¿Salir del juego?" by itself: only the player's Back does.
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   }, 30_000);
 
   it('NAV-01 the address stays the same while the game adds and removes its history entry', async () => {
@@ -120,6 +124,10 @@ describe('App · the back button (NAV-01)', () => {
     pressBack();
     await waitFor(() => {
       expect(heading()).toHaveTextContent('¿A qué jugamos?');
+    });
+    expect(window.location.search).toBe('?seed=42');
+    await waitFor(() => {
+      expect(window.history.state).toEqual({ miatlas: HOME_ENTRIES });
     });
     expect(window.location.search).toBe('?seed=42');
   });

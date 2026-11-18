@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { BackContext, GAME_ENTRIES, HOME_ENTRIES, type BackHandler } from './backContext.ts';
 
 /** How deep in the game's own entries a history entry is: 0 is the page's own entry. */
@@ -30,6 +30,8 @@ export function BackButtonProvider({ away, children }: { away: boolean; children
   const acted = useRef(false);
   // The game moved through history itself, to go home: that popstate is not the player's Back.
   const leaving = useRef(false);
+  // The screen holds the entries: "¿Salir del juego?" is open (NAV-02).
+  const held = useRef(false);
   // Changes on every history move, so the effect below runs again after the screen has handled it.
   const [moves, setMoves] = useState(0);
 
@@ -38,13 +40,24 @@ export function BackButtonProvider({ away, children }: { away: boolean; children
   }, []);
 
   const topUp = useCallback(() => {
-    if (!acted.current || leaving.current) return;
+    if (!acted.current || leaving.current || held.current) return;
     const entries = awayNow.current ? GAME_ENTRIES : HOME_ENTRIES;
     while (depth.current < entries) {
       depth.current += 1;
       window.history.pushState({ miatlas: depth.current }, '');
     }
   }, []);
+
+  const hold = useCallback(
+    (next: boolean) => {
+      held.current = next;
+      // "Seguir jugando" was the tap: the entry comes back once the question has closed.
+      if (!next) topUp();
+    },
+    [topUp],
+  );
+
+  const controls = useMemo(() => ({ register, hold }), [register, hold]);
 
   useEffect(() => {
     awayNow.current = away;
@@ -86,5 +99,5 @@ export function BackButtonProvider({ away, children }: { away: boolean; children
     }
   }, [away, moves, topUp]);
 
-  return <BackContext value={register}>{children}</BackContext>;
+  return <BackContext value={controls}>{children}</BackContext>;
 }
