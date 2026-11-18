@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
-import type { RoundSettings } from '../../src/domain/questions.ts';
+import type { Entity } from '../../src/domain/entity.ts';
+import type { Question, RoundSettings } from '../../src/domain/questions.ts';
 import { expectedRound, questionAt, seedAskingFirst, wrongOption } from './expected.ts';
 import { expect, test } from './fixtures.ts';
 import { GameSetupPage } from './pages/GameSetupPage.ts';
@@ -39,14 +40,13 @@ async function startRoundInEnglish(page: Page, game: string): Promise<RoundPage>
   return new RoundPage(page);
 }
 
-/** "Opción N" / "Option N": the card of the wrong option in "País → Bandera". */
-function wrongCard(prefix: 'Opción' | 'Option'): string {
-  return `${prefix} ${String(FIRST.options.indexOf(WRONG) + 1)}`;
-}
-
-/** The same, in the round that asks about Países Bajos. */
-function netherlandsWrongCard(): string {
-  return `Opción ${String(NETHERLANDS_FIRST.options.indexOf(NETHERLANDS_WRONG) + 1)}`;
+/** "Opción N" / "Option N": the card of `wrong` among the options of `question`, in "País → Bandera". */
+function wrongCard(
+  prefix: 'Opción' | 'Option',
+  question: Question = FIRST,
+  wrong: Entity = WRONG,
+): string {
+  return `${prefix} ${String(question.options.indexOf(wrong) + 1)}`;
 }
 
 test.describe('Names with their article in sentences', () => {
@@ -103,7 +103,7 @@ test.describe('Names with their article in sentences', () => {
       const round = await startRound(page, 'País → Bandera', NETHERLANDS_SEED);
       await expect(round.heading).toHaveText('¿Cuál es la bandera de los Países Bajos?');
 
-      await round.answer(netherlandsWrongCard());
+      await round.answer(wrongCard('Opción', NETHERLANDS_FIRST, NETHERLANDS_WRONG));
 
       await expect(round.feedback).toHaveText(
         '¡Uy! La bandera de los Países Bajos es la marcada con ✓',

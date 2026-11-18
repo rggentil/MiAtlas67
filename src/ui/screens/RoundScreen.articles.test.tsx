@@ -117,13 +117,19 @@ describe('RoundScreen · names with their article (DATA-09)', () => {
     expect(feedback()).toHaveTextContent('¡Uy! La bandera de los Países Bajos es la marcada con ✓');
   });
 
-  it('DATA-09 RND-04 FLAG-A a wrong answer about another plural name keeps "Era": "Era Bahamas"', async () => {
-    renderRound('FLAG-A', 'BS');
+  it.each([
+    ['BS', '¡Uy! Era Bahamas'],
+    ['US', '¡Uy! Era Estados Unidos'],
+  ])(
+    'DATA-09 RND-04 FLAG-A a wrong answer about another plural name keeps "Era": %s is "%s"',
+    async (code, sentence) => {
+      renderRound('FLAG-A', code);
 
-    await userEvent.click(screen.getByRole('button', { name: FRANCE.name.es }));
+      await userEvent.click(screen.getByRole('button', { name: FRANCE.name.es }));
 
-    expect(feedback()).toHaveTextContent('¡Uy! Era Bahamas');
-  });
+      expect(feedback()).toHaveTextContent(sentence);
+    },
+  );
 
   it('DATA-09 RND-04 SET-01 FLAG-A in English a wrong answer about the Netherlands is "It was the Netherlands"', async () => {
     localStorage.setItem('miatlas67.language', 'en');

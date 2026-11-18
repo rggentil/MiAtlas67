@@ -204,7 +204,8 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
   factual words (e.g. «Territorio autónomo de Dinamarca», «Estado con reconocimiento limitado»,
   «Estado federado de Somalia»).
 - **DATA-09** A name that takes an article in a sentence keeps it there, in each language: «¿Cuál es la bandera
-  del Reino Unido?», «de la República Dominicana», «Which one is the flag of the United Kingdom?». Options, lists
+  del Reino Unido?», «de la República Dominicana», «de los Países Bajos», «Which one is the flag of the United
+  Kingdom?». Options, lists
   and titles show the name alone («Reino Unido»). An article that is part of the name is never contracted
   («de El Salvador»). A name with «los» is plural, so the verb of the wrong-answer feedback agrees with it:
   «¡Uy! Eran los Países Bajos». Which names take an article is curated data reviewed by the product owner (D18).
