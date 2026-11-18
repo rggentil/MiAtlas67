@@ -69,7 +69,7 @@ tests/
 | Layer | Tools | What it covers | Volume / speed |
 |---|---|---|---|
 | **1. Unit** | Vitest | Domain rules: question generation (no duplicates, correct answer exactly once, distractor rules per level), scoring and stars, unlocking, mastery; data integrity | Many tests, milliseconds |
-| **2. Component / integration** | Vitest + React Testing Library + jsdom + fake-indexeddb | Screens with the real domain logic (round flow, feedback, summary); the storage repository against a fake IndexedDB | Moderate, seconds |
+| **2. Component / integration** | Vitest + React Testing Library + jsdom + fake-indexeddb | Screens with the real domain logic (round flow, feedback, summary); the storage repositories against a fake IndexedDB (`src/storage/*.test.ts`, which Vitest runs in Node: no React there) | Moderate, seconds |
 | **3. End-to-end** | Playwright | User journeys in real browser engines: create profile → play round → see history; persistence after reload; mobile and desktop viewports; accessibility scan | Few tests, critical paths only |
 
 **Playwright projects** (each E2E test runs on all of them):

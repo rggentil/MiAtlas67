@@ -3,7 +3,7 @@ import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { DATABASE_NAME, openStore } from './indexedDbStore.ts';
 import { createMemoryStore } from './memoryStore.ts';
-import type { GameStore, RoundData } from './store.ts';
+import type { GameStore, Player, PlayerData, RoundData } from './store.ts';
 
 /** A round of "Bandera → País", "Europa · Fácil": 8 of 10, with two missed countries. */
 function round(playerId: number, playedAt: number, overrides: Partial<RoundData> = {}): RoundData {
@@ -34,10 +34,31 @@ const HIS_01_FIELDS = [
   'total',
 ];
 
-/** A browser that refuses IndexedDB, as some private modes do. */
-const blockedIndexedDB = {
+/** A browser that refuses to open IndexedDB, as some private modes do. */
+const throwingIndexedDB = {
   open() {
     throw new DOMException('IndexedDB is disabled', 'SecurityError');
+  },
+} as unknown as IDBFactory;
+
+/** A browser whose open request fails, as when site data is disabled. */
+const failingIndexedDB = {
+  open() {
+    const request: Partial<IDBOpenDBRequest> & { error: DOMException } = {
+      error: new DOMException('IndexedDB is disabled', 'InvalidStateError'),
+    };
+    setTimeout(() => {
+      request.onerror?.call(
+        request as IDBOpenDBRequest,
+        {
+          target: request,
+          type: 'error',
+          preventDefault: () => undefined,
+          stopPropagation: () => undefined,
+        } as unknown as Event,
+      );
+    }, 0);
+    return request;
   },
 } as unknown as IDBFactory;
 
@@ -74,12 +95,39 @@ describe.each([
     expect(pablo.id).not.toBe(lucia.id);
   });
 
-  it('PRF-04 changes the nickname and avatar of a player', async () => {
+  it('PRF-04 changes the nickname and avatar of a player, who keeps their place in the list', async () => {
+    const lucia = await store.players.create({ nickname: 'Lucía', avatar: 'fox' });
+    const pablo = await store.players.create({ nickname: 'Pablo', avatar: 'panda' });
+
+    await store.players.update({ ...lucia, nickname: 'Lu', avatar: 'owl' });
+
+    expect(await store.players.list()).toEqual([
+      { id: lucia.id, nickname: 'Lu', avatar: 'owl' },
+      pablo,
+    ]);
+  });
+
+  it('PRF-04 saving a player without changes does not fail', async () => {
     const lucia = await store.players.create({ nickname: 'Lucía', avatar: 'fox' });
 
-    await store.players.update({ ...lucia, nickname: 'Lu', avatar: 'panda' });
+    await store.players.update({ ...lucia });
 
-    expect(await store.players.list()).toEqual([{ id: lucia.id, nickname: 'Lu', avatar: 'panda' }]);
+    expect(await store.players.list()).toEqual([lucia]);
+  });
+
+  it('PRF-04 changing a player or round read from the store does not change the store', async () => {
+    const lucia = await store.players.create({ nickname: 'Lucía', avatar: 'fox' });
+    await store.rounds.add(round(lucia.id, 1_000));
+
+    const [listed] = (await store.players.list()) as { nickname: string }[];
+    if (listed) listed.nickname = 'Otra';
+    const [saved] = (await store.rounds.listByPlayer(lucia.id)) as unknown as {
+      missed: string[];
+    }[];
+    saved?.missed.push('FR');
+
+    expect(await store.players.list()).toEqual([lucia]);
+    expect((await store.rounds.listByPlayer(lucia.id))[0]?.missed).toEqual(['PT', 'BE']);
   });
 
   it('PRF-04 refuses to update a player that does not exist', async () => {
@@ -101,15 +149,18 @@ describe.each([
   it('HIS-01 each player gets only their own rounds, newest first', async () => {
     const lucia = await store.players.create({ nickname: 'Lucía', avatar: 'fox' });
     const pablo = await store.players.create({ nickname: 'Pablo', avatar: 'panda' });
+    // Saved out of date order, so neither the saving order nor its reverse is newest first.
     await store.rounds.add(round(lucia.id, 1_000, { score: 5, stars: 1 }));
     await store.rounds.add(round(pablo.id, 2_000, { score: 10, stars: 3 }));
     await store.rounds.add(round(lucia.id, 3_000, { game: 'FLAG-B' }));
+    await store.rounds.add(round(lucia.id, 500, { score: 7 }));
 
     const rounds = await store.rounds.listByPlayer(lucia.id);
 
     expect(rounds.map((saved) => [saved.playedAt, saved.game, saved.score])).toEqual([
       [3_000, 'FLAG-B', 8],
       [1_000, 'FLAG-A', 5],
+      [500, 'FLAG-A', 7],
     ]);
   });
 
@@ -157,6 +208,17 @@ describe.each([
 
     await store.players.delete(lucia.id);
     expect(await store.players.lastPlayerId()).toBeNull();
+  });
+
+  it('PRF-04 a new player never gets the rounds of a deleted one', async () => {
+    const lucia = await store.players.create({ nickname: 'Lucía', avatar: 'fox' });
+    await store.rounds.add(round(lucia.id, 1_000));
+    await store.players.delete(lucia.id);
+
+    const newcomer = await store.players.create({ nickname: 'Lucía', avatar: 'fox' });
+
+    expect(newcomer.id).not.toBe(lucia.id);
+    expect(await store.rounds.listByPlayer(newcomer.id)).toEqual([]);
   });
 
   it('NFR-04 never keeps fields that are not a nickname, an avatar or a result', async () => {
@@ -248,7 +310,13 @@ describe('game store on the device (IndexedDB)', () => {
 
   it('NFR-04 stores only a nickname and an avatar per player and the fields of HIS-01 per round', async () => {
     const store = await openGame();
-    const lucia = await store.players.create({ nickname: 'Lucía', avatar: 'fox' });
+    const lucia = await store.players.create({
+      nickname: 'Lucía',
+      avatar: 'fox',
+      realName: 'Lucía García',
+      age: 8,
+    } as PlayerData);
+    await store.players.update({ ...lucia, email: 'lucia@example.com' } as Player);
     await store.rounds.add({ ...round(lucia.id, 1_000), entities: ['PT'] } as RoundData);
     store.close();
 
@@ -262,17 +330,24 @@ describe('game store on the device (IndexedDB)', () => {
     expect(Object.keys(stored ?? {}).sort()).toEqual(HIS_01_FIELDS);
   });
 
-  it('NFR-04 the game still works when IndexedDB is blocked, until the page is closed', async () => {
-    const store = await openStore({ indexedDB: blockedIndexedDB, IDBKeyRange });
-    const lucia = await store.players.create({ nickname: 'Lucía', avatar: 'fox' });
-    await store.rounds.add(round(lucia.id, 1_000));
+  it.each([
+    ['refuses to open it', throwingIndexedDB],
+    ['fails the open request', failingIndexedDB],
+    ['has no IndexedDB at all', undefined],
+  ])(
+    'NFR-04 the game still works when the browser %s, until the page is closed',
+    async (_case, blocked) => {
+      const store = await openStore({ indexedDB: blocked, IDBKeyRange });
+      const lucia = await store.players.create({ nickname: 'Lucía', avatar: 'fox' });
+      const saved = await store.rounds.add(round(lucia.id, 1_000));
 
-    expect(await store.players.list()).toEqual([lucia]);
-    expect(await store.rounds.listByPlayer(lucia.id)).toHaveLength(1);
-    store.close();
+      expect(await store.players.list()).toEqual([lucia]);
+      expect(await store.rounds.listByPlayer(lucia.id)).toEqual([saved]);
+      store.close();
 
-    const reopened = await openStore({ indexedDB: blockedIndexedDB, IDBKeyRange });
-    expect(await reopened.players.list()).toEqual([]);
-    reopened.close();
-  });
+      const reopened = await openStore({ indexedDB: blocked, IDBKeyRange });
+      expect(await reopened.players.list()).toEqual([]);
+      reopened.close();
+    },
+  );
 });
