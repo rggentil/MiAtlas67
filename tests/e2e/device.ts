@@ -75,6 +75,53 @@ export async function saveRounds(
   );
 }
 
+/** A finished round with its result, to save straight into the database. */
+export interface Result {
+  readonly game: 'FLAG-A' | 'FLAG-B';
+  readonly region: string;
+  readonly level: 1 | 2 | 3;
+  readonly score: number;
+  readonly stars: 0 | 1 | 2 | 3;
+}
+
+/** Saves the finished rounds `results` of the player `playerId` straight into the database (HIS-01). */
+export async function saveResults(
+  page: Page,
+  playerId: number,
+  results: readonly Result[],
+): Promise<void> {
+  await page.evaluate(
+    ([id, rounds]) =>
+      new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open('miatlas67');
+        request.onerror = () => {
+          reject(new Error('The game database cannot be opened'));
+        };
+        request.onsuccess = () => {
+          const db = request.result;
+          const transaction = db.transaction('rounds', 'readwrite');
+          for (const [index, round] of rounds.entries()) {
+            transaction.objectStore('rounds').add({
+              ...round,
+              playerId: id,
+              playedAt: Date.UTC(2026, 10, 1 + index),
+              total: 10,
+              missed: [],
+            });
+          }
+          transaction.oncomplete = () => {
+            db.close();
+            resolve();
+          };
+          transaction.onerror = () => {
+            reject(new Error('The rounds could not be saved'));
+          };
+        };
+      }),
+    [playerId, results] as const,
+  );
+}
+
 /** How many rounds of the player `playerId` are saved on the device. */
 export async function savedRoundsOf(page: Page, playerId: number): Promise<number> {
   return page.evaluate(

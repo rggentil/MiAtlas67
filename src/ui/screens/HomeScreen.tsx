@@ -20,6 +20,8 @@ interface HomeScreenProps {
   onSwitchPlayer: () => void;
   /** "Historial": the rounds of the player who plays (HIS-02). */
   onOpenHistory: () => void;
+  /** "Progreso": the best stars of the player who plays (HIS-03). */
+  onOpenProgress: () => void;
   /** The phone's back button: back to "¿Quién juega?" (NAV-01, D22). */
   onBack: () => void;
 }
@@ -39,6 +41,7 @@ export function HomeScreen({
   onOpenGame,
   onSwitchPlayer,
   onOpenHistory,
+  onOpenProgress,
   onBack,
 }: HomeScreenProps) {
   const { t } = useI18n();
@@ -56,9 +59,14 @@ export function HomeScreen({
         {GAME_TOPICS.map((topic) => (
           <TopicSection key={topic} topic={topic} onOpenGame={onOpenGame} />
         ))}
-        <Button variant="secondary" onClick={onOpenHistory} className="w-full">
-          {t('home.history')}
-        </Button>
+        <div className="grid grid-cols-2 gap-3">
+          <Button variant="secondary" onClick={onOpenProgress}>
+            {t('home.progress')}
+          </Button>
+          <Button variant="secondary" onClick={onOpenHistory}>
+            {t('home.history')}
+          </Button>
+        </div>
       </main>
       <footer className="mt-auto pt-4 text-center">
         <LanguageSwitch />

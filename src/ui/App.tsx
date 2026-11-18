@@ -21,6 +21,7 @@ import { HistoryScreen } from './screens/HistoryScreen.tsx';
 import { HomeScreen } from './screens/HomeScreen.tsx';
 import { PlayerFormScreen } from './screens/PlayerFormScreen.tsx';
 import { PlayersScreen } from './screens/PlayersScreen.tsx';
+import { ProgressScreen } from './screens/ProgressScreen.tsx';
 import { RoundScreen } from './screens/RoundScreen.tsx';
 import { SummaryScreen } from './screens/SummaryScreen.tsx';
 
@@ -33,6 +34,7 @@ type Screen =
   | { readonly name: 'editPlayer'; readonly player: Player }
   | { readonly name: 'home' }
   | { readonly name: 'history' }
+  | { readonly name: 'progress' }
   | { readonly name: 'setup'; readonly game: PlayableGame }
   | {
       readonly name: 'round';
@@ -263,6 +265,9 @@ function CurrentScreen({
           onOpenHistory={() => {
             setScreen({ name: 'history' });
           }}
+          onOpenProgress={() => {
+            setScreen({ name: 'progress' });
+          }}
           onBack={() => {
             setScreen(PLAYERS);
           }}
@@ -271,6 +276,15 @@ function CurrentScreen({
     case 'history':
       return (
         <HistoryScreen
+          loadRounds={loadRounds}
+          onBack={() => {
+            setScreen(HOME);
+          }}
+        />
+      );
+    case 'progress':
+      return (
+        <ProgressScreen
           loadRounds={loadRounds}
           onBack={() => {
             setScreen(HOME);
