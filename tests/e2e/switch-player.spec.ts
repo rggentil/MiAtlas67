@@ -1,3 +1,4 @@
+import { savedLastPlayer } from './device.ts';
 import { expect, test } from './fixtures.ts';
 import { HomePage } from './pages/HomePage.ts';
 import { NewPlayerPage } from './pages/NewPlayerPage.ts';
@@ -23,8 +24,8 @@ test.describe('Switch player from the home screen', () => {
   });
 
   test(
-    'PRF-03 NFR-05 the player button "Lucía" opens «¿Quién juega?», and "Pablo" then plays, marked as the last player the next time',
-    { tag: ['@PRF-03', '@NFR-05'] },
+    'PRF-03 PRF-01 NFR-05 the player button "Lucía" opens «¿Quién juega?», and "Pablo" then plays, marked as the last player the next time',
+    { tag: ['@PRF-03', '@PRF-01', '@NFR-05'] },
     async ({ page, makeAxeBuilder }) => {
       await expect(home.switchPlayerButton).toHaveAccessibleDescription('Cambiar de jugador');
       const box = await home.switchPlayerButton.boundingBox();
@@ -41,9 +42,30 @@ test.describe('Switch player from the home screen', () => {
       await expect(home.currentPlayer).toHaveText('Pablo');
       await expect(home.currentPlayer.getByRole('img', { name: 'Búho' })).toBeVisible();
 
+      // The game saves who played last in the background: the reload waits until it is saved.
+      await expect.poll(() => savedLastPlayer(page)).toBe('Pablo');
       await page.reload();
       await expect(players.player('Pablo')).toHaveAccessibleDescription('Jugó la última vez');
-      await expect(players.player('Lucía')).not.toHaveAccessibleDescription('Jugó la última vez');
+      await expect(players.player('Lucía')).not.toHaveAccessibleDescription(/./);
+    },
+  );
+
+  test(
+    'PRF-03 NFR-05 a 12-letter nickname keeps the player button 48 px high and the home screen within 320 px',
+    { tag: ['@PRF-03', '@NFR-05'] },
+    async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 640 });
+      await home.switchPlayerButton.click();
+      await players.newPlayerButton.click();
+      await new NewPlayerPage(page).create('Mariaisabela', 'Unicornio');
+      await expect(home.switchPlayerButton).toHaveAccessibleName('Mariaisabela');
+
+      const box = await home.switchPlayerButton.boundingBox();
+      expect(box?.height).toBeGreaterThanOrEqual(48);
+      expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(320);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        320,
+      );
     },
   );
 

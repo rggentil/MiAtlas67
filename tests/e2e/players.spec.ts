@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
+import { savedLastPlayer } from './device.ts';
 import { expect, test } from './fixtures.ts';
 import { HomePage } from './pages/HomePage.ts';
 import { NewPlayerPage } from './pages/NewPlayerPage.ts';
@@ -67,6 +68,8 @@ test.describe('«¿Quién juega?»: create a player and choose who plays', () =>
       await expect(home.currentPlayer).toHaveText('Lucía');
       await expect(home.currentPlayer.getByRole('img', { name: 'Zorro' })).toBeVisible();
 
+      // The game saves who played last in the background: the reload waits until it is saved.
+      await expect.poll(() => savedLastPlayer(page)).toBe('Lucía');
       await page.reload();
       await expect(players.heading).toHaveText('¿Quién juega?');
       await expect(players.list.getByRole('button')).toHaveText([/^Lucía/]);
@@ -184,9 +187,10 @@ test.describe('«¿Quién juega?»: create a player and choose who plays', () =>
       await expect(home.currentPlayer).toHaveText('Pablo');
       await expect(home.currentPlayer.getByRole('img', { name: 'Zorro' })).toBeVisible();
 
+      await expect.poll(() => savedLastPlayer(page)).toBe('Pablo');
       await page.reload();
       await expect(players.player('Pablo')).toHaveAccessibleDescription('Jugó la última vez');
-      await expect(players.player('Lucía')).not.toHaveAccessibleDescription('Jugó la última vez');
+      await expect(players.player('Lucía')).not.toHaveAccessibleDescription(/./);
       await expect(page.getByText('Jugó la última vez')).toHaveCount(1);
       await expect(players.list.getByRole('listitem').nth(1)).toContainText('Jugó la última vez');
       await expect(page.getByText('Jugó la última vez')).toBeVisible();

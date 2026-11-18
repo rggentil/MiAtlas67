@@ -86,16 +86,18 @@ describe('App · switch player from the home screen (PRF-03)', () => {
     expect(await screen.findByRole('dialog', { name: '¿Salir del juego?' })).toBeVisible();
   });
 
-  it('PRF-03 a round is not interrupted to switch player: the round has no player button', async () => {
+  it('PRF-03 the player is switched from the home screen only: no step of a game and no round has the player button', async () => {
     await playAsLucia();
 
     await userEvent.click(screen.getByRole('button', { name: /^Bandera → País/ }));
+    expect(screen.getByRole('region', { name: '¿Dónde jugamos?' })).toBeVisible();
     expect(screen.queryByRole('group', { name: 'Jugador' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Europa' }));
+    expect(screen.getByRole('region', { name: '¿Qué nivel?' })).toBeVisible();
+    expect(screen.queryByRole('group', { name: 'Jugador' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Fácil' }));
 
     expect(screen.getByText('1/10')).toBeVisible();
     expect(screen.queryByRole('group', { name: 'Jugador' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Lucía' })).not.toBeInTheDocument();
   });
 });
