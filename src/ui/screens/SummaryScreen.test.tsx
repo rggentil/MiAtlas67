@@ -36,7 +36,7 @@ function filledStars(): boolean[] {
   return [...stars.querySelectorAll('svg')].map((star) => star.dataset.filled === 'true');
 }
 
-function renderSummary(result: RoundResult) {
+function renderSummary(result: RoundResult, newRecord = false) {
   const onPlayAgain = vi.fn();
   const onMenu = vi.fn();
   renderWithI18n(
@@ -44,6 +44,7 @@ function renderSummary(result: RoundResult) {
       game={playableGame('FLAG-A')}
       settings={SETTINGS}
       result={result}
+      newRecord={newRecord}
       onPlayAgain={onPlayAgain}
       onMenu={onMenu}
     />,
@@ -58,6 +59,28 @@ function question(index: number): Question {
 }
 
 describe('SummaryScreen', () => {
+  it('RND-08 a new personal best shows "¡Nuevo récord!" in a status message', () => {
+    renderSummary(resultWith([0, 1]), true);
+
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('¡Nuevo récord!');
+    expect(within(status).getByText('¡Nuevo récord!')).toBeVisible();
+  });
+
+  it('RND-08 without a new personal best there is no "¡Nuevo récord!", and the status message is empty', () => {
+    renderSummary(resultWith([0, 1]), false);
+
+    expect(screen.queryByText('¡Nuevo récord!')).not.toBeInTheDocument();
+    expect(screen.getByRole('status', { hidden: true })).toBeEmptyDOMElement();
+  });
+
+  it('RND-08 NFR-06 "New record!" in English', () => {
+    localStorage.setItem('miatlas67.language', 'en');
+    renderSummary(resultWith([]), true);
+
+    expect(screen.getByRole('status')).toHaveTextContent('New record!');
+  });
+
   it('SCR-01 SCR-02 a round with 8 correct answers shows "8/10" and 2 stars', () => {
     renderSummary(resultWith([3, 7]));
 

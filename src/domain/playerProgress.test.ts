@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { GameId } from './games.ts';
-import { bestResult, progressOf, totalStars, type PlayedResult } from './playerProgress.ts';
+import {
+  bestResult,
+  isNewRecord,
+  progressOf,
+  totalStars,
+  type PlayedResult,
+} from './playerProgress.ts';
 import { LEVELS, REGION_CHOICES, type Level, type RegionChoice } from './questions.ts';
 import type { Stars } from './round.ts';
 
@@ -117,5 +123,38 @@ describe('totalStars', () => {
 
   it('HIS-03 is 0 with no rounds', () => {
     expect(totalStars(progressOf([], ['FLAG-A', 'FLAG-B']))).toBe(0);
+  });
+});
+
+describe('isNewRecord', () => {
+  const BEST_6 = [played('FLAG-A', 'europe', 1, 6, 1), played('FLAG-A', 'europe', 1, 4, 0)];
+
+  it('RND-08 SCR-03 8/10 after a best of 6/10 is a new personal best', () => {
+    expect(isNewRecord(BEST_6, 'FLAG-A', 'europe', 1, 8)).toBe(true);
+  });
+
+  it('RND-08 D23 a tie with the best is not a record', () => {
+    expect(isNewRecord(BEST_6, 'FLAG-A', 'europe', 1, 6)).toBe(false);
+  });
+
+  it('RND-08 a lower score is not a record', () => {
+    expect(isNewRecord(BEST_6, 'FLAG-A', 'europe', 1, 5)).toBe(false);
+  });
+
+  it('RND-08 D23 the first round of a game, region and level is not a record: there is nothing to beat', () => {
+    expect(isNewRecord([], 'FLAG-A', 'europe', 1, 5)).toBe(false);
+    expect(isNewRecord([], 'FLAG-A', 'europe', 1, 10)).toBe(false);
+  });
+
+  it('GAME-02 SCR-03 records are per game, region and level: other bests do not count', () => {
+    const rounds = [
+      played('FLAG-A', 'europe', 1, 10, 3),
+      played('FLAG-B', 'europe', 2, 10, 3),
+      played('FLAG-A', 'asia', 2, 10, 3),
+      played('FLAG-A', 'europe', 2, 4, 0),
+    ];
+
+    expect(isNewRecord(rounds, 'FLAG-A', 'europe', 2, 6)).toBe(true);
+    expect(isNewRecord(rounds, 'FLAG-A', 'europe', 1, 9)).toBe(false);
   });
 });

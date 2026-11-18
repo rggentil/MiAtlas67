@@ -12,6 +12,8 @@ export class SummaryPage {
   readonly missed: Locator;
   readonly playAgainButton: Locator;
   readonly menuButton: Locator;
+  /** "¡Nuevo récord!": the player beat their best in this game, region and level (RND-08, D23). */
+  readonly newRecord: Locator;
   private readonly page: Page;
 
   constructor(page: Page) {
@@ -22,6 +24,7 @@ export class SummaryPage {
     this.missed = page.getByRole('list', { name: 'Para repasar' }).getByRole('listitem');
     this.playAgainButton = page.getByRole('button', { name: 'Jugar otra vez' });
     this.menuButton = page.getByRole('button', { name: 'Menú' });
+    this.newRecord = page.getByRole('status').getByText('¡Nuevo récord!', { exact: true });
   }
 
   /** The flag of the n-th missed entity (from 0). Its alt text is empty, next to the name, so it has no role. */

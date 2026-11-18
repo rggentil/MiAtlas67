@@ -179,6 +179,7 @@ describe('RoundScreen · names with their article (DATA-09)', () => {
           game={playableGame('FLAG-A')}
           settings={SETTINGS}
           result={roundResult(state)}
+          newRecord={false}
           onPlayAgain={vi.fn()}
           onMenu={vi.fn()}
         />,
