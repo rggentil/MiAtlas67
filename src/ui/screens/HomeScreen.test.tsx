@@ -20,6 +20,7 @@ function renderHome(
   player = LUCIA,
   onSwitchPlayer: () => void = vi.fn(),
   onOpenHistory: () => void = vi.fn(),
+  onOpenProgress: () => void = vi.fn(),
 ) {
   renderWithI18n(
     <HomeScreen
@@ -27,6 +28,7 @@ function renderHome(
       onOpenGame={onOpenGame}
       onSwitchPlayer={onSwitchPlayer}
       onOpenHistory={onOpenHistory}
+      onOpenProgress={onOpenProgress}
       onBack={vi.fn()}
     />,
   );
@@ -48,6 +50,25 @@ describe('HomeScreen', () => {
     await userEvent.click(screen.getByRole('radio', { name: 'English' }));
 
     expect(screen.getByRole('button', { name: 'History' })).toBeVisible();
+  });
+
+  it('HIS-03 "Progreso" opens the progress of the player', async () => {
+    const onOpenProgress = vi.fn();
+    const onOpenHistory = vi.fn();
+    renderHome(vi.fn(), LUCIA, vi.fn(), onOpenHistory, onOpenProgress);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Progreso' }));
+
+    expect(onOpenProgress).toHaveBeenCalledOnce();
+    expect(onOpenHistory).not.toHaveBeenCalled();
+  });
+
+  it('HIS-03 NFR-06 "Progress" in English', async () => {
+    renderHome();
+
+    await userEvent.click(screen.getByRole('radio', { name: 'English' }));
+
+    expect(screen.getByRole('button', { name: 'Progress' })).toBeVisible();
   });
 
   it('PRF-03 the player "Lucía" is a button, described as "Cambiar de jugador", that switches player', async () => {
