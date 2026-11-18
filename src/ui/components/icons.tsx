@@ -86,6 +86,16 @@ export function CheckIcon(props: IconProps) {
   );
 }
 
+/** A pencil: edit a player (PRF-04). */
+export function EditIcon(props: IconProps) {
+  return (
+    <StrokeIcon strokeWidth={2.6} {...props}>
+      <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z" />
+      <path d="m13.5 6.5 4 4" />
+    </StrokeIcon>
+  );
+}
+
 /** Two arrows going opposite ways: change who plays (PRF-03). */
 export function SwitchIcon(props: IconProps) {
   return (

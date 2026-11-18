@@ -5,6 +5,8 @@ import type { Player } from '../../storage/store.ts';
 import { AvatarImage } from '../components/AvatarImage.tsx';
 import { Button } from '../components/Button.tsx';
 import { ExitDialog } from '../components/ExitDialog.tsx';
+import { IconButton } from '../components/IconButton.tsx';
+import { EditIcon } from '../components/icons.tsx';
 import { LanguageSwitch } from '../components/LanguageSwitch.tsx';
 import { Logo } from '../components/Logo.tsx';
 import { ScreenTitle } from '../components/ScreenTitle.tsx';
@@ -18,18 +20,21 @@ interface PlayersScreenProps {
   lastPlayerId: number | null;
   onChoose: (player: Player) => void;
   onNewPlayer: () => void;
+  /** "Editar a Lucía": change the nickname or avatar, or delete the player (PRF-04). */
+  onEdit: (player: Player) => void;
 }
 
 /**
- * "¿Quién juega?" (PRF-01): the first screen. A tap on a player chooses who plays; "Nuevo jugador" creates
- * one while fewer than 8 fit (PRF-05). Back asks "¿Salir del juego?" first, and Back again leaves the game
- * (NAV-02, D22).
+ * "¿Quién juega?" (PRF-01): the first screen. A tap on a player chooses who plays, and the pencil next to it
+ * edits them (PRF-04); "Nuevo jugador" creates one while fewer than 8 fit (PRF-05). Back asks "¿Salir del
+ * juego?" first, and Back again leaves the game (NAV-02, D22).
  */
 export function PlayersScreen({
   players,
   lastPlayerId,
   onChoose,
   onNewPlayer,
+  onEdit,
 }: PlayersScreenProps) {
   const { t } = useI18n();
   const titleId = useId();
@@ -73,11 +78,18 @@ export function PlayersScreen({
               {players.length > 0 && (
                 <ul aria-label={t('players.list')} className="flex flex-col gap-3">
                   {players.map((player) => (
-                    <li key={player.id}>
+                    <li key={player.id} className="flex items-center gap-2">
                       <PlayerButton
                         player={player}
                         last={player.id === lastPlayerId}
                         onChoose={onChoose}
+                      />
+                      <IconButton
+                        label={t('players.edit', { name: player.nickname })}
+                        icon={<EditIcon />}
+                        onClick={() => {
+                          onEdit(player);
+                        }}
                       />
                     </li>
                   ))}
@@ -126,7 +138,7 @@ function PlayerButton({ player, last, onChoose }: PlayerButtonProps) {
   const labelId = useId();
 
   return (
-    <div className="relative">
+    <div className="relative min-w-0 flex-1">
       <button
         type="button"
         aria-describedby={last ? labelId : undefined}

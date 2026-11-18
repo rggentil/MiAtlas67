@@ -72,7 +72,7 @@ test.describe('«¿Quién juega?»: create a player and choose who plays', () =>
       await expect.poll(() => savedLastPlayer(page)).toBe('Lucía');
       await page.reload();
       await expect(players.heading).toHaveText('¿Quién juega?');
-      await expect(players.list.getByRole('button')).toHaveText([/^Lucía/]);
+      await expect(players.playerButtons).toHaveText([/^Lucía/]);
       await expect(players.player('Lucía')).toHaveAccessibleDescription('Jugó la última vez');
     },
   );
@@ -135,7 +135,7 @@ test.describe('«¿Quién juega?»: create a player and choose who plays', () =>
         expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
 
         await newPlayer.backButton.click();
-        await expect(players.list.getByRole('button')).toHaveText([/^Lucía/]);
+        await expect(players.playerButtons).toHaveText([/^Lucía/]);
       },
     );
   }
@@ -177,7 +177,7 @@ test.describe('«¿Quién juega?»: create a player and choose who plays', () =>
       // The avatar Lucía has can be chosen too (D21).
       await addPlayer(page, 'Pablo', 'Zorro');
       await page.reload();
-      await expect(players.list.getByRole('button')).toHaveText([/^Lucía/, /^Pablo/]);
+      await expect(players.playerButtons).toHaveText([/^Lucía/, /^Pablo/]);
 
       await players.choose('Lucía');
       await expect(home.currentPlayer).toHaveText('Lucía');
@@ -208,10 +208,10 @@ test.describe('«¿Quién juega?»: create a player and choose who plays', () =>
       }
 
       await page.reload();
-      await expect(players.list.getByRole('button')).toHaveCount(8);
+      await expect(players.playerButtons).toHaveCount(8);
       await expect(players.newPlayerButton).toHaveCount(0);
       await expect(players.fullNote).toBeVisible();
-      for (const player of await players.list.getByRole('button').all()) {
+      for (const player of await players.playerButtons.all()) {
         await expectTouchTarget(player);
       }
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
@@ -225,9 +225,9 @@ test.describe('«¿Quién juega?»: create a player and choose who plays', () =>
       await addPlayer(page, 'Lucía', 'Zorro');
       await home.chooseLanguage('English');
       await expect(players.heading).toHaveText("Who's playing?");
-      await expect(page.getByRole('button', { name: 'Lucía' })).toHaveAccessibleDescription(
-        'Played last',
-      );
+      await expect(
+        page.getByRole('button', { name: 'Lucía', exact: true }),
+      ).toHaveAccessibleDescription('Played last');
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
 
       await page.getByRole('button', { name: 'New player' }).click();

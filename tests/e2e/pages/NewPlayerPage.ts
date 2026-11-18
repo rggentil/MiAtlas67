@@ -1,6 +1,9 @@
 import type { Locator, Page } from '@playwright/test';
 
-/** Page object for "Nuevo jugador": a nickname and an avatar, nothing else (PRF-02). */
+/**
+ * Page object for the player form: "Nuevo jugador" (PRF-02) and "Editar jugador" (PRF-04), a nickname and an
+ * avatar, nothing else. When editing, "Borrar jugador" asks "¿Borrar a Lucía?" first.
+ */
 export class NewPlayerPage {
   /** "Nuevo jugador" */
   readonly heading: Locator;
@@ -9,6 +12,10 @@ export class NewPlayerPage {
   /** "Elige un animal": the 11 avatars, as radio buttons named after their animal. */
   readonly avatars: Locator;
   readonly createButton: Locator;
+  /** "Guardar", when editing. */
+  readonly saveButton: Locator;
+  /** "Borrar jugador", when editing. */
+  readonly deleteButton: Locator;
   readonly backButton: Locator;
   private readonly page: Page;
 
@@ -18,7 +25,21 @@ export class NewPlayerPage {
     this.nicknameInput = page.getByRole('textbox', { name: 'Nombre' });
     this.avatars = page.getByRole('group', { name: 'Elige un animal' });
     this.createButton = page.getByRole('button', { name: 'Crear' });
+    this.saveButton = page.getByRole('button', { name: 'Guardar' });
+    this.deleteButton = page.getByRole('button', { name: 'Borrar jugador' });
     this.backButton = page.getByRole('button', { name: 'Volver' });
+  }
+
+  /** "¿Borrar a Lucía?" for the player `nickname`. */
+  deleteDialog(nickname: string): Locator {
+    return this.page.getByRole('dialog', { name: `¿Borrar a ${nickname}?` });
+  }
+
+  /** Changes the nickname and the avatar of the player being edited, and taps "Guardar". */
+  async edit(nickname: string, avatar: string): Promise<void> {
+    await this.nicknameInput.fill(nickname);
+    await this.chooseAvatar(avatar);
+    await this.saveButton.click();
   }
 
   /** An avatar by its animal, e.g. "Zorro". */
