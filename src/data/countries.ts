@@ -1,4 +1,4 @@
-import type { Category, Entity, Localized, Region, Tier } from '../domain/entity.ts';
+import type { Articles, Category, Entity, Localized, Region, Tier } from '../domain/entity.ts';
 
 /**
  * The 195 countries of levels 1–3 (spec §13.2): 193 UN members + 2 UN observers.
@@ -10,11 +10,14 @@ import type { Category, Entity, Localized, Region, Tier } from '../domain/entity
  * - Tiers (spec §7) were reviewed by the product owner (#15) and stay editable.
  * - Every country has a quiz capital (decision D13): city-states use the country itself, Nauru its
  *   de facto capital Yaren, Israel and Palestina their proclaimed capitals.
+ * - Articles in sentences (DATA-09) were reviewed by the product owner (D18): in Spanish only «el» Reino Unido
+ *   and Líbano and «la» for the four «República…»; plural names go without one. 15 names take «the» in English.
  */
 
 type Pair = readonly [es: string, en: string];
 
 interface Extra {
+  article?: Articles;
   category?: Category;
   otherCapitals?: readonly Pair[];
 }
@@ -32,6 +35,7 @@ function c(
   return {
     code,
     name: localized(name),
+    ...(extra.article ? { article: extra.article } : {}),
     capital: capital ? localized(capital) : null,
     otherCapitals: (extra.otherCapitals ?? []).map(localized),
     region,
@@ -82,11 +86,14 @@ export const countries: readonly Entity[] = [
   c('ME', ['Montenegro', 'Montenegro'], ['Podgorica', 'Podgorica'], 'europe', 3),
   c('NO', ['Noruega', 'Norway'], ['Oslo', 'Oslo'], 'europe', 1),
   c('NL', ['Países Bajos', 'Netherlands'], ['Ámsterdam', 'Amsterdam'], 'europe', 1, {
+    article: { en: 'the' },
     otherCapitals: [['La Haya', 'The Hague']],
   }),
   c('PL', ['Polonia', 'Poland'], ['Varsovia', 'Warsaw'], 'europe', 1),
   c('PT', ['Portugal', 'Portugal'], ['Lisboa', 'Lisbon'], 'europe', 1),
-  c('GB', ['Reino Unido', 'United Kingdom'], ['Londres', 'London'], 'europe', 1),
+  c('GB', ['Reino Unido', 'United Kingdom'], ['Londres', 'London'], 'europe', 1, {
+    article: { es: 'el', en: 'the' },
+  }),
   c('RO', ['Rumanía', 'Romania'], ['Bucarest', 'Bucharest'], 'europe', 2),
   c('RU', ['Rusia', 'Russia'], ['Moscú', 'Moscow'], 'europe', 1),
   c('SM', ['San Marino', 'San Marino'], ['San Marino', 'San Marino'], 'europe', 2),
@@ -114,7 +121,7 @@ export const countries: readonly Entity[] = [
     3,
   ),
   c('AR', ['Argentina', 'Argentina'], ['Buenos Aires', 'Buenos Aires'], 'americas', 1),
-  c('BS', ['Bahamas', 'Bahamas'], ['Nasáu', 'Nassau'], 'americas', 2),
+  c('BS', ['Bahamas', 'Bahamas'], ['Nasáu', 'Nassau'], 'americas', 2, { article: { en: 'the' } }),
   c('BB', ['Barbados', 'Barbados'], ['Bridgetown', 'Bridgetown'], 'americas', 3),
   c('BZ', ['Belice', 'Belize'], ['Belmopán', 'Belmopan'], 'americas', 3),
   c('BO', ['Bolivia', 'Bolivia'], ['Sucre', 'Sucre'], 'americas', 2, {
@@ -135,6 +142,7 @@ export const countries: readonly Entity[] = [
     ['Washington D. C.', 'Washington, D.C.'],
     'americas',
     1,
+    { article: { en: 'the' } },
   ),
   c('GD', ['Granada', 'Grenada'], ["Saint George's", "Saint George's"], 'americas', 3),
   c('GT', ['Guatemala', 'Guatemala'], ['Ciudad de Guatemala', 'Guatemala City'], 'americas', 2),
@@ -153,6 +161,7 @@ export const countries: readonly Entity[] = [
     ['Santo Domingo', 'Santo Domingo'],
     'americas',
     2,
+    { article: { es: 'la', en: 'the' } },
   ),
   c(
     'KN',
@@ -195,8 +204,17 @@ export const countries: readonly Entity[] = [
   c('CN', ['China', 'China'], ['Pekín', 'Beijing'], 'asia', 1),
   c('KP', ['Corea del Norte', 'North Korea'], ['Pionyang', 'Pyongyang'], 'asia', 2),
   c('KR', ['Corea del Sur', 'South Korea'], ['Seúl', 'Seoul'], 'asia', 1),
-  c('AE', ['Emiratos Árabes Unidos', 'United Arab Emirates'], ['Abu Dabi', 'Abu Dhabi'], 'asia', 2),
-  c('PH', ['Filipinas', 'Philippines'], ['Manila', 'Manila'], 'asia', 1),
+  c(
+    'AE',
+    ['Emiratos Árabes Unidos', 'United Arab Emirates'],
+    ['Abu Dabi', 'Abu Dhabi'],
+    'asia',
+    2,
+    { article: { en: 'the' } },
+  ),
+  c('PH', ['Filipinas', 'Philippines'], ['Manila', 'Manila'], 'asia', 1, {
+    article: { en: 'the' },
+  }),
   c('GE', ['Georgia', 'Georgia'], ['Tiflis', 'Tbilisi'], 'asia', 3),
   c('IN', ['India', 'India'], ['Nueva Delhi', 'New Delhi'], 'asia', 1),
   c('ID', ['Indonesia', 'Indonesia'], ['Yakarta', 'Jakarta'], 'asia', 2),
@@ -209,11 +227,11 @@ export const countries: readonly Entity[] = [
   c('KG', ['Kirguistán', 'Kyrgyzstan'], ['Biskek', 'Bishkek'], 'asia', 3),
   c('KW', ['Kuwait', 'Kuwait'], ['Kuwait', 'Kuwait City'], 'asia', 3),
   c('LA', ['Laos', 'Laos'], ['Vientián', 'Vientiane'], 'asia', 3),
-  c('LB', ['Líbano', 'Lebanon'], ['Beirut', 'Beirut'], 'asia', 2),
+  c('LB', ['Líbano', 'Lebanon'], ['Beirut', 'Beirut'], 'asia', 2, { article: { es: 'el' } }),
   c('MY', ['Malasia', 'Malaysia'], ['Kuala Lumpur', 'Kuala Lumpur'], 'asia', 2, {
     otherCapitals: [['Putrajaya', 'Putrajaya']],
   }),
-  c('MV', ['Maldivas', 'Maldives'], ['Malé', 'Malé'], 'asia', 3),
+  c('MV', ['Maldivas', 'Maldives'], ['Malé', 'Malé'], 'asia', 3, { article: { en: 'the' } }),
   c('MN', ['Mongolia', 'Mongolia'], ['Ulán Bator', 'Ulaanbaatar'], 'asia', 2),
   c('NP', ['Nepal', 'Nepal'], ['Katmandú', 'Kathmandu'], 'asia', 2),
   c('OM', ['Omán', 'Oman'], ['Mascate', 'Muscat'], 'asia', 3),
@@ -252,7 +270,7 @@ export const countries: readonly Entity[] = [
   c('CV', ['Cabo Verde', 'Cape Verde'], ['Praia', 'Praia'], 'africa', 3),
   c('CM', ['Camerún', 'Cameroon'], ['Yaundé', 'Yaoundé'], 'africa', 2),
   c('TD', ['Chad', 'Chad'], ['Yamena', "N'Djamena"], 'africa', 3),
-  c('KM', ['Comoras', 'Comoros'], ['Moroni', 'Moroni'], 'africa', 3),
+  c('KM', ['Comoras', 'Comoros'], ['Moroni', 'Moroni'], 'africa', 3, { article: { en: 'the' } }),
   c('CI', ['Costa de Marfil', 'Ivory Coast'], ['Yamusukro', 'Yamoussoukro'], 'africa', 2),
   c('EG', ['Egipto', 'Egypt'], ['El Cairo', 'Cairo'], 'africa', 1),
   c('ER', ['Eritrea', 'Eritrea'], ['Asmara', 'Asmara'], 'africa', 3),
@@ -261,7 +279,7 @@ export const countries: readonly Entity[] = [
   }),
   c('ET', ['Etiopía', 'Ethiopia'], ['Adís Abeba', 'Addis Ababa'], 'africa', 1),
   c('GA', ['Gabón', 'Gabon'], ['Libreville', 'Libreville'], 'africa', 3),
-  c('GM', ['Gambia', 'Gambia'], ['Banjul', 'Banjul'], 'africa', 3),
+  c('GM', ['Gambia', 'Gambia'], ['Banjul', 'Banjul'], 'africa', 3, { article: { en: 'the' } }),
   c('GH', ['Ghana', 'Ghana'], ['Acra', 'Accra'], 'africa', 2),
   c('GN', ['Guinea', 'Guinea'], ['Conakri', 'Conakry'], 'africa', 3),
   c('GW', ['Guinea-Bisáu', 'Guinea-Bissau'], ['Bisáu', 'Bissau'], 'africa', 3),
@@ -286,6 +304,7 @@ export const countries: readonly Entity[] = [
     ['Bangui', 'Bangui'],
     'africa',
     3,
+    { article: { es: 'la', en: 'the' } },
   ),
   c(
     'CG',
@@ -293,6 +312,7 @@ export const countries: readonly Entity[] = [
     ['Brazzaville', 'Brazzaville'],
     'africa',
     3,
+    { article: { es: 'la', en: 'the' } },
   ),
   c(
     'CD',
@@ -300,6 +320,7 @@ export const countries: readonly Entity[] = [
     ['Kinsasa', 'Kinshasa'],
     'africa',
     2,
+    { article: { es: 'la', en: 'the' } },
   ),
   c('RW', ['Ruanda', 'Rwanda'], ['Kigali', 'Kigali'], 'africa', 3),
   c(
@@ -332,8 +353,12 @@ export const countries: readonly Entity[] = [
   // ── Oceanía (14) ──────────────────────────────────────────────────────────
   c('AU', ['Australia', 'Australia'], ['Canberra', 'Canberra'], 'oceania', 1),
   c('FJ', ['Fiyi', 'Fiji'], ['Suva', 'Suva'], 'oceania', 2),
-  c('MH', ['Islas Marshall', 'Marshall Islands'], ['Majuro', 'Majuro'], 'oceania', 3),
-  c('SB', ['Islas Salomón', 'Solomon Islands'], ['Honiara', 'Honiara'], 'oceania', 3),
+  c('MH', ['Islas Marshall', 'Marshall Islands'], ['Majuro', 'Majuro'], 'oceania', 3, {
+    article: { en: 'the' },
+  }),
+  c('SB', ['Islas Salomón', 'Solomon Islands'], ['Honiara', 'Honiara'], 'oceania', 3, {
+    article: { en: 'the' },
+  }),
   c('KI', ['Kiribati', 'Kiribati'], ['Tarawa Sur', 'South Tarawa'], 'oceania', 3),
   c('FM', ['Micronesia', 'Micronesia'], ['Palikir', 'Palikir'], 'oceania', 3),
   c('NR', ['Nauru', 'Nauru'], ['Yaren', 'Yaren'], 'oceania', 3), // no official capital; Yaren is the de facto one

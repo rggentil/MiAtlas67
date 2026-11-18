@@ -14,11 +14,22 @@ export interface Localized {
   readonly en: string;
 }
 
+/**
+ * The article a name takes inside a sentence, per language (DATA-09): «el Reino Unido», «the Netherlands».
+ * Most names take none. Which ones do was reviewed by the product owner (D18).
+ */
+export interface Articles {
+  readonly es?: 'el' | 'la';
+  readonly en?: 'the';
+}
+
 /** Anything that can be asked in a question (spec §4, DATA-01). */
 export interface Entity {
   /** ISO 3166-1 alpha-2 code, upper case; it also names the flag file. */
   readonly code: string;
   readonly name: Localized;
+  /** The article the name takes in a sentence, if any (DATA-09). Options and lists show the name alone. */
+  readonly article?: Articles;
   /** Quiz capital (DATA-03); `null` keeps the entity out of Capitals games (CAP-02, CAP-03). */
   readonly capital: Localized | null;
   /** Other official capitals: shown as extra info, never offered as wrong options (DATA-03). */

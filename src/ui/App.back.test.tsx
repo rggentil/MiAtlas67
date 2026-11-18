@@ -106,7 +106,10 @@ describe('App · the back button (NAV-01)', () => {
     await waitFor(() => {
       expect(heading()).toHaveTextContent('¿A qué jugamos?');
     });
-    expect(window.history.state).toBeNull();
+    // The game removes its entries a moment after going home.
+    await waitFor(() => {
+      expect(window.history.state).toBeNull();
+    });
   }, 30_000);
 
   it('NAV-01 the address stays the same while the game adds and removes its history entry', async () => {

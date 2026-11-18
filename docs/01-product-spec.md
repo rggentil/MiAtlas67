@@ -1,6 +1,6 @@
 # MiAtlas67 — Product Specification
 
-> **Status: APPROVED v1.4** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
+> **Status: APPROVED v1.5** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
 > [§18 Change log](#18-change-log).
 > Last updated: 2026-11-18
 
@@ -204,8 +204,8 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
   factual words (e.g. «Territorio autónomo de Dinamarca», «Estado con reconocimiento limitado»,
   «Estado federado de Somalia»).
 - **DATA-09** A name that takes an article in a sentence keeps it there, in each language: «¿Cuál es la bandera
-  del Reino Unido?», «de los Países Bajos», «Which one is the flag of the United Kingdom?». Options, lists and
-  titles show the name alone («Reino Unido»). An article that is part of the name is never contracted
+  del Reino Unido?», «de la República Dominicana», «Which one is the flag of the United Kingdom?». Options, lists
+  and titles show the name alone («Reino Unido»). An article that is part of the name is never contracted
   («de El Salvador»). Which names take an article is curated data reviewed by the product owner (D18).
 
 ## 14. Settings
@@ -269,13 +269,15 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 | D15 | Similar flags and land borders (#37) | ✅ Reviewed in a [review page](https://claude.ai/artifact/TXjaHY9kF97aj8az78G93A). 25 similar-flag groups (Somalia–Micronesia dropped; related groups merged, e.g. all pan-Arab flags, the Union Jack ones; Malta and Singapur join Indonesia–Mónaco–Polonia). Land borders: a territory counts when it is part of the country inside the EU (Francia–Brasil and Francia–Surinam via French Guiana, España–Marruecos via Ceuta and Melilla); dependent territories outside the EU do not (Gibraltar, Groenlandia). De facto lines (China–Pakistán yes, India–Afganistán no). Kosovo and Sahara Occidental stay in the extended set (D2); their borders are added with it for level 4 |
 | D16 | Wrong-answer feedback | ✅ "¡Uy! Era Portugal" instead of "¡Casi! Era Portugal": a miss is not always close. "País → Bandera": "¡Uy! La bandera de Portugal es la marcada con ✓". English: "Oops!" (RND-04) |
 | D17 | Flag proportions | ✅ Flags are shown in a 4:3 frame (*flag-icons* 4×3 set), so two flags that differ only in their proportions look the same there: Indonesia (2:3) and Mónaco (4:5) can meet in a level 3 "Mundo" round. Accepted for now. Showing each flag in its real proportions (Suiza square, Nepal not a rectangle, Mongolia and Sri Lanka longer) needs a study of every flag; planned as a Could in epic 7. Chad and Rumanía have the same proportions and differ only in the shade of blue, in reality too: they stay a level 3 challenge (D15) |
-| D18 | Names with an article | ✅ Sentences use the article a name takes (DATA-09). Which names take one, in Spanish and in English, is reviewed by the product owner in story #52 |
+| D18 | Names with an article | ✅ Sentences use the article a name takes (DATA-09). Reviewed in a [review page](https://claude.ai/artifact/5gzVsZBQpAhGjhhjWPSj4P) (story #52). Spanish: «el» Reino Unido and Líbano; «la» República Dominicana, República Centroafricana, República del Congo and República Democrática del Congo. Every other name goes without one: plural names too («de Países Bajos», «de Bahamas», «de Islas Marshall»), and Estados Unidos, India, Ciudad del Vaticano and the South American countries («de Perú», «de Argentina»). English: «the» United Kingdom, United States, Netherlands, United Arab Emirates, Philippines, Bahamas, Gambia, Maldives, Marshall Islands, Solomon Islands, Comoros, Central African Republic, Dominican Republic, Democratic Republic of the Congo and Republic of the Congo. For articles this choice takes precedence over the RAE usage of DATA-02, which writes «los Países Bajos» |
 | D19 | Back button | ✅ The phone's back button goes back inside the game instead of leaving it (NAV-01, story #51) |
 
 No open questions.
 
 ## 18. Change log
 
+- **v1.5** (2026-11-18): names with an article reviewed (D18): in Spanish only six names take one, plural names
+  go without («de Países Bajos»); 15 names take «the» in English.
 - **v1.4** (2026-11-18): decisions after the first demo of epic 3: wrong-answer feedback "¡Uy! Era…" (RND-04,
   D16) · flags in a 4:3 frame for now, real proportions as a Could (D17) · names with their article in sentences
   (DATA-09, D18) · the back button goes back inside the game (NAV-01, D19).

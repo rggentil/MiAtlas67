@@ -6,6 +6,7 @@ import { relations } from '../../data/relations.ts';
 import type { Entity } from '../../domain/entity.ts';
 import { generateRound, type Question, type RoundSettings } from '../../domain/questions.ts';
 import { createRng } from '../../domain/random.ts';
+import { ofName } from '../../i18n/names.ts';
 import { flagFile } from '../../test/flags.ts';
 import { playableGame } from '../../test/games.ts';
 import { renderWithI18n } from '../../test/render.tsx';
@@ -66,11 +67,11 @@ function namesAndAltTexts(): string[] {
 }
 
 describe('RoundScreen · FLAG-B', () => {
-  it('FLAG-B asks "¿Cuál es la bandera de" followed by the country name', () => {
+  it('FLAG-B asks "¿Cuál es la bandera" followed by the country name', () => {
     renderRound();
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      `¿Cuál es la bandera de ${FIRST.entity.name.es}?`,
+      `¿Cuál es la bandera ${ofName(FIRST.entity, 'es')}?`,
     );
   });
 
@@ -128,7 +129,7 @@ describe('RoundScreen · FLAG-B', () => {
       within(screen.getByRole('status')).getByRole('img', { name: 'Incorrecta' }),
     ).toBeVisible();
     expect(screen.getByRole('status')).toHaveTextContent(
-      `¡Uy! La bandera de ${FIRST.entity.name.es} es la marcada con ✓`,
+      `¡Uy! La bandera ${ofName(FIRST.entity, 'es')} es la marcada con ✓`,
     );
     for (const card of within(answers()).getAllByRole('button')) {
       expect(card).toBeDisabled();
@@ -166,13 +167,13 @@ describe('RoundScreen · FLAG-B', () => {
     renderRound();
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      `Which one is the flag of ${FIRST.entity.name.en}?`,
+      `Which one is the flag ${ofName(FIRST.entity, 'en')}?`,
     );
     const wrong = optionName(FIRST, wrongOption(FIRST), 'Option');
     await userEvent.click(screen.getByRole('button', { name: wrong }));
 
     expect(screen.getByRole('status')).toHaveTextContent(
-      `Oops! The flag of ${FIRST.entity.name.en} is the one marked ✓`,
+      `Oops! The flag ${ofName(FIRST.entity, 'en')} is the one marked ✓`,
     );
     expect(within(cardItem(wrong)).getByRole('img', { name: 'Wrong' })).toBeVisible();
   });

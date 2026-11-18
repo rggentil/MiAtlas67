@@ -96,6 +96,43 @@ describe('countries dataset', () => {
     expect(byCode(code).name.es).toBe(name);
   });
 
+  it('DATA-09 D18 the names that take an article are the ones the product owner reviewed', () => {
+    const withArticle = (language: 'es' | 'en', article: string) =>
+      countries
+        .filter((c) => c.article?.[language] === article)
+        .map((c) => c.code)
+        .sort();
+
+    expect(withArticle('es', 'el')).toEqual(['GB', 'LB']);
+    expect(withArticle('es', 'la')).toEqual(['CD', 'CF', 'CG', 'DO']);
+    expect(countries.filter((c) => c.article?.es !== undefined)).toHaveLength(6);
+    expect(withArticle('en', 'the')).toEqual(
+      [
+        'AE',
+        'BS',
+        'CD',
+        'CF',
+        'CG',
+        'DO',
+        'GB',
+        'GM',
+        'KM',
+        'MH',
+        'MV',
+        'NL',
+        'PH',
+        'SB',
+        'US',
+      ].sort(),
+    );
+    expect(countries.filter((c) => c.article?.en !== undefined)).toHaveLength(15);
+  });
+
+  it('DATA-09 a name whose own first word is an article has no article of its own', () => {
+    const startsWithArticle = countries.filter((c) => /^(El|La|Los|Las) /.test(c.name.es));
+    expect(startsWithArticle.map((c) => [c.code, c.article?.es])).toEqual([['SV', undefined]]);
+  });
+
   it.each([
     ['RU', 'europe'],
     ['CY', 'europe'],

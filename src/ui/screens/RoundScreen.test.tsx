@@ -6,6 +6,7 @@ import { relations } from '../../data/relations.ts';
 import type { Entity } from '../../domain/entity.ts';
 import { generateRound, type Question, type RoundSettings } from '../../domain/questions.ts';
 import { createRng } from '../../domain/random.ts';
+import { nameInSentence } from '../../i18n/names.ts';
 import type { RoundResult } from '../../domain/round.ts';
 import { flagFile } from '../../test/flags.ts';
 import { playableGame } from '../../test/games.ts';
@@ -123,7 +124,7 @@ describe('RoundScreen · FLAG-A', () => {
     expect(
       within(optionItem(FIRST.entity.name.es)).getByRole('img', { name: 'Correcta' }),
     ).toBeVisible();
-    expect(feedback()).toHaveTextContent(`¡Uy! Era ${FIRST.entity.name.es}`);
+    expect(feedback()).toHaveTextContent(`¡Uy! Era ${nameInSentence(FIRST.entity, 'es')}`);
     expect(within(feedback()).getByRole('img', { name: 'Incorrecta' })).toBeVisible();
     expect(screen.getByText('Aciertos: 0')).toBeVisible();
   });
@@ -138,7 +139,7 @@ describe('RoundScreen · FLAG-A', () => {
     for (const option of FIRST.options) {
       expect(screen.getByRole('button', { name: option.name.es })).toBeDisabled();
     }
-    expect(feedback()).toHaveTextContent(`¡Uy! Era ${FIRST.entity.name.es}`);
+    expect(feedback()).toHaveTextContent(`¡Uy! Era ${nameInSentence(FIRST.entity, 'es')}`);
     expect(screen.getByText('Aciertos: 0')).toBeVisible();
   });
 
@@ -252,7 +253,7 @@ describe('RoundScreen · FLAG-A', () => {
     expect(screen.getByText('Correct: 0')).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: wrong.name.en }));
 
-    expect(feedback()).toHaveTextContent(`Oops! It was ${FIRST.entity.name.en}`);
+    expect(feedback()).toHaveTextContent(`Oops! It was ${nameInSentence(FIRST.entity, 'en')}`);
     expect(within(optionItem(wrong.name.en)).getByRole('img', { name: 'Wrong' })).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
 
