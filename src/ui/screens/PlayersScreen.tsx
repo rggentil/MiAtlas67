@@ -84,7 +84,11 @@ export function PlayersScreen({
                 </ul>
               )}
               {canAddPlayer(players.length) ? (
-                <Button onClick={onNewPlayer} className="w-full">
+                <Button
+                  variant={players.length > 0 ? 'secondary' : 'primary'}
+                  onClick={onNewPlayer}
+                  className="w-full"
+                >
                   <span aria-hidden="true">+</span>
                   {t('players.new')}
                 </Button>
