@@ -3,6 +3,7 @@ import { GAME_TOPICS, gamesOfTopic, type Game, type GameTopic } from '../../doma
 import { useI18n } from '../../i18n/context.ts';
 import type { Player } from '../../storage/store.ts';
 import { AvatarImage } from '../components/AvatarImage.tsx';
+import { Button } from '../components/Button.tsx';
 import { CapitalIcon, FlagIcon, ShapeIcon, SwitchIcon } from '../components/icons.tsx';
 import { LanguageSwitch } from '../components/LanguageSwitch.tsx';
 import { Logo } from '../components/Logo.tsx';
@@ -17,6 +18,8 @@ interface HomeScreenProps {
   onOpenGame: (game: PlayableGame) => void;
   /** The player button: "¿Quién juega?", to hand the phone to someone else (PRF-03). */
   onSwitchPlayer: () => void;
+  /** "Historial": the rounds of the player who plays (HIS-02). */
+  onOpenHistory: () => void;
   /** The phone's back button: back to "¿Quién juega?" (NAV-01, D22). */
   onBack: () => void;
 }
@@ -31,7 +34,13 @@ const TOPIC_ICONS: Record<GameTopic, ComponentType<{ size?: number }>> = {
  * Home screen: who plays, and the six games grouped by topic (GAME-01). The player button switches player
  * (PRF-03); Back goes to "¿Quién juega?" too (D22).
  */
-export function HomeScreen({ player, onOpenGame, onSwitchPlayer, onBack }: HomeScreenProps) {
+export function HomeScreen({
+  player,
+  onOpenGame,
+  onSwitchPlayer,
+  onOpenHistory,
+  onBack,
+}: HomeScreenProps) {
   const { t } = useI18n();
 
   useOnBack(onBack);
@@ -47,6 +56,9 @@ export function HomeScreen({ player, onOpenGame, onSwitchPlayer, onBack }: HomeS
         {GAME_TOPICS.map((topic) => (
           <TopicSection key={topic} topic={topic} onOpenGame={onOpenGame} />
         ))}
+        <Button variant="secondary" onClick={onOpenHistory} className="w-full">
+          {t('home.history')}
+        </Button>
       </main>
       <footer className="mt-auto pt-4 text-center">
         <LanguageSwitch />

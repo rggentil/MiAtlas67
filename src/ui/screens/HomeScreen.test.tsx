@@ -19,18 +19,37 @@ function renderHome(
   onOpenGame: (game: PlayableGame) => void = vi.fn(),
   player = LUCIA,
   onSwitchPlayer: () => void = vi.fn(),
+  onOpenHistory: () => void = vi.fn(),
 ) {
   renderWithI18n(
     <HomeScreen
       player={player}
       onOpenGame={onOpenGame}
       onSwitchPlayer={onSwitchPlayer}
+      onOpenHistory={onOpenHistory}
       onBack={vi.fn()}
     />,
   );
 }
 
 describe('HomeScreen', () => {
+  it('HIS-02 "Historial" opens the history of the player', async () => {
+    const onOpenHistory = vi.fn();
+    renderHome(vi.fn(), LUCIA, vi.fn(), onOpenHistory);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Historial' }));
+
+    expect(onOpenHistory).toHaveBeenCalledOnce();
+  });
+
+  it('HIS-02 NFR-06 "History" in English', async () => {
+    renderHome();
+
+    await userEvent.click(screen.getByRole('radio', { name: 'English' }));
+
+    expect(screen.getByRole('button', { name: 'History' })).toBeVisible();
+  });
+
   it('PRF-03 the player "Lucía" is a button, described as "Cambiar de jugador", that switches player', async () => {
     const onSwitchPlayer = vi.fn();
     renderHome(vi.fn(), LUCIA, onSwitchPlayer);

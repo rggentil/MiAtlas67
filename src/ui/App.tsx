@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { countries } from '../data/countries.ts';
 import { relations } from '../data/relations.ts';
 import { generateRound, type Question, type RoundSettings } from '../domain/questions.ts';
@@ -6,11 +6,18 @@ import { createRng } from '../domain/random.ts';
 import type { RoundResult } from '../domain/round.ts';
 import { I18nProvider } from '../i18n/I18nProvider.tsx';
 import { openStore } from '../storage/indexedDbStore.ts';
-import type { GameStore, Player, PlayerData } from '../storage/store.ts';
+import {
+  roundToSave,
+  type GameStore,
+  type Player,
+  type PlayerData,
+  type SavedRound,
+} from '../storage/store.ts';
 import { BackButtonProvider } from './navigation/BackButtonProvider.tsx';
 import { getGameSeed } from './gameSeed.ts';
 import type { PlayableGame } from './games.ts';
 import { GameSetupScreen } from './screens/GameSetupScreen.tsx';
+import { HistoryScreen } from './screens/HistoryScreen.tsx';
 import { HomeScreen } from './screens/HomeScreen.tsx';
 import { PlayerFormScreen } from './screens/PlayerFormScreen.tsx';
 import { PlayersScreen } from './screens/PlayersScreen.tsx';
@@ -25,6 +32,7 @@ type Screen =
   | { readonly name: 'newPlayer' }
   | { readonly name: 'editPlayer'; readonly player: Player }
   | { readonly name: 'home' }
+  | { readonly name: 'history' }
   | { readonly name: 'setup'; readonly game: PlayableGame }
   | {
       readonly name: 'round';
@@ -111,6 +119,26 @@ function Screens({ givenStore }: { givenStore: GameStore | undefined }) {
   const [player, setPlayer] = useState<Player | null>(null);
   const [screen, setScreen] = useState<Screen>(PLAYERS);
   const [rng] = useState(() => createRng(getGameSeed()));
+  // The round being saved: the history waits for it, so a round just played is always listed.
+  const saving = useRef<Promise<unknown>>(Promise.resolve());
+
+  /** Saves a completed round of the player who plays (HIS-01); a quit round never gets here (RND-07). */
+  function saveRound(game: PlayableGame, settings: RoundSettings, result: RoundResult) {
+    if (!store || !player) return;
+    const played = {
+      playerId: player.id,
+      playedAt: Date.now(),
+      game: game.id,
+      region: settings.region,
+      level: settings.level,
+    };
+    saving.current = store.rounds.add(roundToSave(played, result)).catch(() => undefined);
+  }
+
+  const loadRounds = useCallback(async (): Promise<readonly SavedRound[]> => {
+    await saving.current;
+    return store && player ? store.rounds.listByPlayer(player.id) : [];
+  }, [store, player]);
 
   // Generated in event handlers, never during render, so StrictMode cannot draw twice.
   function startRound(game: PlayableGame, settings: RoundSettings, number: number) {
@@ -195,6 +223,8 @@ function Screens({ givenStore }: { givenStore: GameStore | undefined }) {
             player={player}
             setScreen={setScreen}
             startRound={startRound}
+            saveRound={saveRound}
+            loadRounds={loadRounds}
           />
         )
       )}
@@ -207,9 +237,18 @@ interface CurrentScreenProps {
   player: Player;
   setScreen: (screen: Screen) => void;
   startRound: (game: PlayableGame, settings: RoundSettings, number: number) => void;
+  saveRound: (game: PlayableGame, settings: RoundSettings, result: RoundResult) => void;
+  loadRounds: () => Promise<readonly SavedRound[]>;
 }
 
-function CurrentScreen({ screen, player, setScreen, startRound }: CurrentScreenProps) {
+function CurrentScreen({
+  screen,
+  player,
+  setScreen,
+  startRound,
+  saveRound,
+  loadRounds,
+}: CurrentScreenProps) {
   switch (screen.name) {
     case 'home':
       return (
@@ -221,8 +260,20 @@ function CurrentScreen({ screen, player, setScreen, startRound }: CurrentScreenP
           onSwitchPlayer={() => {
             setScreen(PLAYERS);
           }}
+          onOpenHistory={() => {
+            setScreen({ name: 'history' });
+          }}
           onBack={() => {
             setScreen(PLAYERS);
+          }}
+        />
+      );
+    case 'history':
+      return (
+        <HistoryScreen
+          loadRounds={loadRounds}
+          onBack={() => {
+            setScreen(HOME);
           }}
         />
       );
@@ -249,6 +300,7 @@ function CurrentScreen({ screen, player, setScreen, startRound }: CurrentScreenP
             setScreen(HOME);
           }}
           onFinish={(result) => {
+            saveRound(screen.game, screen.settings, result);
             setScreen({ ...screen, name: 'summary', result });
           }}
         />

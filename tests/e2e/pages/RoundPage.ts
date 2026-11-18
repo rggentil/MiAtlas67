@@ -82,6 +82,18 @@ export class RoundPage {
     }
   }
 
+  /**
+   * Plays a whole FLAG-B round: the cards are "Opción 1" to "Opción 4"; the questions at `wrongAt` with a wrong
+   * flag, the others right, tapping "Siguiente" after each answer.
+   */
+  async playFlagBRound(questions: readonly Question[], wrongAt: readonly number[]): Promise<void> {
+    for (const [index, question] of questions.entries()) {
+      const option = wrongAt.includes(index) ? wrongOption(question) : question.entity;
+      await this.answer(`Opción ${String(question.options.indexOf(option) + 1)}`);
+      await this.nextButton.click();
+    }
+  }
+
   /** "Salir de la partida", then "Sí, salir" in the confirmation (RND-07). */
   async quit(): Promise<void> {
     await this.quitButton.click();

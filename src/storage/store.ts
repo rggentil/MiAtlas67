@@ -1,6 +1,6 @@
 import type { GameId } from '../domain/games.ts';
 import type { Level, RegionChoice } from '../domain/questions.ts';
-import type { Stars } from '../domain/round.ts';
+import type { RoundResult, Stars } from '../domain/round.ts';
 
 /** A player on this device (PRF-02). Only a nickname and an avatar are kept: no real name, age or email (NFR-04). */
 export interface Player {
@@ -73,4 +73,31 @@ export function roundFields(data: RoundData): RoundData {
 /** Newest first; rounds of the same millisecond keep the order they were saved in, newest first too. */
 export function newestFirst(a: SavedRound, b: SavedRound): number {
   return b.playedAt - a.playedAt || b.id - a.id;
+}
+
+/** Where and when a round was played, and by whom. */
+export interface PlayedRound {
+  readonly playerId: number;
+  readonly playedAt: number;
+  readonly game: GameId;
+  readonly region: RegionChoice;
+  readonly level: Level;
+}
+
+/**
+ * What is saved of a completed round (HIS-01): its score with the number of questions, its stars, and the
+ * missed entities by code, so that a data fix of a name does not change the history.
+ */
+export function roundToSave(played: PlayedRound, result: RoundResult): RoundData {
+  return {
+    playerId: played.playerId,
+    playedAt: played.playedAt,
+    game: played.game,
+    region: played.region,
+    level: played.level,
+    score: result.score,
+    total: result.total,
+    stars: result.stars,
+    missed: result.missed.map((entity) => entity.code),
+  };
 }
