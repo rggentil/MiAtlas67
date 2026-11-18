@@ -3,7 +3,7 @@ import { formatMessage } from './format.ts';
 
 describe('formatMessage', () => {
   it('NFR-06 fills the placeholders of a UI text', () => {
-    expect(formatMessage('¡Casi! Era {name}', { name: 'Portugal' })).toBe('¡Casi! Era Portugal');
+    expect(formatMessage('¡Uy! Era {name}', { name: 'Portugal' })).toBe('¡Uy! Era Portugal');
     expect(formatMessage('Aciertos: {n}', { n: 3 })).toBe('Aciertos: 3');
   });
 

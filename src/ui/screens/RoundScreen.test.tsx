@@ -123,7 +123,7 @@ describe('RoundScreen · FLAG-A', () => {
     expect(
       within(optionItem(FIRST.entity.name.es)).getByRole('img', { name: 'Correcta' }),
     ).toBeVisible();
-    expect(feedback()).toHaveTextContent(`¡Casi! Era ${FIRST.entity.name.es}`);
+    expect(feedback()).toHaveTextContent(`¡Uy! Era ${FIRST.entity.name.es}`);
     expect(within(feedback()).getByRole('img', { name: 'Incorrecta' })).toBeVisible();
     expect(screen.getByText('Aciertos: 0')).toBeVisible();
   });
@@ -138,7 +138,7 @@ describe('RoundScreen · FLAG-A', () => {
     for (const option of FIRST.options) {
       expect(screen.getByRole('button', { name: option.name.es })).toBeDisabled();
     }
-    expect(feedback()).toHaveTextContent(`¡Casi! Era ${FIRST.entity.name.es}`);
+    expect(feedback()).toHaveTextContent(`¡Uy! Era ${FIRST.entity.name.es}`);
     expect(screen.getByText('Aciertos: 0')).toBeVisible();
   });
 
@@ -252,7 +252,7 @@ describe('RoundScreen · FLAG-A', () => {
     expect(screen.getByText('Correct: 0')).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: wrong.name.en }));
 
-    expect(feedback()).toHaveTextContent(`So close! It was ${FIRST.entity.name.en}`);
+    expect(feedback()).toHaveTextContent(`Oops! It was ${FIRST.entity.name.en}`);
     expect(within(optionItem(wrong.name.en)).getByRole('img', { name: 'Wrong' })).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
 
