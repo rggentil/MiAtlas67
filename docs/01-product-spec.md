@@ -1,6 +1,6 @@
 # MiAtlas67 — Product Specification
 
-> **Status: APPROVED v1.7** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
+> **Status: APPROVED v1.8** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
 > [§18 Change log](#18-change-log).
 > Last updated: 2026-11-18
 
@@ -152,7 +152,8 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 
 ## 11. History and progress
 
-- **HIS-01** Every completed round is saved: date/time, profile, game, region, level, score, stars, missed entities.
+- **HIS-01** Every completed round is saved: date/time, profile, game, region, level, score with its number of
+  questions (8/10), stars, missed entities.
 - **HIS-02** History screen per profile: newest first, filterable by game.
 - **HIS-03** Progress screen per profile: stars per game/region/level, total stars.
 - **HIS-04** *(Should)* Mastered entities per game: "Países dominados: 37/195". Extended entities are counted separately.
@@ -285,6 +286,8 @@ No open questions.
 
 ## 18. Change log
 
+- **v1.8** (2026-11-18): HIS-01 says that the score is kept with its number of questions (8/10), as the summary
+  shows it.
 - **v1.7** (2026-11-18): Países Bajos follows the RAE: «de los Países Bajos», «¡Uy! Eran los Países Bajos»
   (DATA-09, RND-04, D18); the other plural names keep going without an article.
 - **v1.6** (2026-11-18): Back on the home screen asks "¿Salir del juego?" before leaving (NAV-02, D20).
