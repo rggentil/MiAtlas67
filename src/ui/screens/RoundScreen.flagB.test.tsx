@@ -128,7 +128,7 @@ describe('RoundScreen · FLAG-B', () => {
       within(screen.getByRole('status')).getByRole('img', { name: 'Incorrecta' }),
     ).toBeVisible();
     expect(screen.getByRole('status')).toHaveTextContent(
-      `¡Casi! La bandera de ${FIRST.entity.name.es} es la marcada con ✓`,
+      `¡Uy! La bandera de ${FIRST.entity.name.es} es la marcada con ✓`,
     );
     for (const card of within(answers()).getAllByRole('button')) {
       expect(card).toBeDisabled();
@@ -172,7 +172,7 @@ describe('RoundScreen · FLAG-B', () => {
     await userEvent.click(screen.getByRole('button', { name: wrong }));
 
     expect(screen.getByRole('status')).toHaveTextContent(
-      `So close! The flag of ${FIRST.entity.name.en} is the one marked ✓`,
+      `Oops! The flag of ${FIRST.entity.name.en} is the one marked ✓`,
     );
     expect(within(cardItem(wrong)).getByRole('img', { name: 'Wrong' })).toBeVisible();
   });

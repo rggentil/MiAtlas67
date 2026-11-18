@@ -84,7 +84,7 @@ test.describe('Play a FLAG-B round', () => {
       await expect(round.mark(wrong, 'Incorrecta')).toBeVisible();
       await expect(round.mark(card(FIRST, FIRST.entity), 'Correcta')).toBeVisible();
       await expect(round.feedback).toHaveText(
-        `¡Casi! La bandera de ${FIRST.entity.name.es} es la marcada con ✓`,
+        `¡Uy! La bandera de ${FIRST.entity.name.es} es la marcada con ✓`,
       );
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
     },

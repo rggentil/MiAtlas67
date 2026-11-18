@@ -322,8 +322,7 @@ function Feedback({ game, question, chosen, nextRef, onNext }: FeedbackProps) {
   const correct = chosen === question.entity.code;
   const name = question.entity.name[language];
   // FLAG-A names the right country; in FLAG-B the country is the question, so it points at the ✓ flag.
-  const almost =
-    game.direction === 'A' ? t('round.almost', { name }) : t('round.almostFlag', { name });
+  const miss = game.direction === 'A' ? t('round.wrong', { name }) : t('round.wrongFlag', { name });
 
   return (
     <section
@@ -341,7 +340,7 @@ function Feedback({ game, question, chosen, nextRef, onNext }: FeedbackProps) {
               <p
                 className={`font-display leading-tight ${correct || game.direction === 'A' ? 'text-3xl' : 'text-2xl'}`}
               >
-                {correct ? t('round.correct') : almost}
+                {correct ? t('round.correct') : miss}
               </p>
             </>
           )}

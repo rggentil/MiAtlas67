@@ -19,7 +19,7 @@ export class RoundPage {
   readonly answers: Locator;
   /** The answer buttons, in the order they are shown. */
   readonly options: Locator;
-  /** The feedback after answering: "¡Correcto!" or "¡Casi! Era …" (RND-04). */
+  /** The feedback after answering: "¡Correcto!" or "¡Uy! Era …" (RND-04). */
   readonly feedback: Locator;
   readonly nextButton: Locator;
   readonly quitButton: Locator;

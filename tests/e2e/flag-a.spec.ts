@@ -85,7 +85,7 @@ test.describe('Play a FLAG-A round', () => {
 
       await expect(round.mark(wrong.name.es, 'Incorrecta')).toBeVisible();
       await expect(round.mark(FIRST.entity.name.es, 'Correcta')).toBeVisible();
-      await expect(round.feedback).toHaveText(`¡Casi! Era ${FIRST.entity.name.es}`);
+      await expect(round.feedback).toHaveText(`¡Uy! Era ${FIRST.entity.name.es}`);
       await expect(round.score).toHaveText('Aciertos: 0');
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
     },

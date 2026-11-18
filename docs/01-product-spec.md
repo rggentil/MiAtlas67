@@ -1,8 +1,8 @@
 # MiAtlas67 — Product Specification
 
-> **Status: APPROVED v1.3** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
+> **Status: APPROVED v1.4** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
 > [§18 Change log](#18-change-log).
-> Last updated: 2026-11-17
+> Last updated: 2026-11-18
 
 ---
 
@@ -53,7 +53,7 @@ It is a personal and learning project: no business model, no ads, no tracking.
 |---|---|
 | **Must (MVP)** | The six games (§6) · regions and levels 1–3 · 10-question multiple-choice rounds · immediate feedback · round summary · stars · level unlocking · local profiles · history saved on the device · mobile-first responsive UI · Spanish UI with switchable English |
 | **Should** | Level 4 Experto with the extended entity set · Atlas (learning/browse mode) · family records (local leaderboard) · mastered-entity counter · offline and installable (PWA) · sound effects with mute |
-| **Could** | Mixed rounds (both directions of a topic) · read names aloud (text-to-speech) · achievements/badges · "67" easter egg · timed challenge · "review my mistakes" round · progress chart · parent switch "unlock everything" · themed packs (e.g. Spanish autonomous communities) |
+| **Could** | Mixed rounds (both directions of a topic) · read names aloud (text-to-speech) · achievements/badges · "67" easter egg · timed challenge · "review my mistakes" round · progress chart · parent switch "unlock everything" · themed packs (e.g. Spanish autonomous communities) · flags in their real proportions (D17) |
 | **Won't (for now)** | Place-the-country-on-the-map mode · online multiplayer/sync · app store release · typed answers |
 
 ## 6. Games
@@ -123,7 +123,7 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 - **RND-03** No timer in v1.
 - **RND-04** Immediate feedback after each answer:
   - correct → positive animation (and sound if enabled);
-  - wrong → the chosen option is marked wrong, the correct one is highlighted and named ("¡Casi! Era Portugal").
+  - wrong → the chosen option is marked wrong, the correct one is highlighted and named ("¡Uy! Era Portugal", D16).
   - Feedback never relies on colour alone (✓ / ✗ icons as well).
 - **RND-05** The player taps "Siguiente" to move on, so the child controls the pace.
 - **RND-06** Progress (e.g. 3/10) and current score are always visible.
@@ -203,6 +203,10 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
   position. Names use neutral, widely used forms. The Atlas describes each extended entity's status in plain,
   factual words (e.g. «Territorio autónomo de Dinamarca», «Estado con reconocimiento limitado»,
   «Estado federado de Somalia»).
+- **DATA-09** A name that takes an article in a sentence keeps it there, in each language: «¿Cuál es la bandera
+  del Reino Unido?», «de los Países Bajos», «Which one is the flag of the United Kingdom?». Options, lists and
+  titles show the name alone («Reino Unido»). An article that is part of the name is never contracted
+  («de El Salvador»). Which names take an article is curated data reviewed by the product owner (D18).
 
 ## 14. Settings
 
@@ -215,13 +219,18 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 - Mobile-first, portrait. Works from 360 px wide up to desktop (centred column on large screens).
 - Kid-friendly: large touch targets (≥ 48 px), large readable text, minimal reading, colourful and playful
   but not noisy.
-- Encouraging tone: never "you failed", always "¡Casi! Era…".
+- Encouraging tone: never "you failed", and no "¡Casi!" when the answer was not close: a miss gets a light
+  "¡Uy! Era…" (D16).
 - Colour-blind friendly: feedback also uses icons, not just colour.
 - Visual direction: theme C **«Bloques»** (D11). Thick dark outlines, offset "sticker" shadows, a sky-blue
   background and one bright colour per topic (Banderas pink, Capitales blue, Siluetas green). Display font
   *Lilita One*, body font *Nunito*. Reference mockups are in the
   [design canvas](https://claude.ai/artifact/SDHWBLStMoj1Xg2eNdF3PX). Design tokens are in
   [02-technical-approach.md §7](02-technical-approach.md#7-visual-theme-tokens--theme-c-bloques).
+- **NAV-01** The phone's back button (or back gesture, or the browser's Back) goes back inside the game. It does
+  what the screen's own way back does: a setup step goes to the previous step or home ("Volver"), a round asks
+  "¿Salir de la partida?" first (RND-07) and Back again closes that question, the summary goes home ("Menú").
+  Only the home screen is left by Back (D19).
 
 ## 16. Non-functional requirements
 
@@ -258,11 +267,18 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 | D13 | Country data review (#15) | ✅ Tiers reviewed one by one. Flags show the flag in de facto use (Afganistán: the Islamic Emirate flag). Every country has a quiz capital: city-states → the country itself, Nauru → Yaren (de facto), Israel → Jerusalén, Palestina → Jerusalén Este (Ramala as extra info), so CAP-03 still holds. Sahara Occidental → El Aaiún |
 | D14 | Level 3 "tricky" distractors | ✅ Split from the question generator (#17) into story #37 (similar flags + neighbours, with a data review). Until then level 3 wrong options are random from the same region |
 | D15 | Similar flags and land borders (#37) | ✅ Reviewed in a [review page](https://claude.ai/artifact/TXjaHY9kF97aj8az78G93A). 25 similar-flag groups (Somalia–Micronesia dropped; related groups merged, e.g. all pan-Arab flags, the Union Jack ones; Malta and Singapur join Indonesia–Mónaco–Polonia). Land borders: a territory counts when it is part of the country inside the EU (Francia–Brasil and Francia–Surinam via French Guiana, España–Marruecos via Ceuta and Melilla); dependent territories outside the EU do not (Gibraltar, Groenlandia). De facto lines (China–Pakistán yes, India–Afganistán no). Kosovo and Sahara Occidental stay in the extended set (D2); their borders are added with it for level 4 |
+| D16 | Wrong-answer feedback | ✅ "¡Uy! Era Portugal" instead of "¡Casi! Era Portugal": a miss is not always close. "País → Bandera": "¡Uy! La bandera de Portugal es la marcada con ✓". English: "Oops!" (RND-04) |
+| D17 | Flag proportions | ✅ Flags are shown in a 4:3 frame (*flag-icons* 4×3 set), so two flags that differ only in their proportions look the same there: Indonesia (2:3) and Mónaco (4:5) can meet in a level 3 "Mundo" round. Accepted for now. Showing each flag in its real proportions (Suiza square, Nepal not a rectangle, Mongolia and Sri Lanka longer) needs a study of every flag; planned as a Could in epic 7. Chad and Rumanía have the same proportions and differ only in the shade of blue, in reality too: they stay a level 3 challenge (D15) |
+| D18 | Names with an article | ✅ Sentences use the article a name takes (DATA-09). Which names take one, in Spanish and in English, is reviewed by the product owner in story #52 |
+| D19 | Back button | ✅ The phone's back button goes back inside the game instead of leaving it (NAV-01, story #51) |
 
 No open questions.
 
 ## 18. Change log
 
+- **v1.4** (2026-11-18): decisions after the first demo of epic 3: wrong-answer feedback "¡Uy! Era…" (RND-04,
+  D16) · flags in a 4:3 frame for now, real proportions as a Could (D17) · names with their article in sentences
+  (DATA-09, D18) · the back button goes back inside the game (NAV-01, D19).
 - **v1.3** (2026-11-17): level 3 "tricky" wrong options defined (LVL-06); similar flags and land borders reviewed
   (D15).
 - **v1.2** (2026-11-17): level 3 "tricky" distractors split into story #37; same-region distractors until then (D14).
