@@ -1,11 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { countries } from '../data/countries.ts';
 import { relations } from '../data/relations.ts';
 import { generateRound } from '../domain/questions.ts';
 import { createRng } from '../domain/random.ts';
 import { App } from './App.tsx';
+import { GAME_ENTRIES } from './navigation/backContext.ts';
 
 /** The first round of a visit with ?seed=42 in "Europa · Fácil". */
 const FIRST_ROUND = generateRound(
@@ -37,6 +38,7 @@ describe('App · the back button (NAV-01)', () => {
     window.history.replaceState(null, '', '/?seed=42');
   });
   afterEach(() => {
+    vi.restoreAllMocks();
     window.history.replaceState(null, '', '/');
   });
 
@@ -117,5 +119,26 @@ describe('App · the back button (NAV-01)', () => {
       expect(heading()).toHaveTextContent('¿A qué jugamos?');
     });
     expect(window.location.search).toBe('?seed=42');
+  });
+
+  it('NAV-01 Back never adds a history entry by itself, only a tap does (Chrome skips entries added without one)', async () => {
+    render(<App />);
+    await startRound();
+    expect(window.history.state).toEqual({ miatlas: GAME_ENTRIES });
+    const pushState = vi.spyOn(window.history, 'pushState');
+
+    pressBack();
+    await screen.findByRole('dialog', { name: '¿Salir de la partida?' });
+    pressBack();
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    pressBack();
+    await screen.findByRole('dialog', { name: '¿Salir de la partida?' });
+    expect(pushState).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Seguir jugando' }));
+    expect(pushState).toHaveBeenCalledTimes(GAME_ENTRIES);
+    expect(window.history.state).toEqual({ miatlas: GAME_ENTRIES });
   });
 });
