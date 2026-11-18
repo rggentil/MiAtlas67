@@ -52,10 +52,10 @@ describe('bestResult', () => {
     expect(bestResult(rounds, 'FLAG-A', 'africa', 1)).toBeNull();
   });
 
-  it('SCR-03 with two rounds of the same best score, it keeps that score', () => {
-    const rounds = [played('FLAG-A', 'europe', 1, 8, 2), played('FLAG-A', 'europe', 1, 8, 2)];
+  it('SCR-03 a lower round after the best one does not lower it', () => {
+    const rounds = [played('FLAG-A', 'europe', 1, 9, 2), played('FLAG-A', 'europe', 1, 4, 0)];
 
-    expect(bestResult(rounds, 'FLAG-A', 'europe', 1)?.score).toBe(8);
+    expect(bestResult(rounds, 'FLAG-A', 'europe', 1)).toEqual({ score: 9, total: 10, stars: 2 });
   });
 });
 

@@ -96,13 +96,23 @@ describe('App · progress: stars per game, region and level (HIS-03, SCR-03, GAM
 
   it("HIS-03 each player sees their own progress: Pablo's 3 stars are not Lucía's", async () => {
     const store = await deviceWith({ players: [LUCIA, PABLO] });
-    await save(store, 2, 'FLAG-A', 'europe', 1, 3);
+    const pablo = (await store.players.list()).find((player) => player.nickname === 'Pablo');
+    if (!pablo) throw new Error('Pablo is not on the device');
+    await save(store, pablo.id, 'FLAG-A', 'europe', 1, 3);
     await renderApp(store);
 
     await openProgress('Lucía');
 
     expect(await cell('Bandera → País', 'Europa', 'Fácil')).toHaveTextContent('Sin jugar');
     expect(screen.getByText('0 estrellas en total')).toBeVisible();
+
+    // And Pablo does see his 3 stars: the rounds above are really his.
+    await userEvent.click(screen.getByRole('button', { name: 'Volver' }));
+    await userEvent.click(
+      within(screen.getByRole('group', { name: 'Jugador' })).getByRole('button'),
+    );
+    await openProgress('Pablo');
+    expect(await cell('Bandera → País', 'Europa', 'Fácil')).toHaveTextContent('3 de 3 estrellas');
   });
 
   it('HIS-03 SCR-03 a perfect round just played shows 3 stars in "Europa · Fácil"', async () => {

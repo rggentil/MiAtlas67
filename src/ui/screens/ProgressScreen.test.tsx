@@ -58,6 +58,18 @@ describe('ProgressScreen', () => {
     ]);
   });
 
+  it('HIS-03 2 stars are drawn as 2 filled stars and 1 empty one, and written "2 de 3 estrellas"', async () => {
+    renderProgress([played('FLAG-A', 'europe', 1, 8, 2)]);
+
+    const europeEasy = await cell('Bandera → País', 'Europa', 'Fácil');
+    expect(europeEasy).toHaveTextContent('2 de 3 estrellas');
+    expect([...europeEasy.querySelectorAll('svg')].map((star) => star.dataset.filled)).toEqual([
+      'true',
+      'true',
+      'false',
+    ]);
+  });
+
   it('HIS-03 a region and level not played yet shows "Sin jugar"', async () => {
     renderProgress([played('FLAG-A', 'europe', 1, 10, 3)]);
 
@@ -69,6 +81,11 @@ describe('ProgressScreen', () => {
 
     const africaMedium = await cell('Bandera → País', 'África', 'Medio');
     expect(africaMedium).toHaveTextContent('0 de 3 estrellas');
+    expect([...africaMedium.querySelectorAll('svg')].map((star) => star.dataset.filled)).toEqual([
+      'false',
+      'false',
+      'false',
+    ]);
     expect(africaMedium).not.toHaveTextContent('Sin jugar');
   });
 
@@ -131,6 +148,7 @@ describe('ProgressScreen', () => {
     );
 
     expect(await screen.findByText('0 estrellas en total')).toBeVisible();
+    expect(screen.getAllByText('Sin jugar')).toHaveLength(2 * 6 * 3);
   });
 
   it('NAV-01 "Volver" goes back', async () => {
