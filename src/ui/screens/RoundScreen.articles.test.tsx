@@ -56,7 +56,9 @@ describe('RoundScreen · names with their article (DATA-09)', () => {
   it.each([
     ['GB', '¿Cuál es la bandera del Reino Unido?'],
     ['DO', '¿Cuál es la bandera de la República Dominicana?'],
-    ['NL', '¿Cuál es la bandera de Países Bajos?'],
+    ['NL', '¿Cuál es la bandera de los Países Bajos?'],
+    ['BS', '¿Cuál es la bandera de Bahamas?'],
+    ['US', '¿Cuál es la bandera de Estados Unidos?'],
     ['FR', '¿Cuál es la bandera de Francia?'],
     ['SV', '¿Cuál es la bandera de El Salvador?'],
   ])('DATA-09 FLAG-B asks about %s: "%s"', (code, question) => {
@@ -97,6 +99,39 @@ describe('RoundScreen · names with their article (DATA-09)', () => {
     expect(feedback()).toHaveTextContent('¡Uy! Era la República Dominicana');
   });
 
+  it('DATA-09 RND-04 FLAG-A a wrong answer agrees with the plural: "Eran los Países Bajos"; the options show the name alone', async () => {
+    renderRound('FLAG-A', 'NL');
+    expect(screen.getByRole('button', { name: 'Países Bajos' })).toBeVisible();
+
+    await userEvent.click(screen.getByRole('button', { name: FRANCE.name.es }));
+
+    expect(feedback()).toHaveTextContent('¡Uy! Eran los Países Bajos');
+    expect(screen.getByRole('button', { name: 'Países Bajos' })).toBeDisabled();
+  });
+
+  it('DATA-09 RND-04 FLAG-B a wrong answer points at the flag "de los Países Bajos"', async () => {
+    renderRound('FLAG-B', 'NL');
+
+    await userEvent.click(screen.getByRole('button', { name: franceCard('NL', 'Opción') }));
+
+    expect(feedback()).toHaveTextContent('¡Uy! La bandera de los Países Bajos es la marcada con ✓');
+  });
+
+  it('DATA-09 RND-04 FLAG-A a wrong answer about another plural name keeps "Era": "Era Bahamas"', async () => {
+    renderRound('FLAG-A', 'BS');
+
+    await userEvent.click(screen.getByRole('button', { name: FRANCE.name.es }));
+
+    expect(feedback()).toHaveTextContent('¡Uy! Era Bahamas');
+  });
+
+  it('DATA-09 RND-04 SET-01 FLAG-A in English a wrong answer about the Netherlands is "It was the Netherlands"', async () => {
+    localStorage.setItem('miatlas67.language', 'en');
+    renderRound('FLAG-A', 'NL');
+    await userEvent.click(screen.getByRole('button', { name: FRANCE.name.en }));
+    expect(feedback()).toHaveTextContent('Oops! It was the Netherlands');
+  });
+
   it('DATA-09 RND-04 FLAG-B a wrong answer points at the flag "del Reino Unido"', async () => {
     renderRound('FLAG-B', 'GB');
 
@@ -123,23 +158,28 @@ describe('RoundScreen · names with their article (DATA-09)', () => {
   });
 
   it.each([
-    ['es', 'Para repasar', 'Reino Unido'],
-    ['en', 'To review', 'United Kingdom'],
-  ])('DATA-09 RND-08 SET-01 in "%s", "%s" lists the name alone: "%s"', (language, list, name) => {
-    localStorage.setItem('miatlas67.language', language);
-    let state = startRound([questionAbout('GB')]);
-    state = next(answer(state, 'FR'));
-    renderWithI18n(
-      <SummaryScreen
-        game={playableGame('FLAG-A')}
-        settings={SETTINGS}
-        result={roundResult(state)}
-        onPlayAgain={vi.fn()}
-        onMenu={vi.fn()}
-      />,
-    );
+    ['es', 'Para repasar', 'GB', 'Reino Unido'],
+    ['en', 'To review', 'GB', 'United Kingdom'],
+    ['es', 'Para repasar', 'NL', 'Países Bajos'],
+    ['en', 'To review', 'NL', 'Netherlands'],
+  ])(
+    'DATA-09 RND-08 SET-01 in "%s", "%s" lists %s by the name alone: "%s"',
+    (language, list, code, name) => {
+      localStorage.setItem('miatlas67.language', language);
+      let state = startRound([questionAbout(code)]);
+      state = next(answer(state, 'FR'));
+      renderWithI18n(
+        <SummaryScreen
+          game={playableGame('FLAG-A')}
+          settings={SETTINGS}
+          result={roundResult(state)}
+          onPlayAgain={vi.fn()}
+          onMenu={vi.fn()}
+        />,
+      );
 
-    const missed = within(screen.getByRole('list', { name: list })).getAllByRole('listitem');
-    expect(missed.map((item) => item.textContent)).toEqual([name]);
-  });
+      const missed = within(screen.getByRole('list', { name: list })).getAllByRole('listitem');
+      expect(missed.map((item) => item.textContent)).toEqual([name]);
+    },
+  );
 });

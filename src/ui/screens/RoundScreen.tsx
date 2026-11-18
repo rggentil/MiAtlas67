@@ -13,7 +13,7 @@ import {
   type RoundResult,
 } from '../../domain/round.ts';
 import { useI18n } from '../../i18n/context.ts';
-import { nameInSentence, ofName, ofWords } from '../../i18n/names.ts';
+import { nameInSentence, ofName, ofWords, wasWords } from '../../i18n/names.ts';
 import { useOnBack } from '../navigation/useOnBack.ts';
 import { Button } from '../components/Button.tsx';
 import { Chip } from '../components/Chip.tsx';
@@ -330,7 +330,10 @@ function Feedback({ game, question, chosen, nextRef, onNext }: FeedbackProps) {
   // Both keep the article the name takes (DATA-09): «Era el Reino Unido», «La bandera del Reino Unido».
   const miss =
     game.direction === 'A'
-      ? t('round.wrong', { name: nameInSentence(question.entity, language) })
+      ? t('round.wrong', {
+          was: wasWords(question.entity, language),
+          name: nameInSentence(question.entity, language),
+        })
       : t('round.wrongFlag', { ofName: ofName(question.entity, language) });
 
   return (

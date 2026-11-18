@@ -105,7 +105,9 @@ describe('countries dataset', () => {
 
     expect(withArticle('es', 'el')).toEqual(['GB', 'LB']);
     expect(withArticle('es', 'la')).toEqual(['CD', 'CF', 'CG', 'DO']);
-    expect(countries.filter((c) => c.article?.es !== undefined)).toHaveLength(6);
+    // Países Bajos follows the RAE; the other plural names go without an article (D18, v1.7).
+    expect(withArticle('es', 'los')).toEqual(['NL']);
+    expect(countries.filter((c) => c.article?.es !== undefined)).toHaveLength(7);
     expect(withArticle('en', 'the')).toEqual(
       [
         'AE',
