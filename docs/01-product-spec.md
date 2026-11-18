@@ -1,6 +1,6 @@
 # MiAtlas67 — Product Specification
 
-> **Status: APPROVED v1.8** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
+> **Status: APPROVED v1.9** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
 > [§18 Change log](#18-change-log).
 > Last updated: 2026-11-18
 
@@ -130,6 +130,8 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 - **RND-07** The player can quit a round (with confirmation). Quit rounds are not saved in the history.
 - **RND-08** End-of-round summary: score, stars, "new personal best" and "level unlocked" indicators, the list of
   missed entities with their correct answers (the learning moment), and the buttons "Jugar otra vez" and "Menú".
+  "¡Nuevo récord!" shows when the score beats the player's best one in that game, region and level. A tie does
+  not, and neither does the first round there, which has nothing to beat (D23).
 
 ## 9. Scoring and stars
 
@@ -141,8 +143,10 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 
 - **PRF-01** On launch, a "¿Quién juega?" screen shows the existing profiles; tap one to select it.
   The last used profile is highlighted.
-- **PRF-02** Create profile: nickname (1–12 characters, unique on the device) + avatar from a predefined
-  set. No password, email, age or real name required.
+- **PRF-02** Create profile: nickname (1–12 letters, unique on the device) + avatar from a predefined
+  set of 11 animals (D21). No password, email, age or real name required. Two nicknames that differ only in
+  capitals, accents or spaces at both ends count as the same ("lucia" = "Lucía"). Two profiles may have the same
+  avatar (D21).
 - **PRF-03** Switch profile at any time from the main menu.
 - **PRF-04** Edit nickname/avatar; delete a profile (with confirmation; this deletes its history).
 - **PRF-05** Maximum 8 profiles per device.
@@ -180,7 +184,8 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
   (e.g. Rusia → Europa, Turquía → Asia, Egipto → África, Groenlandia → América), documented in the data.
   Extended entities belong to the region where they are located (e.g. Puntland → África, Bonaire → América).
 - **DATA-05** All data is bundled with the app (no runtime API calls). It uses openly licensed sources, which are
-  listed on an "Acerca de" screen (flags: *flag-icons*, MIT; shapes: *Natural Earth*, public domain).
+  listed on an "Acerca de" screen (flags: *flag-icons*, MIT; shapes: *Natural Earth*, public domain; avatars:
+  *OpenMoji*, CC BY-SA 4.0).
   Flags missing from *flag-icons* (e.g. Abjasia, Puntland), or shown there differently from the flag in de facto
   use (Afganistán, D13), come from *Wikimedia Commons*; the source and licence of each such file are recorded in
   the data.
@@ -233,8 +238,9 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 - **NAV-01** The phone's back button (or back gesture, or the browser's Back) goes back inside the game. It does
   what the screen's own way back does: a setup step goes to the previous step or home ("Volver"), a round asks
   "¿Salir de la partida?" first (RND-07) and Back again closes that question, the summary goes home ("Menú").
-  Only the home screen is left by Back, and it asks first (NAV-02, D19).
-- **NAV-02** On the home screen, Back asks "¿Salir del juego?" with "Pulsa atrás otra vez para salir." and one
+  Creating a player goes back to "¿Quién juega?", and so does the home screen (D22). Only "¿Quién juega?" is
+  left by Back, and it asks first (NAV-02, D19).
+- **NAV-02** On "¿Quién juega?", Back asks "¿Salir del juego?" with "Pulsa atrás otra vez para salir." and one
   button, "Seguir jugando", which closes the question. Back again leaves the game. There is no "Sí, salir": a web
   page cannot close itself, and when the game was opened from the phone's home screen or in a new tab there is no
   page before it to go to. While the question is open, only "Seguir jugando" keeps the player in the game: a tap
@@ -281,11 +287,20 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 | D18 | Names with an article | ✅ Sentences use the article a name takes (DATA-09). Reviewed in a [review page](https://claude.ai/artifact/5gzVsZBQpAhGjhhjWPSj4P) (story #52); Países Bajos changed in v1.7 (story #58). Spanish: «el» Reino Unido and Líbano; «la» República Dominicana, República Centroafricana, República del Congo and República Democrática del Congo; «los» Países Bajos, where the product owner follows the RAE («de los Países Bajos», «¡Uy! Eran los Países Bajos»). Every other name goes without one: the other plural names too («de Bahamas», «de Islas Marshall»), and Estados Unidos, India, Ciudad del Vaticano and the South American countries («de Perú», «de Argentina»). English: «the» United Kingdom, United States, Netherlands, United Arab Emirates, Philippines, Bahamas, Gambia, Maldives, Marshall Islands, Solomon Islands, Comoros, Central African Republic, Dominican Republic, Democratic Republic of the Congo and Republic of the Congo. For the other plural names this choice takes precedence over the RAE usage of DATA-02 |
 | D19 | Back button | ✅ The phone's back button goes back inside the game instead of leaving it (NAV-01, story #51) |
 | D20 | Leaving from the home screen | ✅ Back on the home screen asks "¿Salir del juego?" first; Back again leaves (NAV-02, story #55). Chosen over a "Sí, salir" button, which could not leave when there is no page before the game, and over an Android-style notice at the bottom. Escape closes the question too, like "¿Salir de la partida?"; Escape is not a tap for the browser, so after it Back leaves without asking until the next tap |
+| D21 | Avatars | ✅ 11 animals drawn by *OpenMoji* (CC BY-SA 4.0, credited on "Acerca de", DATA-05), chosen in the [review page](https://claude.ai/artifact/PzZrMTSrdtRNzHJMXRv3hi) over the flat *Fluent Emoji* style, because their black outline matches «Bloques»: Zorro, Panda, Rana, León, Pingüino, Pulpo, Unicornio, Dinosaurio, Gato, Perro and Búho. Two players may have the same avatar: the nickname tells them apart, and nobody loses their favourite animal (PRF-02) |
+| D22 | Back on the home screen | ✅ The game opens on "¿Quién juega?", so Back on the home screen goes there, and "¿Quién juega?" is the screen that asks "¿Salir del juego?" (NAV-01, NAV-02, story #61). Back always goes to the screen before. This moves the question of D20 to another screen; the rest of D20 stays |
+| D23 | "¡Nuevo récord!" | ✅ Only when a round beats the player's best score in the same game, region and level. A tie is not a record, and neither is the first round there: it would show very often at first, with 36 combinations in "Banderas" alone (RND-08, story #66) |
+| D24 | Devices | ⏳ The family plays on Android and on iPhone. Safari on iPhone and iPad deletes the data of a website after 7 days of Safari use without opening it, so players and history would be lost; a game added to the home screen keeps them (NFR-02, planned for epic 7). Open: whether to bring that part forward |
 
-No open questions.
+Open: D24.
 
 ## 18. Change log
 
+- **v1.9** (2026-11-18): decisions of the epic 4 review page: the avatars are 11 OpenMoji animals, and two
+  players may share one (PRF-02, DATA-05, D21) · Back on the home screen goes to "¿Quién juega?", which now asks
+  "¿Salir del juego?" (NAV-01, NAV-02, D22) · "¡Nuevo récord!" only when a previous best is beaten (RND-08, D23) ·
+  the family plays on Android and iPhone, so the home screen install may come earlier (D24, open). PRF-02 counts
+  the nickname in letters and says when two nicknames are the same.
 - **v1.8** (2026-11-18): HIS-01 says that the score is kept with its number of questions (8/10), as the summary
   shows it.
 - **v1.7** (2026-11-18): Países Bajos follows the RAE: «de los Países Bajos», «¡Uy! Eran los Países Bajos»

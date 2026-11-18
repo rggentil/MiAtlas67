@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { countries } from '../data/countries.ts';
@@ -7,7 +7,7 @@ import { generateRound, type Question, type RoundSettings } from '../domain/ques
 import { createRng } from '../domain/random.ts';
 import { ofName } from '../i18n/names.ts';
 import { flagFile } from '../test/flags.ts';
-import { App } from './App.tsx';
+import { renderAppAsLucia } from '../test/app.tsx';
 
 const SETTINGS: RoundSettings = { topic: 'flags', region: 'europe', level: 1 };
 
@@ -51,7 +51,7 @@ describe('App · round summary', () => {
 
   it('RND-08 after the 10th answer the summary appears; "Jugar otra vez" starts a new round of Europa · Fácil', async () => {
     const [first, second] = firstTwoRounds();
-    render(<App />);
+    await renderAppAsLucia();
     await startFlagsRound();
 
     await play(first, [2, 5]);
@@ -79,7 +79,7 @@ describe('App · round summary', () => {
 
   it('RND-08 "Menú" on the summary goes back to the home screen', async () => {
     const [first] = firstTwoRounds();
-    render(<App />);
+    await renderAppAsLucia();
     await startFlagsRound();
     await play(first, []);
 
@@ -91,7 +91,7 @@ describe('App · round summary', () => {
 
   it('RND-08 FLAG-B "Jugar otra vez" after a "País → Bandera" round starts FLAG-B again', async () => {
     const [first, second] = firstTwoRounds();
-    render(<App />);
+    await renderAppAsLucia();
     await startFlagsRound(/^País → Bandera/);
 
     for (const question of first) {

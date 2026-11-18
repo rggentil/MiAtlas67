@@ -1,20 +1,53 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import type { Player } from '../../storage/store.ts';
 import type { PlayableGame } from '../games.ts';
 import { renderWithI18n } from '../../test/render.tsx';
 import { HomeScreen } from './HomeScreen.tsx';
 
 const SOON_GAMES = ['País → Capital', 'Capital → País', 'Silueta → País', 'País → Silueta'];
 
+const LUCIA: Player = { id: 1, nickname: 'Lucía', avatar: 'fox' };
+
 /** A game button, found by the start of its name: "Bandera → País ¿De qué país es?". */
 function game(name: string): HTMLElement {
   return screen.getByRole('button', { name: (accessibleName) => accessibleName.startsWith(name) });
 }
 
+function renderHome(onOpenGame: (game: PlayableGame) => void = vi.fn(), player = LUCIA) {
+  renderWithI18n(<HomeScreen player={player} onOpenGame={onOpenGame} onBack={vi.fn()} />);
+}
+
 describe('HomeScreen', () => {
+  it('PRF-01 shows who plays: the nickname and the avatar, named after its animal', () => {
+    renderHome();
+
+    const player = screen.getByRole('group', { name: 'Jugador' });
+    expect(player).toHaveTextContent('Lucía');
+    expect(within(player).getByRole('img', { name: 'Zorro' })).toBeVisible();
+  });
+
+  it('PRF-01 NFR-06 says who plays in English too', async () => {
+    renderHome(vi.fn(), { id: 2, nickname: 'Pablo', avatar: 'owl' });
+
+    await userEvent.click(screen.getByRole('radio', { name: 'English' }));
+
+    const player = screen.getByRole('group', { name: 'Player' });
+    expect(player).toHaveTextContent('Pablo');
+    expect(within(player).getByRole('img', { name: 'Owl' })).toBeVisible();
+  });
+
+  it('PRF-02 a player saved with an avatar that is no longer offered shows the first one', () => {
+    renderHome(vi.fn(), { id: 3, nickname: 'Ana', avatar: 'turtle' });
+
+    expect(
+      within(screen.getByRole('group', { name: 'Jugador' })).getByRole('img', { name: 'Zorro' }),
+    ).toBeVisible();
+  });
+
   it('GAME-01 shows the topics Banderas, Capitales and Siluetas, each with its two games', () => {
-    renderWithI18n(<HomeScreen onOpenGame={vi.fn()} />);
+    renderHome();
 
     expect(screen.getByRole('heading', { level: 1, name: '¿A qué jugamos?' })).toBeVisible();
     const topics = screen.getAllByRole('region');
@@ -36,7 +69,7 @@ describe('HomeScreen', () => {
   });
 
   it('GAME-01 names each game by its direction and its question', () => {
-    renderWithI18n(<HomeScreen onOpenGame={vi.fn()} />);
+    renderHome();
 
     expect(screen.getByRole('button', { name: 'Bandera → País ¿De qué país es?' })).toBeEnabled();
     expect(
@@ -46,7 +79,7 @@ describe('HomeScreen', () => {
 
   it('GAME-01 both Flags games can be opened', async () => {
     const onOpenGame = vi.fn<(game: PlayableGame) => void>();
-    renderWithI18n(<HomeScreen onOpenGame={onOpenGame} />);
+    renderHome(onOpenGame);
 
     await userEvent.click(game('Bandera → País'));
     await userEvent.click(game('País → Bandera'));
@@ -56,7 +89,7 @@ describe('HomeScreen', () => {
 
   it('GAME-01 the Capitals and Shapes games show "Pronto" and cannot be opened', async () => {
     const onOpenGame = vi.fn();
-    renderWithI18n(<HomeScreen onOpenGame={onOpenGame} />);
+    renderHome(onOpenGame);
 
     for (const name of SOON_GAMES) {
       const soon = game(name);
@@ -69,7 +102,7 @@ describe('HomeScreen', () => {
   });
 
   it('GAME-01 the home screen speaks English when English is chosen', async () => {
-    renderWithI18n(<HomeScreen onOpenGame={vi.fn()} />);
+    renderHome();
 
     await userEvent.click(screen.getByRole('radio', { name: 'English' }));
 

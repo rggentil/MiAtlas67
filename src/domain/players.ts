@@ -4,6 +4,36 @@ export const MAX_PLAYERS = 8;
 /** A nickname has 1 to 12 letters (PRF-02). */
 export const MAX_NICKNAME_LETTERS = 12;
 
+/** The avatars a player can choose, in the order they are offered: 11 animals (PRF-02, D21). */
+export const AVATARS = [
+  'fox',
+  'panda',
+  'frog',
+  'lion',
+  'penguin',
+  'octopus',
+  'unicorn',
+  'trex',
+  'cat',
+  'dog',
+  'owl',
+] as const;
+
+export type AvatarId = (typeof AVATARS)[number];
+
+/** Whether a stored avatar is one of the set: a player saved by an older version may have another one. */
+export function isAvatar(avatar: string): avatar is AvatarId {
+  return (AVATARS as readonly string[]).includes(avatar);
+}
+
+/**
+ * The avatar a new player starts with: the first one nobody has yet, so that two players do not look alike
+ * unless they choose to (D21 allows it). When every avatar is taken, the first one.
+ */
+export function firstFreeAvatar(taken: readonly string[]): AvatarId {
+  return AVATARS.find((avatar) => !taken.includes(avatar)) ?? AVATARS[0];
+}
+
 /** Why a nickname cannot be used: the screen says it in the player's language. */
 export type NicknameProblem = 'empty' | 'tooLong' | 'taken';
 

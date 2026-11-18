@@ -39,7 +39,8 @@ test.describe('Language', { tag: '@SET-01' }, () => {
 
     await page.reload();
 
-    await expect(home.heading).toHaveText('What shall we play?');
+    // The game opens again on «¿Quién juega?» (PRF-01), already in English.
+    await expect(home.heading).toHaveText("Who's playing?");
     await expect(home.languageOption('English')).toBeChecked();
   });
 

@@ -2,6 +2,8 @@ import { expectedRounds } from './expected.ts';
 import { expect, test } from './fixtures.ts';
 import { GameSetupPage } from './pages/GameSetupPage.ts';
 import { HomePage } from './pages/HomePage.ts';
+import { NewPlayerPage } from './pages/NewPlayerPage.ts';
+import { PlayersPage } from './pages/PlayersPage.ts';
 import { RoundPage } from './pages/RoundPage.ts';
 import { SummaryPage } from './pages/SummaryPage.ts';
 
@@ -12,44 +14,43 @@ const [FIRST_ROUND = []] = expectedRounds({ topic: 'flags', region: 'europe', le
 const GAME_ADDRESS = /\/\?seed=42$/;
 const PAGE_BEFORE = /\/\?before$/;
 
-test.describe('Back on the home screen asks before leaving the game', () => {
-  let home: HomePage;
-  let setup: GameSetupPage;
+test.describe('Back on «¿Quién juega?» asks before leaving the game', () => {
+  let players: PlayersPage;
+  let newPlayer: NewPlayerPage;
 
   test.beforeEach(async ({ page }) => {
-    home = new HomePage(page);
-    setup = new GameSetupPage(page);
+    players = new PlayersPage(page);
+    newPlayer = new NewPlayerPage(page);
     // A page before the game, so that leaving it with Back can be seen.
     await page.goto('/?before');
-    await home.goto('?seed=42');
-    await expect(home.heading).toHaveText('¿A qué jugamos?');
+    await players.goto('?seed=42');
   });
 
-  /** A tap in the game: open "Bandera → País" and come back with "Volver". */
+  /** A tap in the game: open "Nuevo jugador" and come back with "Volver". */
   async function tapAround(): Promise<void> {
-    await home.openGame('Bandera → País');
-    await setup.backButton.click();
-    await expect(home.heading).toHaveText('¿A qué jugamos?');
-    await home.onlyHomeEntryLeft();
-    // Going home does not open the question by itself: only the player's Back does.
-    await expect(home.exitDialog).toBeHidden();
+    await players.newPlayerButton.click();
+    await newPlayer.backButton.click();
+    await expect(players.heading).toHaveText('¿Quién juega?');
+    await players.onlyOwnEntryLeft();
+    // Coming back does not open the question by itself: only the player's Back does.
+    await expect(players.exitDialog).toBeHidden();
   }
 
   test(
-    'NAV-02 after a tap, Back on the home screen asks "¿Salir del juego?" and stays in the game',
+    'NAV-02 after a tap, Back on «¿Quién juega?» asks "¿Salir del juego?" and stays in the game',
     { tag: '@NAV-02' },
     async ({ page, makeAxeBuilder }) => {
       await tapAround();
 
       await page.goBack();
 
-      await expect(home.exitDialog).toBeVisible();
-      await expect(home.exitDialog).toContainText('Pulsa atrás otra vez para salir.');
+      await expect(players.exitDialog).toBeVisible();
+      await expect(players.exitDialog).toContainText('Pulsa atrás otra vez para salir.');
       // One button only: a web page cannot close itself, so there is no "Sí, salir" (D20).
-      await expect(home.exitDialog.getByRole('button')).toHaveText(['Seguir jugando']);
-      await expect(home.exitStayButton).toBeFocused();
+      await expect(players.exitDialog.getByRole('button')).toHaveText(['Seguir jugando']);
+      await expect(players.exitStayButton).toBeFocused();
       await expect(page).toHaveURL(GAME_ADDRESS);
-      const box = await home.exitStayButton.boundingBox();
+      const box = await players.exitStayButton.boundingBox();
       expect(box?.width).toBeGreaterThanOrEqual(48);
       expect(box?.height).toBeGreaterThanOrEqual(48);
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
@@ -62,7 +63,7 @@ test.describe('Back on the home screen asks before leaving the game', () => {
     async ({ page }) => {
       await tapAround();
       await page.goBack();
-      await expect(home.exitDialog).toBeVisible();
+      await expect(players.exitDialog).toBeVisible();
 
       await page.goBack();
 
@@ -76,7 +77,7 @@ test.describe('Back on the home screen asks before leaving the game', () => {
     async ({ page }) => {
       await tapAround();
       await page.goBack();
-      await expect(home.exitStayButton).toBeFocused();
+      await expect(players.exitStayButton).toBeFocused();
 
       for (let press = 0; press < 4; press++) {
         await page.keyboard.press('Tab');
@@ -86,8 +87,8 @@ test.describe('Back on the home screen asks before leaving the game', () => {
         });
         expect(outside).toBe(false);
       }
-      await home.exitDialog.getByText('Pulsa atrás otra vez para salir.').click();
-      await expect(home.exitDialog).toBeVisible();
+      await players.exitDialog.getByText('Pulsa atrás otra vez para salir.').click();
+      await expect(players.exitDialog).toBeVisible();
 
       // As the question says: Back again leaves, whatever was tapped in it.
       await page.goBack();
@@ -102,34 +103,64 @@ test.describe('Back on the home screen asks before leaving the game', () => {
       await tapAround();
       await page.goBack();
 
-      await home.exitStayButton.click();
+      await players.exitStayButton.click();
 
-      await expect(home.exitDialog).toBeHidden();
-      await expect(home.heading).toBeFocused();
+      await expect(players.exitDialog).toBeHidden();
+      await expect(players.heading).toBeFocused();
       await page.goBack();
-      await expect(home.exitDialog).toBeVisible();
+      await expect(players.exitDialog).toBeVisible();
       await expect(page).toHaveURL(GAME_ADDRESS);
     },
   );
 
   test(
-    'NAV-02 NAV-01 after "Menú", Back asks first, and no finished round comes back',
+    'NAV-01 NAV-02 Back on the home screen goes to «¿Quién juega?», and Back again asks "¿Salir del juego?" (D22)',
+    { tag: ['@NAV-01', '@NAV-02'] },
+    async ({ page }) => {
+      const home = new HomePage(page);
+      await players.newPlayerButton.click();
+      await newPlayer.create('Lucía', 'Zorro');
+      await expect(home.heading).toHaveText('¿A qué jugamos?');
+
+      await page.goBack();
+      await expect(players.heading).toHaveText('¿Quién juega?');
+      await expect(players.exitDialog).toBeHidden();
+      await expect(players.player('Lucía')).toBeVisible();
+
+      await page.goBack();
+      await expect(players.exitDialog).toBeVisible();
+      await expect(page).toHaveURL(GAME_ADDRESS);
+
+      await page.goBack();
+      await expect(page).toHaveURL(PAGE_BEFORE);
+    },
+  );
+
+  test(
+    'NAV-02 NAV-01 after "Menú", Back goes to «¿Quién juega?» and then asks first, and no finished round comes back',
     { tag: ['@NAV-02', '@NAV-01'] },
     async ({ page }) => {
+      const home = new HomePage(page);
+      const setup = new GameSetupPage(page);
       const round = new RoundPage(page);
       const summary = new SummaryPage(page);
+      await players.newPlayerButton.click();
+      await newPlayer.create('Lucía', 'Zorro');
       await home.openGame('Bandera → País');
       await setup.chooseRegion('Europa');
       await setup.chooseLevel('Fácil');
       await round.playRound(FIRST_ROUND, []);
       await summary.menuButton.click();
       await expect(home.heading).toHaveText('¿A qué jugamos?');
-      await home.onlyHomeEntryLeft();
-      await expect(home.exitDialog).toBeHidden();
 
       await page.goBack();
-      await expect(home.exitDialog).toBeVisible();
-      await expect(home.heading).toHaveText('¿A qué jugamos?');
+      await expect(players.heading).toHaveText('¿Quién juega?');
+      await players.onlyOwnEntryLeft();
+      await expect(players.exitDialog).toBeHidden();
+
+      await page.goBack();
+      await expect(players.exitDialog).toBeVisible();
+      await expect(players.heading).toHaveText('¿Quién juega?');
 
       await page.goBack();
       await expect(page).toHaveURL(PAGE_BEFORE);
@@ -150,12 +181,12 @@ test.describe('Back on the home screen asks before leaving the game', () => {
     'NAV-02 SET-01 in English: "Leave the game?", "Press Back again to leave." and "Keep playing"',
     { tag: ['@NAV-02', '@SET-01'] },
     async ({ page }) => {
-      await home.chooseLanguage('English');
-      await expect(home.heading).toHaveText('What shall we play?');
+      await page.getByText('English', { exact: true }).click();
+      await expect(players.heading).toHaveText("Who's playing?");
 
       await page.goBack();
 
-      const dialog = home.exitDialogNamed('Leave the game?');
+      const dialog = players.exitDialogNamed('Leave the game?');
       await expect(dialog).toBeVisible();
       await expect(dialog).toContainText('Press Back again to leave.');
       await expect(dialog.getByRole('button')).toHaveText(['Keep playing']);

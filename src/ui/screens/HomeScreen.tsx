@@ -1,18 +1,22 @@
-import { useEffect, useId, useRef, useState, type ComponentType } from 'react';
+import { useId, type ComponentType } from 'react';
 import { GAME_TOPICS, gamesOfTopic, type Game, type GameTopic } from '../../domain/games.ts';
 import { useI18n } from '../../i18n/context.ts';
-import { ExitDialog } from '../components/ExitDialog.tsx';
+import type { Player } from '../../storage/store.ts';
+import { AvatarImage } from '../components/AvatarImage.tsx';
 import { CapitalIcon, FlagIcon, ShapeIcon } from '../components/icons.tsx';
 import { LanguageSwitch } from '../components/LanguageSwitch.tsx';
 import { Logo } from '../components/Logo.tsx';
 import { ScreenTitle } from '../components/ScreenTitle.tsx';
 import { toneClasses } from '../components/tones.ts';
 import { isPlayable, type PlayableGame } from '../games.ts';
-import { useHoldEntries } from '../navigation/useHoldEntries.ts';
 import { useOnBack } from '../navigation/useOnBack.ts';
 
 interface HomeScreenProps {
+  /** Who plays (PRF-01). */
+  player: Player;
   onOpenGame: (game: PlayableGame) => void;
+  /** The phone's back button: back to "¿Quién juega?" (NAV-01, D22). */
+  onBack: () => void;
 }
 
 const TOPIC_ICONS: Record<GameTopic, ComponentType<{ size?: number }>> = {
@@ -22,61 +26,53 @@ const TOPIC_ICONS: Record<GameTopic, ComponentType<{ size?: number }>> = {
 };
 
 /**
- * Home screen: the six games grouped by topic (GAME-01). Back asks "¿Salir del juego?" first, and Back
- * again leaves the game (NAV-02).
+ * Home screen: who plays, and the six games grouped by topic (GAME-01). Back goes to "¿Quién juega?" (D22).
  */
-export function HomeScreen({ onOpenGame }: HomeScreenProps) {
+export function HomeScreen({ player, onOpenGame, onBack }: HomeScreenProps) {
   const { t } = useI18n();
-  const titleId = useId();
-  const [exiting, setExiting] = useState(false);
-  // Closing the question gives the focus back to the title, once the page is no longer inert: focus() on
-  // inert content does nothing.
-  const backFromDialog = useRef(false);
 
-  useOnBack(() => {
-    setExiting(true);
-  });
-  // With the question open, Back always leaves: only "Seguir jugando" brings the entry back.
-  useHoldEntries(exiting);
-
-  useEffect(() => {
-    if (exiting || !backFromDialog.current) return;
-    backFromDialog.current = false;
-    document.getElementById(titleId)?.focus();
-  }, [exiting, titleId]);
-
-  function stay() {
-    backFromDialog.current = true;
-    setExiting(false);
-  }
+  useOnBack(onBack);
 
   return (
-    <>
-      <div
-        inert={exiting}
-        className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 px-4 pt-5 pb-6"
-      >
-        <header>
-          <Logo />
-        </header>
-        <main className="flex flex-col gap-4">
-          <ScreenTitle id={titleId} className="mt-2 text-3xl">
-            {t('home.title')}
-          </ScreenTitle>
-          {GAME_TOPICS.map((topic) => (
-            <TopicSection key={topic} topic={topic} onOpenGame={onOpenGame} />
-          ))}
-        </main>
-        <footer className="mt-auto pt-4 text-center">
-          <LanguageSwitch />
-        </footer>
-      </div>
-      {exiting && <ExitDialog onStay={stay} />}
-    </>
+    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 px-4 pt-5 pb-6">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <Logo />
+        <CurrentPlayer player={player} />
+      </header>
+      <main className="flex flex-col gap-4">
+        <ScreenTitle className="mt-2 text-3xl">{t('home.title')}</ScreenTitle>
+        {GAME_TOPICS.map((topic) => (
+          <TopicSection key={topic} topic={topic} onOpenGame={onOpenGame} />
+        ))}
+      </main>
+      <footer className="mt-auto pt-4 text-center">
+        <LanguageSwitch />
+      </footer>
+    </div>
   );
 }
 
-function TopicSection({ topic, onOpenGame }: { topic: GameTopic } & HomeScreenProps) {
+/** Who plays: the avatar, named after its animal, and the nickname. */
+function CurrentPlayer({ player }: { player: Player }) {
+  const { t } = useI18n();
+
+  return (
+    <div
+      role="group"
+      aria-label={t('player.current')}
+      className="flex min-w-0 items-center gap-2 rounded-full border-3 border-ink bg-paper py-1 pr-4 pl-1 shadow-block-sm"
+    >
+      <AvatarImage avatar={player.avatar} size={36} />
+      <span className="min-w-0 font-display text-xl leading-tight break-words">
+        {player.nickname}
+      </span>
+    </div>
+  );
+}
+
+type GameOpener = Pick<HomeScreenProps, 'onOpenGame'>;
+
+function TopicSection({ topic, onOpenGame }: { topic: GameTopic } & GameOpener) {
   const { t } = useI18n();
   const headingId = useId();
   const Icon = TOPIC_ICONS[topic];
@@ -107,7 +103,7 @@ function TopicSection({ topic, onOpenGame }: { topic: GameTopic } & HomeScreenPr
  * A game: its direction ("Bandera → País") and its question. The accessible name is the whole visible
  * text, "Pronto" included, so it matches what is on screen (WCAG 2.5.3).
  */
-function GameButton({ game, onOpenGame }: { game: Game } & HomeScreenProps) {
+function GameButton({ game, onOpenGame }: { game: Game } & GameOpener) {
   const { t } = useI18n();
   const playable = isPlayable(game);
 

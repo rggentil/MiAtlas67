@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  AVATARS,
   canAddPlayer,
   cleanNickname,
+  firstFreeAvatar,
+  isAvatar,
   MAX_NICKNAME_LETTERS,
   MAX_PLAYERS,
   nicknameLetters,
@@ -62,5 +65,39 @@ describe('number of players', () => {
     expect(canAddPlayer(0)).toBe(true);
     expect(canAddPlayer(7)).toBe(true);
     expect(canAddPlayer(8)).toBe(false);
+  });
+});
+
+describe('avatars', () => {
+  it('PRF-02 a player chooses one of 11 animals', () => {
+    expect(AVATARS).toEqual([
+      'fox',
+      'panda',
+      'frog',
+      'lion',
+      'penguin',
+      'octopus',
+      'unicorn',
+      'trex',
+      'cat',
+      'dog',
+      'owl',
+    ]);
+  });
+
+  it('PRF-02 knows the avatars of the set, and no other', () => {
+    expect(isAvatar('fox')).toBe(true);
+    expect(isAvatar('turtle')).toBe(false);
+    expect(isAvatar('')).toBe(false);
+  });
+
+  it('PRF-02 a new player starts with the first avatar nobody has yet', () => {
+    expect(firstFreeAvatar([])).toBe('fox');
+    expect(firstFreeAvatar(['fox', 'panda'])).toBe('frog');
+    expect(firstFreeAvatar(['panda'])).toBe('fox');
+  });
+
+  it('PRF-02 when every avatar is taken, a new player starts with the first one (two players may share it)', () => {
+    expect(firstFreeAvatar(AVATARS)).toBe('fox');
   });
 });

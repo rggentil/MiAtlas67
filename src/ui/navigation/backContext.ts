@@ -17,10 +17,14 @@ export const BackContext = createContext<BackControls>({
 });
 
 /**
- * How many history entries of its own the game keeps above the page while away from home: Back can be
- * pressed this many times in a row (e.g. in a round: ask, close the question, ask again) before it leaves.
+ * How many history entries of its own the game keeps above the page while away from the first screen,
+ * "¿Quién juega?": Back can be pressed this many times in a row (e.g. in a round: ask, close the question,
+ * ask again) before it leaves.
  */
 export const GAME_ENTRIES = 3;
 
-/** On the home screen the game keeps one: Back asks "¿Salir del juego?", and Back again leaves (NAV-02). */
-export const HOME_ENTRIES = 1;
+/**
+ * On the first screen, "¿Quién juega?", the game keeps one: Back asks "¿Salir del juego?", and Back again
+ * leaves (NAV-02, D22).
+ */
+export const FIRST_SCREEN_ENTRIES = 1;
