@@ -197,6 +197,47 @@ describe('App · history of the rounds played (HIS-01, HIS-02, RND-07)', () => {
     expect(entries[0]).toHaveTextContent('10/10');
   }, 30_000);
 
+  it('HIS-02 "Historial" waits for a round that is still being saved, so it is always listed', async () => {
+    const [round] = firstTwoRounds();
+    const store = await deviceWith();
+    const save = store.rounds.add.bind(store.rounds);
+    let finishSaving: () => void = () => undefined;
+    store.rounds.add = (data) =>
+      new Promise((resolve) => {
+        finishSaving = () => {
+          resolve(save(data));
+        };
+      });
+    await renderApp(store);
+    await userEvent.click(screen.getByRole('button', { name: 'Lucía' }));
+    await startRound('Bandera → País');
+    await play('FLAG-A', round);
+    await userEvent.click(screen.getByRole('button', { name: 'Menú' }));
+
+    await userEvent.click(screen.getByRole('button', { name: 'Historial' }));
+    expect(screen.queryByText('Todavía no hay partidas.')).not.toBeInTheDocument();
+    finishSaving();
+
+    const list = await screen.findByRole('list', { name: 'Partidas' });
+    expect(within(list).getAllByRole('listitem')).toHaveLength(1);
+  }, 30_000);
+
+  it('HIS-01 when a round cannot be saved, the summary still shows and the game goes on', async () => {
+    const [round] = firstTwoRounds();
+    const store = await deviceWith();
+    store.rounds.add = () => Promise.reject(new Error('Storage is full'));
+    await renderApp(store);
+    await userEvent.click(screen.getByRole('button', { name: 'Lucía' }));
+    await startRound('Bandera → País');
+
+    await play('FLAG-A', round);
+
+    expect(heading()).toHaveTextContent('¡Perfecto!');
+    await userEvent.click(screen.getByRole('button', { name: 'Menú' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Historial' }));
+    expect(await screen.findByText('Todavía no hay partidas.')).toBeVisible();
+  }, 30_000);
+
   it('NAV-01 "Volver" and the back button go from "Historial" to the home screen', async () => {
     await renderAppAsLucia();
     await userEvent.click(screen.getByRole('button', { name: 'Historial' }));

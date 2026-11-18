@@ -69,7 +69,7 @@ describe('HistoryScreen', () => {
     );
   });
 
-  it('HIS-02 lists the rounds in the order of the store: newest first', async () => {
+  it('HIS-02 keeps the order the store gives, which is newest first', async () => {
     renderHistory();
 
     const entries = await listed();
@@ -131,6 +131,30 @@ describe('HistoryScreen', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Historial' })).toBeVisible();
     expect(screen.queryByText('Todavía no hay partidas.')).not.toBeInTheDocument();
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
+  });
+
+  it.each([0, 1, 2, 3] as const)(
+    'HIS-01 a round with %i stars draws them and says "%i de 3 estrellas"',
+    async (stars) => {
+      const [first] = ROUNDS;
+      if (!first) throw new Error('No round');
+      renderHistory([{ ...first, stars }]);
+
+      const rating = await screen.findByRole('img', { name: `${String(stars)} de 3 estrellas` });
+      const drawn = [...rating.querySelectorAll('svg')].map((star) => star.dataset.filled);
+      expect(drawn).toEqual([1, 2, 3].map((star) => String(star <= stars)));
+    },
+  );
+
+  it('HIS-02 when the rounds cannot be read, it says there are no rounds instead of staying blank', async () => {
+    renderWithI18n(
+      <HistoryScreen
+        loadRounds={() => Promise.reject(new Error('Storage is blocked'))}
+        onBack={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText('Todavía no hay partidas.')).toBeVisible();
   });
 
   it('NAV-01 "Volver" goes back', async () => {

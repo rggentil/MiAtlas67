@@ -36,9 +36,12 @@ export function HistoryScreen({ loadRounds, onBack }: HistoryScreenProps) {
 
   useEffect(() => {
     let live = true;
-    void loadRounds().then((loaded) => {
-      if (live) setRounds(loaded);
-    });
+    // When the rounds cannot be read, the screen says there are none rather than staying blank.
+    void loadRounds()
+      .catch(() => [])
+      .then((loaded) => {
+        if (live) setRounds(loaded);
+      });
     return () => {
       live = false;
     };

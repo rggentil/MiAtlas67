@@ -1,4 +1,4 @@
-import { savedPlayerId, savedRoundsOf, saveRounds } from './device.ts';
+import { savedMissedOf, savedPlayerId, savedRoundsOf, saveRounds } from './device.ts';
 import { expectedRounds, questionAt } from './expected.ts';
 import { expect, test } from './fixtures.ts';
 import { GameSetupPage } from './pages/GameSetupPage.ts';
@@ -76,27 +76,13 @@ test.describe('History of the rounds played', () => {
       await startRound('Bandera → País');
       await round.playRound(FIRST_ROUND, [2, 5]);
 
-      const missed = await page.evaluate(
-        () =>
-          new Promise<string[]>((resolve) => {
-            const request = indexedDB.open('miatlas67');
-            request.onsuccess = () => {
-              const all = request.result
-                .transaction('rounds', 'readonly')
-                .objectStore('rounds')
-                .getAll();
-              all.onsuccess = () => {
-                request.result.close();
-                const rounds = all.result as { missed: string[] }[];
-                resolve(rounds[0]?.missed ?? []);
-              };
-            };
-          }),
-      );
-      expect(missed).toEqual([
-        questionAt(FIRST_ROUND, 2).entity.code,
-        questionAt(FIRST_ROUND, 5).entity.code,
-      ]);
+      // The game saves in the background: wait until the round is there.
+      const lucia = (await savedPlayerId(page, 'Lucía')) ?? -1;
+      await expect
+        .poll(() => savedMissedOf(page, lucia))
+        .toEqual([
+          [questionAt(FIRST_ROUND, 2).entity.code, questionAt(FIRST_ROUND, 5).entity.code],
+        ]);
     },
   );
 
@@ -131,6 +117,22 @@ test.describe('History of the rounds played', () => {
     },
   );
 
+  test(
+    'HIS-02 NFR-05 a game without rounds says so, with no axe violations',
+    { tag: ['@HIS-02', '@NFR-05'] },
+    async ({ page, makeAxeBuilder }) => {
+      await saveRounds(page, (await savedPlayerId(page, 'Lucía')) ?? -1, 1, 'FLAG-A');
+      await home.historyButton.click();
+      await expect(history.entries).toHaveCount(1);
+
+      await history.chooseFilter('País → Bandera');
+
+      await expect(page.getByText('Todavía no hay partidas de este juego.')).toBeVisible();
+      await expect(history.rounds).toBeHidden();
+      expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
+    },
+  );
+
   test('HIS-02 each player sees only their own history', { tag: '@HIS-02' }, async ({ page }) => {
     const players = new PlayersPage(page);
     await home.switchPlayerButton.click();
@@ -146,9 +148,9 @@ test.describe('History of the rounds played', () => {
   });
 
   test(
-    'RND-07 HIS-02 a quit round is not saved: "Historial" says there are no rounds yet',
-    { tag: ['@RND-07', '@HIS-02'] },
-    async ({ page }) => {
+    'RND-07 HIS-02 NFR-05 a quit round is not saved: "Historial" says there are no rounds yet',
+    { tag: ['@RND-07', '@HIS-02', '@NFR-05'] },
+    async ({ page, makeAxeBuilder }) => {
       await startRound('Bandera → País');
       await round.answer(questionAt(FIRST_ROUND, 0).entity.name.es);
 
@@ -157,6 +159,7 @@ test.describe('History of the rounds played', () => {
 
       await expect(history.empty).toBeVisible();
       await expect(history.rounds).toBeHidden();
+      expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
       expect(await savedRoundsOf(page, (await savedPlayerId(page, 'Lucía')) ?? -1)).toBe(0);
     },
   );

@@ -98,6 +98,29 @@ export async function savedRoundsOf(page: Page, playerId: number): Promise<numbe
   );
 }
 
+/** The missed entities of each saved round of the player `playerId`, in the order they were saved. */
+export async function savedMissedOf(page: Page, playerId: number): Promise<string[][]> {
+  return page.evaluate(
+    (id) =>
+      new Promise<string[][]>((resolve, reject) => {
+        const request = indexedDB.open('miatlas67');
+        request.onerror = () => {
+          reject(new Error('The game database cannot be opened'));
+        };
+        request.onsuccess = () => {
+          const db = request.result;
+          const all = db.transaction('rounds', 'readonly').objectStore('rounds').getAll();
+          all.onsuccess = () => {
+            db.close();
+            const rounds = all.result as { playerId: number; missed: string[] }[];
+            resolve(rounds.filter((round) => round.playerId === id).map((round) => round.missed));
+          };
+        };
+      }),
+    playerId,
+  );
+}
+
 /** The nickname of the player saved as the last one who played, or `null`. */
 export async function savedLastPlayer(page: Page): Promise<string | null> {
   return page.evaluate(
