@@ -10,8 +10,9 @@ import type { Articles, Category, Entity, Localized, Region, Tier } from '../dom
  * - Tiers (spec §7) were reviewed by the product owner (#15) and stay editable.
  * - Every country has a quiz capital (decision D13): city-states use the country itself, Nauru its
  *   de facto capital Yaren, Israel and Palestina their proclaimed capitals.
- * - Articles in sentences (DATA-09) were reviewed by the product owner (D18): in Spanish only «el» Reino Unido
- *   and Líbano and «la» for the four «República…»; plural names go without one. 15 names take «the» in English.
+ * - Articles in sentences (DATA-09) were reviewed by the product owner (D18): in Spanish «el» Reino Unido and
+ *   Líbano, «la» for the four «República…» and «los» Países Bajos (as the RAE writes it); every other name goes
+ *   without one, plural names too. 15 names take «the» in English.
  */
 
 type Pair = readonly [es: string, en: string];
@@ -86,7 +87,7 @@ export const countries: readonly Entity[] = [
   c('ME', ['Montenegro', 'Montenegro'], ['Podgorica', 'Podgorica'], 'europe', 3),
   c('NO', ['Noruega', 'Norway'], ['Oslo', 'Oslo'], 'europe', 1),
   c('NL', ['Países Bajos', 'Netherlands'], ['Ámsterdam', 'Amsterdam'], 'europe', 1, {
-    article: { en: 'the' },
+    article: { es: 'los', en: 'the' },
     otherCapitals: [['La Haya', 'The Hague']],
   }),
   c('PL', ['Polonia', 'Poland'], ['Varsovia', 'Warsaw'], 'europe', 1),

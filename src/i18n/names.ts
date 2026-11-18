@@ -11,10 +11,21 @@ export function ofWords(entity: Entity, language: Language): string {
       return 'del';
     case 'la':
       return 'de la';
+    case 'los':
+      return 'de los';
     default:
       // An article that is part of the name is never contracted: «de El Salvador».
       return 'de';
   }
+}
+
+/**
+ * The verb that opens the wrong-answer feedback: «Era», or «Eran» for a plural name such as «los Países Bajos»
+ * (RND-04). In English it is «It was» for every name.
+ */
+export function wasWords(entity: Entity, language: Language): string {
+  if (language === 'en') return 'It was';
+  return entity.article?.es === 'los' ? 'Eran' : 'Era';
 }
 
 /** «del Reino Unido», «de Francia», «of the United Kingdom». */

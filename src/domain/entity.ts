@@ -16,10 +16,11 @@ export interface Localized {
 
 /**
  * The article a name takes inside a sentence, per language (DATA-09): «el Reino Unido», «the Netherlands».
- * Most names take none. Which ones do was reviewed by the product owner (D18).
+ * Most names take none; «los» marks a plural name (Países Bajos). Which ones take one was reviewed by the
+ * product owner (D18).
  */
 export interface Articles {
-  readonly es?: 'el' | 'la';
+  readonly es?: 'el' | 'la' | 'los';
   readonly en?: 'the';
 }
 

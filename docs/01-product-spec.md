@@ -1,6 +1,6 @@
 # MiAtlas67 — Product Specification
 
-> **Status: APPROVED v1.6** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
+> **Status: APPROVED v1.7** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
 > [§18 Change log](#18-change-log).
 > Last updated: 2026-11-18
 
@@ -123,7 +123,7 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 - **RND-03** No timer in v1.
 - **RND-04** Immediate feedback after each answer:
   - correct → positive animation (and sound if enabled);
-  - wrong → the chosen option is marked wrong, the correct one is highlighted and named ("¡Uy! Era Portugal", D16).
+  - wrong → the chosen option is marked wrong, the correct one is highlighted and named ("¡Uy! Era Portugal", D16; "¡Uy! Eran los Países Bajos" for a plural name, DATA-09).
   - Feedback never relies on colour alone (✓ / ✗ icons as well).
 - **RND-05** The player taps "Siguiente" to move on, so the child controls the pace.
 - **RND-06** Progress (e.g. 3/10) and current score are always visible.
@@ -204,9 +204,11 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
   factual words (e.g. «Territorio autónomo de Dinamarca», «Estado con reconocimiento limitado»,
   «Estado federado de Somalia»).
 - **DATA-09** A name that takes an article in a sentence keeps it there, in each language: «¿Cuál es la bandera
-  del Reino Unido?», «de la República Dominicana», «Which one is the flag of the United Kingdom?». Options, lists
+  del Reino Unido?», «de la República Dominicana», «de los Países Bajos», «Which one is the flag of the United
+  Kingdom?». Options, lists
   and titles show the name alone («Reino Unido»). An article that is part of the name is never contracted
-  («de El Salvador»). Which names take an article is curated data reviewed by the product owner (D18).
+  («de El Salvador»). A name with «los» is plural, so the verb of the wrong-answer feedback agrees with it:
+  «¡Uy! Eran los Países Bajos». Which names take an article is curated data reviewed by the product owner (D18).
 
 ## 14. Settings
 
@@ -275,7 +277,7 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 | D15 | Similar flags and land borders (#37) | ✅ Reviewed in a [review page](https://claude.ai/artifact/TXjaHY9kF97aj8az78G93A). 25 similar-flag groups (Somalia–Micronesia dropped; related groups merged, e.g. all pan-Arab flags, the Union Jack ones; Malta and Singapur join Indonesia–Mónaco–Polonia). Land borders: a territory counts when it is part of the country inside the EU (Francia–Brasil and Francia–Surinam via French Guiana, España–Marruecos via Ceuta and Melilla); dependent territories outside the EU do not (Gibraltar, Groenlandia). De facto lines (China–Pakistán yes, India–Afganistán no). Kosovo and Sahara Occidental stay in the extended set (D2); their borders are added with it for level 4 |
 | D16 | Wrong-answer feedback | ✅ "¡Uy! Era Portugal" instead of "¡Casi! Era Portugal": a miss is not always close. "País → Bandera": "¡Uy! La bandera de Portugal es la marcada con ✓". English: "Oops!" (RND-04) |
 | D17 | Flag proportions | ✅ Flags are shown in a 4:3 frame (*flag-icons* 4×3 set), so two flags that differ only in their proportions look the same there: Indonesia (2:3) and Mónaco (4:5) can meet in a level 3 "Mundo" round. Accepted for now. Showing each flag in its real proportions (Suiza square, Nepal not a rectangle, Mongolia and Sri Lanka longer) needs a study of every flag; planned as a Could in epic 7. Chad and Rumanía have the same proportions and differ only in the shade of blue, in reality too: they stay a level 3 challenge (D15) |
-| D18 | Names with an article | ✅ Sentences use the article a name takes (DATA-09). Reviewed in a [review page](https://claude.ai/artifact/5gzVsZBQpAhGjhhjWPSj4P) (story #52). Spanish: «el» Reino Unido and Líbano; «la» República Dominicana, República Centroafricana, República del Congo and República Democrática del Congo. Every other name goes without one: plural names too («de Países Bajos», «de Bahamas», «de Islas Marshall»), and Estados Unidos, India, Ciudad del Vaticano and the South American countries («de Perú», «de Argentina»). English: «the» United Kingdom, United States, Netherlands, United Arab Emirates, Philippines, Bahamas, Gambia, Maldives, Marshall Islands, Solomon Islands, Comoros, Central African Republic, Dominican Republic, Democratic Republic of the Congo and Republic of the Congo. For articles this choice takes precedence over the RAE usage of DATA-02, which writes «los Países Bajos» |
+| D18 | Names with an article | ✅ Sentences use the article a name takes (DATA-09). Reviewed in a [review page](https://claude.ai/artifact/5gzVsZBQpAhGjhhjWPSj4P) (story #52); Países Bajos changed in v1.7 (story #58). Spanish: «el» Reino Unido and Líbano; «la» República Dominicana, República Centroafricana, República del Congo and República Democrática del Congo; «los» Países Bajos, where the product owner follows the RAE («de los Países Bajos», «¡Uy! Eran los Países Bajos»). Every other name goes without one: the other plural names too («de Bahamas», «de Islas Marshall»), and Estados Unidos, India, Ciudad del Vaticano and the South American countries («de Perú», «de Argentina»). English: «the» United Kingdom, United States, Netherlands, United Arab Emirates, Philippines, Bahamas, Gambia, Maldives, Marshall Islands, Solomon Islands, Comoros, Central African Republic, Dominican Republic, Democratic Republic of the Congo and Republic of the Congo. For the other plural names this choice takes precedence over the RAE usage of DATA-02 |
 | D19 | Back button | ✅ The phone's back button goes back inside the game instead of leaving it (NAV-01, story #51) |
 | D20 | Leaving from the home screen | ✅ Back on the home screen asks "¿Salir del juego?" first; Back again leaves (NAV-02, story #55). Chosen over a "Sí, salir" button, which could not leave when there is no page before the game, and over an Android-style notice at the bottom. Escape closes the question too, like "¿Salir de la partida?"; Escape is not a tap for the browser, so after it Back leaves without asking until the next tap |
 
@@ -283,6 +285,8 @@ No open questions.
 
 ## 18. Change log
 
+- **v1.7** (2026-11-18): Países Bajos follows the RAE: «de los Países Bajos», «¡Uy! Eran los Países Bajos»
+  (DATA-09, RND-04, D18); the other plural names keep going without an article.
 - **v1.6** (2026-11-18): Back on the home screen asks "¿Salir del juego?" before leaving (NAV-02, D20).
 - **v1.5** (2026-11-18): names with an article reviewed (D18): in Spanish only six names take one, plural names
   go without («de Países Bajos»); 15 names take «the» in English.
