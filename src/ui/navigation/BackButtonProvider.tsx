@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { BackContext, GAME_ENTRIES, type BackHandler } from './backContext.ts';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { BackContext, GAME_ENTRIES, HOME_ENTRIES, type BackHandler } from './backContext.ts';
 
 /** How deep in the game's own entries a history entry is: 0 is the page's own entry. */
 function depthOf(state: unknown): number {
@@ -10,11 +10,12 @@ function depthOf(state: unknown): number {
 }
 
 /**
- * The phone's back button (or back gesture, or the browser's Back) inside the game (NAV-01).
+ * The phone's back button (or back gesture, or the browser's Back) inside the game (NAV-01, NAV-02).
  *
- * Away from home, the game keeps a few history entries of its own above the page (the address stays the
- * same). Back moves down one of them, and the current screen does what its own way back does (registered
- * with `useOnBack`). Going home removes the game's entries, so on the home screen Back leaves the game.
+ * The game keeps a few history entries of its own above the page (the address stays the same): three away
+ * from home, one on the home screen. Back moves down one of them, and the current screen does what its own
+ * way back does (registered with `useOnBack`); on the home screen that is asking "¿Salir del juego?". Going
+ * home removes the entries above the home one, so from the question Back leaves the game.
  *
  * Entries are only added after a tap or a key press, never on their own after a Back: Chrome's back
  * button skips every entry of a page that adds entries without a user action (history manipulation
@@ -29,6 +30,8 @@ export function BackButtonProvider({ away, children }: { away: boolean; children
   const acted = useRef(false);
   // The game moved through history itself, to go home: that popstate is not the player's Back.
   const leaving = useRef(false);
+  // The screen holds the entries: "¿Salir del juego?" is open (NAV-02).
+  const held = useRef(false);
   // Changes on every history move, so the effect below runs again after the screen has handled it.
   const [moves, setMoves] = useState(0);
 
@@ -37,12 +40,24 @@ export function BackButtonProvider({ away, children }: { away: boolean; children
   }, []);
 
   const topUp = useCallback(() => {
-    if (!awayNow.current || !acted.current || leaving.current) return;
-    while (depth.current < GAME_ENTRIES) {
+    if (!acted.current || leaving.current || held.current) return;
+    const entries = awayNow.current ? GAME_ENTRIES : HOME_ENTRIES;
+    while (depth.current < entries) {
       depth.current += 1;
       window.history.pushState({ miatlas: depth.current }, '');
     }
   }, []);
+
+  const hold = useCallback(
+    (next: boolean) => {
+      held.current = next;
+      // "Seguir jugando" was the tap: the entry comes back once the question has closed.
+      if (!next) topUp();
+    },
+    [topUp],
+  );
+
+  const controls = useMemo(() => ({ register, hold }), [register, hold]);
 
   useEffect(() => {
     awayNow.current = away;
@@ -60,7 +75,7 @@ export function BackButtonProvider({ away, children }: { away: boolean; children
       depth.current = depthOf(event.state);
       acted.current = false;
       if (leaving.current) leaving.current = false;
-      else if (awayNow.current && depth.current < before) handler.current?.();
+      else if (depth.current < before) handler.current?.();
       setMoves((n) => n + 1);
     }
     window.addEventListener('click', onAction, true);
@@ -75,14 +90,14 @@ export function BackButtonProvider({ away, children }: { away: boolean; children
 
   useEffect(() => {
     if (leaving.current) return;
-    if (away) {
-      topUp();
-    } else if (depth.current > 0) {
-      // Home: the game's entries go, also after a reload or a Forward into them.
+    if (!away && depth.current > HOME_ENTRIES) {
+      // Home: the entries above the home one go, also after a reload or a Forward into them.
       leaving.current = true;
-      window.history.go(-depth.current);
+      window.history.go(HOME_ENTRIES - depth.current);
+    } else {
+      topUp();
     }
   }, [away, moves, topUp]);
 
-  return <BackContext value={register}>{children}</BackContext>;
+  return <BackContext value={controls}>{children}</BackContext>;
 }

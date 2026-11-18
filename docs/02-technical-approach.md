@@ -58,9 +58,9 @@ tests/
 - The UI depends on the domain, and storage is hidden behind interfaces (IndexedDB now, maybe cloud later).
 - All assets (flags, shapes, data) are bundled, so nothing is fetched at runtime.
 - Navigation between screens is React state: the URL never changes, so `?seed=` stays for the whole visit.
-  Away from home the game keeps up to three history entries of its own, so the phone's back button goes back
-  inside the game instead of leaving it (NAV-01, `src/ui/navigation/`). They are added only after a tap or a
-  key press: Chrome's back button skips the entries a page adds without one.
+  The game keeps history entries of its own, three away from home and one on the home screen, so the phone's
+  back button goes back inside the game, and asks before leaving it (NAV-01, NAV-02, `src/ui/navigation/`).
+  They are added only after a tap or a key press: Chrome's back button skips the entries a page adds without one.
 - The data build script generates `countries.json` and simplified shapes once. The output is committed to the
   repo, and integrity tests guard it.
 

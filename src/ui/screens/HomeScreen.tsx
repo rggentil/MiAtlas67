@@ -1,12 +1,15 @@
-import { useId, type ComponentType } from 'react';
+import { useEffect, useId, useRef, useState, type ComponentType } from 'react';
 import { GAME_TOPICS, gamesOfTopic, type Game, type GameTopic } from '../../domain/games.ts';
 import { useI18n } from '../../i18n/context.ts';
+import { ExitDialog } from '../components/ExitDialog.tsx';
 import { CapitalIcon, FlagIcon, ShapeIcon } from '../components/icons.tsx';
 import { LanguageSwitch } from '../components/LanguageSwitch.tsx';
 import { Logo } from '../components/Logo.tsx';
 import { ScreenTitle } from '../components/ScreenTitle.tsx';
 import { toneClasses } from '../components/tones.ts';
 import { isPlayable, type PlayableGame } from '../games.ts';
+import { useHoldEntries } from '../navigation/useHoldEntries.ts';
+import { useOnBack } from '../navigation/useOnBack.ts';
 
 interface HomeScreenProps {
   onOpenGame: (game: PlayableGame) => void;
@@ -18,25 +21,58 @@ const TOPIC_ICONS: Record<GameTopic, ComponentType<{ size?: number }>> = {
   shapes: ShapeIcon,
 };
 
-/** Home screen: the six games grouped by topic (GAME-01). */
+/**
+ * Home screen: the six games grouped by topic (GAME-01). Back asks "¿Salir del juego?" first, and Back
+ * again leaves the game (NAV-02).
+ */
 export function HomeScreen({ onOpenGame }: HomeScreenProps) {
   const { t } = useI18n();
+  const titleId = useId();
+  const [exiting, setExiting] = useState(false);
+  // Closing the question gives the focus back to the title, once the page is no longer inert: focus() on
+  // inert content does nothing.
+  const backFromDialog = useRef(false);
+
+  useOnBack(() => {
+    setExiting(true);
+  });
+  // With the question open, Back always leaves: only "Seguir jugando" brings the entry back.
+  useHoldEntries(exiting);
+
+  useEffect(() => {
+    if (exiting || !backFromDialog.current) return;
+    backFromDialog.current = false;
+    document.getElementById(titleId)?.focus();
+  }, [exiting, titleId]);
+
+  function stay() {
+    backFromDialog.current = true;
+    setExiting(false);
+  }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 px-4 pt-5 pb-6">
-      <header>
-        <Logo />
-      </header>
-      <main className="flex flex-col gap-4">
-        <ScreenTitle className="mt-2 text-3xl">{t('home.title')}</ScreenTitle>
-        {GAME_TOPICS.map((topic) => (
-          <TopicSection key={topic} topic={topic} onOpenGame={onOpenGame} />
-        ))}
-      </main>
-      <footer className="mt-auto pt-4 text-center">
-        <LanguageSwitch />
-      </footer>
-    </div>
+    <>
+      <div
+        inert={exiting}
+        className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 px-4 pt-5 pb-6"
+      >
+        <header>
+          <Logo />
+        </header>
+        <main className="flex flex-col gap-4">
+          <ScreenTitle id={titleId} className="mt-2 text-3xl">
+            {t('home.title')}
+          </ScreenTitle>
+          {GAME_TOPICS.map((topic) => (
+            <TopicSection key={topic} topic={topic} onOpenGame={onOpenGame} />
+          ))}
+        </main>
+        <footer className="mt-auto pt-4 text-center">
+          <LanguageSwitch />
+        </footer>
+      </div>
+      {exiting && <ExitDialog onStay={stay} />}
+    </>
   );
 }
 

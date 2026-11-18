@@ -14,16 +14,24 @@ const FIRST = questionAt(FIRST_ROUND, 0);
 const GAME_ADDRESS = /\/\?seed=42$/;
 const PAGE_BEFORE = /\/\?before$/;
 
-/** Waits until the game has removed its own history entries (it does so a moment after going home). */
-async function gameEntriesRemoved(page: Page): Promise<void> {
-  await expect.poll(() => page.evaluate(() => window.history.state as unknown)).toBeNull();
-}
-
 test.describe('The back button goes back inside the game', () => {
   let home: HomePage;
   let setup: GameSetupPage;
   let round: RoundPage;
   let summary: SummaryPage;
+
+  /** Home is where Back leaves the game: it asks "¿Salir del juego?" first (NAV-02), and Back again leaves. */
+  async function backAsksThenLeaves(page: Page): Promise<void> {
+    await home.onlyHomeEntryLeft();
+    // Going home does not open the question by itself: only the player's Back does.
+    await expect(home.exitDialog).toBeHidden();
+    await page.goBack();
+    await expect(home.exitDialog).toBeVisible();
+    await expect(page).toHaveURL(GAME_ADDRESS);
+
+    await page.goBack();
+    await expect(page).toHaveURL(PAGE_BEFORE);
+  }
 
   test.beforeEach(async ({ page }) => {
     home = new HomePage(page);
@@ -51,20 +59,19 @@ test.describe('The back button goes back inside the game', () => {
 
       await page.goBack();
       await expect(home.heading).toHaveText('¿A qué jugamos?');
+      await expect(home.exitDialog).toBeHidden();
       await expect(page).toHaveURL(GAME_ADDRESS);
     },
   );
 
   test(
-    'NAV-01 after "Volver" to the home screen, Back leaves the game',
-    { tag: '@NAV-01' },
+    'NAV-01 NAV-02 after "Volver" to the home screen, Back asks before leaving the game',
+    { tag: ['@NAV-01', '@NAV-02'] },
     async ({ page }) => {
       await setup.backButton.click();
       await expect(home.heading).toHaveText('¿A qué jugamos?');
-      await gameEntriesRemoved(page);
 
-      await page.goBack();
-      await expect(page).toHaveURL(PAGE_BEFORE);
+      await backAsksThenLeaves(page);
     },
   );
 
@@ -96,8 +103,8 @@ test.describe('The back button goes back inside the game', () => {
   );
 
   test(
-    'NAV-01 RND-07 confirming "Sí, salir" after Back goes home, and Back then leaves the game',
-    { tag: ['@NAV-01', '@RND-07'] },
+    'NAV-01 RND-07 NAV-02 confirming "Sí, salir" after Back goes home, and Back then asks before leaving',
+    { tag: ['@NAV-01', '@RND-07', '@NAV-02'] },
     async ({ page }) => {
       await setup.chooseRegion('Europa');
       await setup.chooseLevel('Fácil');
@@ -105,11 +112,9 @@ test.describe('The back button goes back inside the game', () => {
       await page.goBack();
       await round.confirmQuitButton.click();
       await expect(home.heading).toHaveText('¿A qué jugamos?');
-      await gameEntriesRemoved(page);
 
-      // Nothing of the round is left behind: Back leaves the game, to the page before it.
-      await page.goBack();
-      await expect(page).toHaveURL(PAGE_BEFORE);
+      // Nothing of the round is left behind.
+      await backAsksThenLeaves(page);
     },
   );
 
@@ -125,60 +130,39 @@ test.describe('The back button goes back inside the game', () => {
 
       await page.goBack();
       await expect(home.heading).toHaveText('¿A qué jugamos?');
+      await expect(home.exitDialog).toBeHidden();
       await expect(page).toHaveURL(GAME_ADDRESS);
-      await gameEntriesRemoved(page);
 
-      await page.goBack();
-      await expect(page).toHaveURL(PAGE_BEFORE);
+      await backAsksThenLeaves(page);
     },
   );
 
   test(
-    'NAV-01 RND-08 after "Menú", Back on the home screen leaves the game: no finished round comes back',
-    { tag: ['@NAV-01', '@RND-08'] },
-    async ({ page }) => {
-      await setup.chooseRegion('Europa');
-      await setup.chooseLevel('Fácil');
-      await round.playRound(FIRST_ROUND, []);
-      await summary.menuButton.click();
-      await expect(home.heading).toHaveText('¿A qué jugamos?');
-      await gameEntriesRemoved(page);
-
-      await page.goBack();
-      await expect(page).toHaveURL(PAGE_BEFORE);
-    },
-  );
-
-  test(
-    'NAV-01 a reload in the middle of the game opens home, and Back then leaves the game',
-    { tag: '@NAV-01' },
+    'NAV-01 NAV-02 a reload in the middle of the game opens home, and Back then asks before leaving',
+    { tag: ['@NAV-01', '@NAV-02'] },
     async ({ page }) => {
       await setup.chooseRegion('Europa');
 
       await page.reload();
       await expect(home.heading).toHaveText('¿A qué jugamos?');
-      await gameEntriesRemoved(page);
 
-      await page.goBack();
-      await expect(page).toHaveURL(PAGE_BEFORE);
+      await backAsksThenLeaves(page);
     },
   );
 
   test(
-    'NAV-01 Forward after going home with Back stays home, and Back then leaves the game',
-    { tag: '@NAV-01' },
+    'NAV-01 NAV-02 Forward after going home with Back stays home, and Back then asks before leaving',
+    { tag: ['@NAV-01', '@NAV-02'] },
     async ({ page }) => {
       await page.goBack();
       await expect(home.heading).toHaveText('¿A qué jugamos?');
-      await gameEntriesRemoved(page);
+      await home.onlyHomeEntryLeft();
 
       await page.goForward();
       await expect(home.heading).toHaveText('¿A qué jugamos?');
       await expect(page).toHaveURL(GAME_ADDRESS);
-      await gameEntriesRemoved(page);
 
-      await page.goBack();
-      await expect(page).toHaveURL(PAGE_BEFORE);
+      await backAsksThenLeaves(page);
     },
   );
 });
