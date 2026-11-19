@@ -21,6 +21,8 @@ interface Extra {
   article?: Articles;
   category?: Category;
   otherCapitals?: readonly Pair[];
+  /** `false` keeps the country out of Shapes games (SHAPE-03, SHAPE-04). */
+  shapeEligible?: false;
 }
 
 const localized = ([es, en]: Pair): Localized => ({ es, en });
@@ -42,6 +44,7 @@ function c(
     region,
     category: extra.category ?? 'un-member',
     tier,
+    shapeEligible: extra.shapeEligible ?? true,
   };
 }
 

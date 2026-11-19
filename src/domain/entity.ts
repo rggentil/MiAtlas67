@@ -38,10 +38,24 @@ export interface Entity {
   readonly region: Region;
   readonly category: Category;
   readonly tier: Tier;
+  /**
+   * The entity has a recognizable silhouette, so it can be asked or offered in Shapes games. Microstates
+   * (SHAPE-03) and entities without a reliable, undisputed geometry (SHAPE-04) do not.
+   */
+  readonly shapeEligible: boolean;
 }
 
 export function isCapitalEligible(entity: Entity): boolean {
   return entity.capital !== null;
+}
+
+export function isShapeEligible(entity: Entity): boolean {
+  return entity.shapeEligible;
+}
+
+/** File name of the entity's silhouette in `src/assets/shapes` (SHAPE-02). */
+export function shapeFileName(entity: Entity): string {
+  return `${entity.code.toLowerCase()}.svg`;
 }
 
 /** File name of the entity's flag in `src/assets/flags`. */

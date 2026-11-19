@@ -41,6 +41,7 @@ function entity(code: string, overrides: Partial<Entity> = {}): Entity {
     region: 'europe',
     category: 'un-member',
     tier: 1,
+    shapeEligible: true,
     ...overrides,
   };
 }
