@@ -21,21 +21,21 @@ test.describe('Home screen', { tag: '@GAME-01' }, () => {
   });
 
   test(
-    'GAME-01 CAP-A only the games with a screen can be opened in this phase',
-    { tag: ['@GAME-01', '@CAP-A'] },
+    'GAME-01 CAP-A CAP-B only the games with a screen can be opened in this phase',
+    { tag: ['@GAME-01', '@CAP-A', '@CAP-B'] },
     async ({ page }) => {
       const home = new HomePage(page);
       const game = new GameSetupPage(page);
       await home.goto();
 
-      for (const name of ['Bandera → País', 'País → Bandera', 'País → Capital']) {
+      for (const name of ['Bandera → País', 'País → Bandera', 'País → Capital', 'Capital → País']) {
         await home.openGame(name);
         await expect(game.heading).toHaveText(name);
         await game.backButton.click();
         await expect(home.heading).toHaveText('¿A qué jugamos?');
       }
 
-      for (const name of ['Capital → País', 'Silueta → País', 'País → Silueta']) {
+      for (const name of ['Silueta → País', 'País → Silueta']) {
         await expect(home.game(name)).toBeDisabled();
         await expect(home.game(name)).toContainText('Pronto');
       }

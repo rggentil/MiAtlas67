@@ -37,12 +37,16 @@ interface RoundScreenProps {
   onFinish: (result: RoundResult) => void;
 }
 
+/** The quiz capital of an entity in a Capitals round. */
+function capitalOf(entity: Entity, language: Language): string {
+  // CAP-02: the question generator never puts an entity without a quiz capital in a Capitals round.
+  if (!entity.capital) throw new Error(`${entity.code} has no quiz capital`);
+  return entity.capital[language];
+}
+
 /** The text of a text option: the country's name, or its quiz capital in CAP-A. */
 function optionText(game: PlayableGame, option: Entity, language: Language): string {
-  if (game.id !== 'CAP-A') return option.name[language];
-  // CAP-02: the question generator never puts an entity without a quiz capital in a Capitals round.
-  if (!option.capital) throw new Error(`${option.code} has no quiz capital`);
-  return option.capital[language];
+  return game.id === 'CAP-A' ? capitalOf(option, language) : option.name[language];
 }
 
 /** How an option looks once the question is answered (RND-04). */
@@ -191,6 +195,15 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
                     {t('round.askedName', { name: question.entity.name[language] })}
                   </span>
                 </ScreenTitle>
+              ) : game.id === 'CAP-B' ? (
+                <ScreenTitle className="flex flex-col gap-1">
+                  <span className="font-body text-lg font-extrabold text-ink-muted">
+                    {t('round.CAP-B.prompt')}
+                  </span>{' '}
+                  <span className="text-4xl">
+                    {t('round.askedName', { name: capitalOf(question.entity, language) })}
+                  </span>
+                </ScreenTitle>
               ) : (
                 <>
                   <ScreenTitle className="text-2xl">{t('round.FLAG-A.prompt')}</ScreenTitle>
@@ -208,6 +221,7 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
                   <TextOption
                     key={option.code}
                     text={optionText(game, option, language)}
+                    flag={game.id === 'CAP-B' && settings.level === 1 ? option : null}
                     state={optionState(option, question, chosen)}
                     onChoose={() => {
                       setState(answer(state, option.code));
@@ -237,10 +251,13 @@ const OPTION_TONES: Record<OptionState, string> = {
 /** A country or capital name as a large button (GAME-03); once answered, its ✓ or ✗ mark sits beside it (RND-04). */
 function TextOption({
   text,
+  flag,
   state,
   onChoose,
 }: {
   text: string;
+  /** CAP-01: in CAP-B at level 1, the country's flag sits next to its name as a hint. */
+  flag: Entity | null;
   state: OptionState;
   onChoose: () => void;
 }) {
@@ -251,13 +268,18 @@ function TextOption({
         disabled={state !== 'open'}
         onClick={onChoose}
         className={[
-          'flex min-h-14 w-full items-center px-5 py-2 text-left',
+          'flex min-h-14 w-full items-center gap-3 px-5 py-2 text-left',
           'rounded-block border-3 border-ink font-display text-xl leading-tight',
           'motion-safe:transition-[translate,box-shadow] motion-safe:duration-75',
           'focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-accent',
           OPTION_TONES[state],
         ].join(' ')}
       >
+        {flag && (
+          <span className="w-12 flex-none">
+            <FlagImage entity={flag} alt="" className="rounded-md" />
+          </span>
+        )}
         {text}
       </button>
       {(state === 'correct' || state === 'wrong') && (
@@ -352,7 +374,7 @@ function Feedback({ game, question, chosen, nextRef, onNext }: FeedbackProps) {
   const { t, language } = useI18n();
   const answered = chosen !== null;
   const correct = chosen === question.entity.code;
-  // FLAG-A names the right country and CAP-A the right capital; in FLAG-B the country is the question, so it
+  // FLAG-A and CAP-B name the right country and CAP-A the right capital; in FLAG-B the country is the question, so it
   // points at the ✓ flag. Names keep the article they take (DATA-09): «Era el Reino Unido».
   const miss =
     game.id === 'FLAG-B'

@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import type { Entity } from '../../domain/entity.ts';
 import { formatProgress } from '../../domain/progress.ts';
 import type { RoundSettings } from '../../domain/questions.ts';
 import type { RoundResult, Stars } from '../../domain/round.ts';
@@ -44,7 +45,7 @@ export function SummaryScreen({
   onPlayAgain,
   onMenu,
 }: SummaryScreenProps) {
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const reviewId = useId();
   // The phone's back button goes home, like "Menú" (NAV-01).
   useOnBack(onMenu);
@@ -102,17 +103,7 @@ export function SummaryScreen({
                   <span className="w-16 flex-none">
                     <FlagImage entity={entity} alt="" className="rounded-md" />
                   </span>
-                  <span className="flex flex-col">
-                    <span className="text-lg leading-tight font-black">
-                      {entity.name[language]}
-                    </span>
-                    {/* In the Capitals games the correct answer is the capital (RND-08). */}
-                    {game.topic === 'capitals' && entity.capital && (
-                      <span className="leading-tight font-bold text-ink-muted">
-                        {entity.capital[language]}
-                      </span>
-                    )}
-                  </span>
+                  <MissedText game={game} entity={entity} />
                 </li>
               ))}
             </ul>
@@ -177,5 +168,23 @@ function Celebration({ label }: { label: string }) {
         />
       ))}
     </div>
+  );
+}
+
+/**
+ * What a missed question teaches (RND-08): the country, and in the Capitals games its capital too. In CAP-B the
+ * capital was the question, so it comes first and the country under it.
+ */
+function MissedText({ game, entity }: { game: PlayableGame; entity: Entity }) {
+  const { language } = useI18n();
+  const country = entity.name[language];
+  const capital = game.topic === 'capitals' ? entity.capital?.[language] : undefined;
+  const [main, extra] = game.id === 'CAP-B' && capital ? [capital, country] : [country, capital];
+
+  return (
+    <span className="flex flex-col">
+      <span className="text-lg leading-tight font-black">{main}</span>
+      {extra && <span className="leading-tight font-bold text-ink-muted">{extra}</span>}
+    </span>
   );
 }

@@ -88,7 +88,7 @@ describe('HistoryScreen', () => {
       within(screen.getByRole('group', { name: 'Juego' }))
         .getAllByRole('radio')
         .map((radio) => radio.closest('label')?.textContent),
-    ).toEqual(['Todos', 'Bandera → País', 'País → Bandera', 'País → Capital']);
+    ).toEqual(['Todos', 'Bandera → País', 'País → Bandera', 'País → Capital', 'Capital → País']);
     expect(filter('Todos')).toBeChecked();
   });
 
@@ -181,7 +181,13 @@ describe('HistoryScreen', () => {
       within(screen.getByRole('group', { name: 'Game' }))
         .getAllByRole('radio')
         .map((radio) => radio.closest('label')?.textContent),
-    ).toEqual(['All', 'Flag → Country', 'Country → Flag', 'Country → Capital']);
+    ).toEqual([
+      'All',
+      'Flag → Country',
+      'Country → Flag',
+      'Country → Capital',
+      'Capital → Country',
+    ]);
   });
 
   it('HIS-02 NFR-06 says "No rounds yet." in English', async () => {
