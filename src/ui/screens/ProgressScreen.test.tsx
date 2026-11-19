@@ -110,9 +110,10 @@ describe('ProgressScreen', () => {
 
     await table('Bandera → País');
     const tables = screen.getAllByRole('table');
-    expect(tables).toHaveLength(2);
+    expect(tables).toHaveLength(3);
     expect(tables[0]).toHaveAccessibleName('Bandera → País');
     expect(tables[1]).toHaveAccessibleName('País → Bandera');
+    expect(tables[2]).toHaveAccessibleName('País → Capital');
     const flagB = within(await table('País → Bandera'));
     expect(flagB.getAllByRole('columnheader').map((th) => th.textContent)).toEqual([
       'Región',
@@ -136,7 +137,7 @@ describe('ProgressScreen', () => {
     renderProgress([]);
 
     expect(await screen.findByText('0 estrellas en total')).toBeVisible();
-    expect(screen.getAllByText('Sin jugar')).toHaveLength(2 * 6 * 3);
+    expect(screen.getAllByText('Sin jugar')).toHaveLength(3 * 6 * 3);
   });
 
   it('HIS-03 when the rounds cannot be read, it shows "Sin jugar" instead of staying blank', async () => {
@@ -148,7 +149,7 @@ describe('ProgressScreen', () => {
     );
 
     expect(await screen.findByText('0 estrellas en total')).toBeVisible();
-    expect(screen.getAllByText('Sin jugar')).toHaveLength(2 * 6 * 3);
+    expect(screen.getAllByText('Sin jugar')).toHaveLength(3 * 6 * 3);
   });
 
   it('NAV-01 "Volver" goes back', async () => {

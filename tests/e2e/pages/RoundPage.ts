@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
+import type { Entity } from '../../../src/domain/entity.ts';
 import type { Question } from '../../../src/domain/questions.ts';
 import { wrongOption } from '../expected.ts';
 
@@ -71,13 +72,18 @@ export class RoundPage {
   }
 
   /**
-   * Plays a whole FLAG-A round: the questions at `wrongAt` with a wrong country, the others right, tapping
-   * "Siguiente" after each answer.
+   * Plays a whole round of text answers: the questions at `wrongAt` with a wrong option, the others right,
+   * tapping "Siguiente" after each answer. `label` is the text of an option's button: the country name
+   * (FLAG-A) unless told otherwise, e.g. its capital in CAP-A.
    */
-  async playRound(questions: readonly Question[], wrongAt: readonly number[]): Promise<void> {
+  async playRound(
+    questions: readonly Question[],
+    wrongAt: readonly number[],
+    label: (option: Entity) => string = (option) => option.name.es,
+  ): Promise<void> {
     for (const [index, question] of questions.entries()) {
       const option = wrongAt.includes(index) ? wrongOption(question) : question.entity;
-      await this.answer(option.name.es);
+      await this.answer(label(option));
       await this.nextButton.click();
     }
   }
