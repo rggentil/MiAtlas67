@@ -86,7 +86,8 @@ export const countries: readonly Entity[] = [
   c('MK', ['Macedonia del Norte', 'North Macedonia'], ['Skopie', 'Skopje'], 'europe', 2),
   c('MT', ['Malta', 'Malta'], ['La Valeta', 'Valletta'], 'europe', 2),
   c('MD', ['Moldavia', 'Moldova'], ['Chisináu', 'Chișinău'], 'europe', 3),
-  c('MC', ['Mónaco', 'Monaco'], ['Mónaco', 'Monaco'], 'europe', 2), // city-state: the capital is the country itself
+  // City-state: the capital is the country itself. Too small for a silhouette (SHAPE-03).
+  c('MC', ['Mónaco', 'Monaco'], ['Mónaco', 'Monaco'], 'europe', 2, { shapeEligible: false }),
   c('ME', ['Montenegro', 'Montenegro'], ['Podgorica', 'Podgorica'], 'europe', 3),
   c('NO', ['Noruega', 'Norway'], ['Oslo', 'Oslo'], 'europe', 1),
   c('NL', ['Países Bajos', 'Netherlands'], ['Ámsterdam', 'Amsterdam'], 'europe', 1, {
@@ -113,6 +114,7 @@ export const countries: readonly Entity[] = [
     2,
     {
       category: 'un-observer',
+      shapeEligible: false,
     },
   ), // city-state: the capital is the country itself
 
@@ -365,7 +367,8 @@ export const countries: readonly Entity[] = [
   }),
   c('KI', ['Kiribati', 'Kiribati'], ['Tarawa Sur', 'South Tarawa'], 'oceania', 3),
   c('FM', ['Micronesia', 'Micronesia'], ['Palikir', 'Palikir'], 'oceania', 3),
-  c('NR', ['Nauru', 'Nauru'], ['Yaren', 'Yaren'], 'oceania', 3), // no official capital; Yaren is the de facto one
+  // No official capital; Yaren is the de facto one. Too small for a silhouette (SHAPE-03).
+  c('NR', ['Nauru', 'Nauru'], ['Yaren', 'Yaren'], 'oceania', 3, { shapeEligible: false }),
   c('NZ', ['Nueva Zelanda', 'New Zealand'], ['Wellington', 'Wellington'], 'oceania', 2),
   c('PW', ['Palaos', 'Palau'], ['Ngerulmud', 'Ngerulmud'], 'oceania', 3),
   c(

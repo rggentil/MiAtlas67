@@ -246,6 +246,38 @@ describe('generateRound', () => {
     }
   });
 
+  it('SHAPE-03 SHAPE-04 Shapes rounds never ask or offer an entity without shapeEligible', () => {
+    const entities = [
+      ...fixture(10),
+      entity('VA', { shapeEligible: false }),
+      entity('MC', { shapeEligible: false }),
+    ];
+    const shapeCodes = questionsOf(
+      { topic: 'shapes', region: 'europe', level: 1 },
+      entities,
+    ).flatMap((question) => [question.entity.code, ...codes(question.options)]);
+    expect(shapeCodes).not.toContain('VA');
+    expect(shapeCodes).not.toContain('MC');
+    // The other topics still play them.
+    const flagCodes = questionsOf({ topic: 'flags', region: 'europe', level: 1 }, entities).flatMap(
+      (question) => codes(question.options),
+    );
+    expect(flagCodes).toEqual(expect.arrayContaining(['VA', 'MC']));
+  });
+
+  it('SHAPE-03 with the real data every region and level has a Shapes round of eligible countries only', () => {
+    for (const region of REGION_CHOICES) {
+      for (const level of LEVELS) {
+        for (const round of rounds({ topic: 'shapes', region, level })) {
+          expect(round).toHaveLength(QUESTIONS_PER_ROUND);
+          for (const question of round) {
+            expect(question.options.every((option) => option.shapeEligible)).toBe(true);
+          }
+        }
+      }
+    }
+  });
+
   it('CAP-02 Capitals rounds never ask or offer an entity without a quiz capital', () => {
     const entities = [
       ...fixture(10),
