@@ -60,7 +60,7 @@ test.describe('History of the rounds played', () => {
       await expect(entry.getByRole('img', { name: '2 de 3 estrellas' })).toBeVisible();
       await expect(history.filterOption('Todos')).toBeChecked();
       // The filter chips are the tap targets of their visually hidden radio buttons.
-      for (const name of ['Todos', 'Bandera → País', 'País → Bandera']) {
+      for (const name of ['Todos', 'Bandera → País', 'País → Bandera', 'País → Capital']) {
         const box = await history.filter.getByText(name, { exact: true }).boundingBox();
         expect(box?.height).toBeGreaterThanOrEqual(48);
         expect(box?.width).toBeGreaterThanOrEqual(48);

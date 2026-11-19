@@ -102,7 +102,17 @@ export function SummaryScreen({
                   <span className="w-16 flex-none">
                     <FlagImage entity={entity} alt="" className="rounded-md" />
                   </span>
-                  <span className="text-lg leading-tight font-black">{entity.name[language]}</span>
+                  <span className="flex flex-col">
+                    <span className="text-lg leading-tight font-black">
+                      {entity.name[language]}
+                    </span>
+                    {/* In the Capitals games the correct answer is the capital (RND-08). */}
+                    {game.topic === 'capitals' && entity.capital && (
+                      <span className="leading-tight font-bold text-ink-muted">
+                        {entity.capital[language]}
+                      </span>
+                    )}
+                  </span>
                 </li>
               ))}
             </ul>

@@ -227,6 +227,24 @@ describe('generateRound', () => {
     }
   });
 
+  it('DATA-03 in the real data, no other capital (Bolivia: La Paz) is ever offered for the asked country', () => {
+    const withOthers = countries.filter((country) => country.otherCapitals.length > 0);
+    expect(codes(withOthers)).toEqual(expect.arrayContaining(['BO', 'NL', 'ZA', 'MY']));
+    for (const region of REGION_CHOICES) {
+      for (const level of LEVELS) {
+        for (const round of rounds({ topic: 'capitals', region, level })) {
+          for (const question of round) {
+            const others = question.entity.otherCapitals.flatMap((other) => [other.es, other.en]);
+            const offered = question.options.flatMap((option) =>
+              option.capital ? [option.capital.es, option.capital.en] : [],
+            );
+            expect(offered.filter((name) => others.includes(name))).toEqual([]);
+          }
+        }
+      }
+    }
+  });
+
   it('CAP-02 Capitals rounds never ask or offer an entity without a quiz capital', () => {
     const entities = [
       ...fixture(10),

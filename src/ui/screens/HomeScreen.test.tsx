@@ -6,7 +6,7 @@ import type { PlayableGame } from '../games.ts';
 import { renderWithI18n } from '../../test/render.tsx';
 import { HomeScreen } from './HomeScreen.tsx';
 
-const SOON_GAMES = ['País → Capital', 'Capital → País', 'Silueta → País', 'País → Silueta'];
+const SOON_GAMES = ['Capital → País', 'Silueta → País', 'País → Silueta'];
 
 const LUCIA: Player = { id: 1, nickname: 'Lucía', avatar: 'fox' };
 
@@ -162,7 +162,16 @@ describe('HomeScreen', () => {
     expect(onOpenGame.mock.calls.map(([opened]) => opened.id)).toEqual(['FLAG-A', 'FLAG-B']);
   });
 
-  it('GAME-01 the Capitals and Shapes games show "Pronto" and cannot be opened', async () => {
+  it('CAP-A GAME-01 "País → Capital" can be opened', async () => {
+    const onOpenGame = vi.fn<(game: PlayableGame) => void>();
+    renderHome(onOpenGame);
+
+    await userEvent.click(game('País → Capital'));
+
+    expect(onOpenGame.mock.calls.map(([opened]) => opened.id)).toEqual(['CAP-A']);
+  });
+
+  it('GAME-01 the games still to come show "Pronto" and cannot be opened', async () => {
     const onOpenGame = vi.fn();
     renderHome(onOpenGame);
 
@@ -186,6 +195,6 @@ describe('HomeScreen', () => {
     expect(
       screen.getByRole('button', { name: 'Flag → Country Which country is it?' }),
     ).toBeEnabled();
-    expect(game('Country → Capital')).toHaveAccessibleName(/ Soon$/);
+    expect(game('Capital → Country')).toHaveAccessibleName(/ Soon$/);
   });
 });

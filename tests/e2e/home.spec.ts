@@ -20,23 +20,27 @@ test.describe('Home screen', { tag: '@GAME-01' }, () => {
     }
   });
 
-  test('GAME-01 only the Flags games can be opened in this phase', async ({ page }) => {
-    const home = new HomePage(page);
-    const game = new GameSetupPage(page);
-    await home.goto();
+  test(
+    'GAME-01 CAP-A only the games with a screen can be opened in this phase',
+    { tag: ['@GAME-01', '@CAP-A'] },
+    async ({ page }) => {
+      const home = new HomePage(page);
+      const game = new GameSetupPage(page);
+      await home.goto();
 
-    for (const name of ['Bandera → País', 'País → Bandera']) {
-      await home.openGame(name);
-      await expect(game.heading).toHaveText(name);
-      await game.backButton.click();
-      await expect(home.heading).toHaveText('¿A qué jugamos?');
-    }
+      for (const name of ['Bandera → País', 'País → Bandera', 'País → Capital']) {
+        await home.openGame(name);
+        await expect(game.heading).toHaveText(name);
+        await game.backButton.click();
+        await expect(home.heading).toHaveText('¿A qué jugamos?');
+      }
 
-    for (const name of ['País → Capital', 'Capital → País', 'Silueta → País', 'País → Silueta']) {
-      await expect(home.game(name)).toBeDisabled();
-      await expect(home.game(name)).toContainText('Pronto');
-    }
-  });
+      for (const name of ['Capital → País', 'Silueta → País', 'País → Silueta']) {
+        await expect(home.game(name)).toBeDisabled();
+        await expect(home.game(name)).toContainText('Pronto');
+      }
+    },
+  );
 
   test(
     'NFR-05 every button of the home screen has a touch target of at least 48 × 48 px',

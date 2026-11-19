@@ -13,6 +13,7 @@ import {
   type RoundResult,
 } from '../../domain/round.ts';
 import { useI18n } from '../../i18n/context.ts';
+import type { Language } from '../../i18n/languages.ts';
 import { nameInSentence, ofName, ofWords, wasWords } from '../../i18n/names.ts';
 import { useOnBack } from '../navigation/useOnBack.ts';
 import { Button } from '../components/Button.tsx';
@@ -34,6 +35,14 @@ interface RoundScreenProps {
   onQuit: () => void;
   /** "Siguiente" after the last answer: the round is complete (RND-08). */
   onFinish: (result: RoundResult) => void;
+}
+
+/** The text of a text option: the country's name, or its quiz capital in CAP-A. */
+function optionText(game: PlayableGame, option: Entity, language: Language): string {
+  if (game.id !== 'CAP-A') return option.name[language];
+  // CAP-02: the question generator never puts an entity without a quiz capital in a Capitals round.
+  if (!option.capital) throw new Error(`${option.code} has no quiz capital`);
+  return option.capital[language];
 }
 
 /** How an option looks once the question is answered (RND-04). */
@@ -136,30 +145,7 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
 
         {/* A new key per question: the new question's title takes the focus (NFR-05). */}
         <main key={state.current} className="flex flex-col gap-4">
-          {game.direction === 'A' ? (
-            <>
-              <ScreenTitle className="text-2xl">{t('round.FLAG-A.prompt')}</ScreenTitle>
-              <div className="mx-auto w-full max-w-56 rounded-block border-3 border-ink bg-paper p-3 shadow-block">
-                <FlagImage entity={question.entity} alt={t('round.flagAlt')} />
-              </div>
-              <ul
-                ref={optionsRef}
-                aria-label={t('round.options')}
-                className="flex scroll-mb-56 flex-col gap-3"
-              >
-                {question.options.map((option) => (
-                  <TextOption
-                    key={option.code}
-                    option={option}
-                    state={optionState(option, question, chosen)}
-                    onChoose={() => {
-                      setState(answer(state, option.code));
-                    }}
-                  />
-                ))}
-              </ul>
-            </>
-          ) : (
+          {game.id === 'FLAG-B' ? (
             <>
               {/* FLAG-B: the country's name is the question, large, as in the «Bloques» mockup. */}
               <ScreenTitle className="flex flex-col gap-1">
@@ -167,7 +153,7 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
                   {t('round.FLAG-B.prompt', { of: ofWords(question.entity, language) })}
                 </span>{' '}
                 <span className="text-4xl">
-                  {t('round.FLAG-B.country', { name: question.entity.name[language] })}
+                  {t('round.askedName', { name: question.entity.name[language] })}
                 </span>
               </ScreenTitle>
               <ul
@@ -180,6 +166,48 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
                     key={option.code}
                     option={option}
                     label={t('round.option', { n: index + 1 })}
+                    state={optionState(option, question, chosen)}
+                    onChoose={() => {
+                      setState(answer(state, option.code));
+                    }}
+                  />
+                ))}
+              </ul>
+            </>
+          ) : (
+            <>
+              {game.id === 'CAP-A' ? (
+                <ScreenTitle className="flex flex-col gap-1">
+                  <span className="font-body text-lg font-extrabold text-ink-muted">
+                    {t('round.CAP-A.prompt', { of: ofWords(question.entity, language) })}
+                  </span>{' '}
+                  <span className="flex items-center gap-3 text-4xl">
+                    {/* CAP-01: at level 1 the flag next to the name is a visual hint. */}
+                    {settings.level === 1 && (
+                      <span className="w-16 flex-none">
+                        <FlagImage entity={question.entity} alt="" className="rounded-md" />
+                      </span>
+                    )}
+                    {t('round.askedName', { name: question.entity.name[language] })}
+                  </span>
+                </ScreenTitle>
+              ) : (
+                <>
+                  <ScreenTitle className="text-2xl">{t('round.FLAG-A.prompt')}</ScreenTitle>
+                  <div className="mx-auto w-full max-w-56 rounded-block border-3 border-ink bg-paper p-3 shadow-block">
+                    <FlagImage entity={question.entity} alt={t('round.flagAlt')} />
+                  </div>
+                </>
+              )}
+              <ul
+                ref={optionsRef}
+                aria-label={t('round.options')}
+                className="flex scroll-mb-56 flex-col gap-3"
+              >
+                {question.options.map((option) => (
+                  <TextOption
+                    key={option.code}
+                    text={optionText(game, option, language)}
                     state={optionState(option, question, chosen)}
                     onChoose={() => {
                       setState(answer(state, option.code));
@@ -206,18 +234,16 @@ const OPTION_TONES: Record<OptionState, string> = {
   other: 'bg-paper opacity-50',
 };
 
-/** A country name as a large button (GAME-03); once answered, its ✓ or ✗ mark sits beside it (RND-04). */
+/** A country or capital name as a large button (GAME-03); once answered, its ✓ or ✗ mark sits beside it (RND-04). */
 function TextOption({
-  option,
+  text,
   state,
   onChoose,
 }: {
-  option: Entity;
+  text: string;
   state: OptionState;
   onChoose: () => void;
 }) {
-  const { language } = useI18n();
-
   return (
     <li className="relative">
       <button
@@ -232,7 +258,7 @@ function TextOption({
           OPTION_TONES[state],
         ].join(' ')}
       >
-        {option.name[language]}
+        {text}
       </button>
       {(state === 'correct' || state === 'wrong') && (
         <AnswerMark correct={state === 'correct'} variant="badge" />
@@ -326,15 +352,17 @@ function Feedback({ game, question, chosen, nextRef, onNext }: FeedbackProps) {
   const { t, language } = useI18n();
   const answered = chosen !== null;
   const correct = chosen === question.entity.code;
-  // FLAG-A names the right country; in FLAG-B the country is the question, so it points at the ✓ flag.
-  // Both keep the article the name takes (DATA-09): «Era el Reino Unido», «La bandera del Reino Unido».
+  // FLAG-A names the right country and CAP-A the right capital; in FLAG-B the country is the question, so it
+  // points at the ✓ flag. Names keep the article they take (DATA-09): «Era el Reino Unido».
   const miss =
-    game.direction === 'A'
-      ? t('round.wrong', {
-          was: wasWords(question.entity, language),
-          name: nameInSentence(question.entity, language),
-        })
-      : t('round.wrongFlag', { ofName: ofName(question.entity, language) });
+    game.id === 'FLAG-B'
+      ? t('round.wrongFlag', { ofName: ofName(question.entity, language) })
+      : game.id === 'CAP-A'
+        ? t('round.wrongCapital', { name: optionText(game, question.entity, language) })
+        : t('round.wrong', {
+            was: wasWords(question.entity, language),
+            name: nameInSentence(question.entity, language),
+          });
 
   return (
     <section
@@ -350,7 +378,7 @@ function Feedback({ game, question, chosen, nextRef, onNext }: FeedbackProps) {
             <>
               <AnswerMark correct={correct} variant="tile" />
               <p
-                className={`font-display leading-tight ${correct || game.direction === 'A' ? 'text-3xl' : 'text-2xl'}`}
+                className={`font-display leading-tight ${correct || game.id !== 'FLAG-B' ? 'text-3xl' : 'text-2xl'}`}
               >
                 {correct ? t('round.correct') : miss}
               </p>
