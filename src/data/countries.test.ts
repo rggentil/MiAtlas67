@@ -1,10 +1,34 @@
 import { describe, expect, it } from 'vitest';
-import { flagFileName, isCapitalEligible, REGIONS, type Entity } from '../domain/entity.ts';
+import {
+  flagFileName,
+  isCapitalEligible,
+  REGIONS,
+  shapeFileName,
+  type Entity,
+} from '../domain/entity.ts';
 import { countries } from './countries.ts';
 
 const bundledFlags = new Set(
   Object.keys(import.meta.glob('../assets/flags/*.svg')).map((path) => path.split('/').pop()),
 );
+
+/** The bundled silhouettes (SHAPE-02), by file name, with their SVG text. */
+const bundledShapes = new Map(
+  Object.entries(
+    import.meta.glob<string>('../assets/shapes/*.svg', {
+      eager: true,
+      query: '?raw',
+      import: 'default',
+    }),
+  ).map(([path, svg]) => [path.split('/').pop(), svg]),
+);
+
+/** A silhouette bigger than this would weigh too much on a phone: the build script simplifies it. */
+const MAX_SHAPE_BYTES = 20_000;
+
+function codes(entities: readonly Entity[]): string[] {
+  return entities.map((entity) => entity.code);
+}
 
 function byCode(code: string): Entity {
   const entity = countries.find((c) => c.code === code);
@@ -83,6 +107,48 @@ describe('countries dataset', () => {
   it('DATA-05 DATA-06 every flag file exists in the bundle', () => {
     const missing = countries.map(flagFileName).filter((file) => !bundledFlags.has(file));
     expect(missing).toEqual([]);
+  });
+
+  it('DATA-05 DATA-06 SHAPE-02 every shape-eligible country has a bundled silhouette, small enough for a phone', () => {
+    const eligible = countries.filter((country) => country.shapeEligible);
+    const missing = eligible.map(shapeFileName).filter((file) => !bundledShapes.has(file));
+    expect(missing).toEqual([]);
+    const tooBig = eligible.filter(
+      (country) => (bundledShapes.get(shapeFileName(country))?.length ?? 0) > MAX_SHAPE_BYTES,
+    );
+    expect(codes(tooBig)).toEqual([]);
+  });
+
+  it('SHAPE-01 a silhouette is only ink outlines: no text, no image, no neighbouring country', () => {
+    for (const [file, svg] of bundledShapes) {
+      expect(svg, file).toMatch(
+        /^<svg [^>]*viewBox="0 0 200 200">(<path [^>]*d="M[^"]+"\/>){1,3}<\/svg>\n?$/,
+      );
+      const colours = svg.match(/(fill|stroke)="[^"]*"/g) ?? [];
+      expect(
+        colours.filter((colour) => !/"(#1a1a2e|none)"$/.test(colour)),
+        file,
+      ).toEqual([]);
+    }
+  });
+
+  it.each(['MV', 'TV', 'MH', 'KI', 'FM'])(
+    'SHAPE-01 the islands of %s are drawn with an outline, so each one shows at least as a dot',
+    (code) => {
+      expect(bundledShapes.get(`${code.toLowerCase()}.svg`)).toMatch(
+        /<path [^>]*stroke-width="[3-9]"[^>]*d="M/,
+      );
+    },
+  );
+
+  it('SHAPE-02 Spain shows the Canary Islands in a framed box (D25)', () => {
+    expect(bundledShapes.get('es.svg')).toMatch(
+      /<path fill="none" stroke="#1a1a2e" [^>]*d="M[^"]+Z"\/>/,
+    );
+  });
+
+  it('SHAPE-03 every country has a silhouette in the Shapes games, microstates included (D25)', () => {
+    expect(countries.filter((country) => !country.shapeEligible).map((c) => c.code)).toEqual([]);
   });
 
   it.each([

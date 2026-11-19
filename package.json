@@ -24,6 +24,7 @@
     "test:e2e:ui": "playwright test --ui",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run test:coverage && npm run test:e2e",
     "data:flags": "node scripts/sync-flags.ts",
+    "data:shapes": "node scripts/build-shapes.ts",
     "trace": "node scripts/trace.ts"
   },
   "dependencies": {
@@ -42,11 +43,16 @@
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
     "@testing-library/user-event": "14.6.12",
+    "@types/d3-geo": "3.1.1",
+    "@types/geojson": "7946.0.16",
     "@types/node": "22.20.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "@types/topojson-client": "3.1.5",
+    "@types/topojson-specification": "1.0.5",
     "@vitejs/plugin-react": "6.3.0",
     "@vitest/coverage-v8": "5.1.0",
+    "d3-geo": "3.1.1",
     "eslint": "10.15.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-react-hooks": "7.1.1",
@@ -54,12 +60,15 @@
     "fake-indexeddb": "6.2.7",
     "flag-icons": "7.6.0",
     "globals": "17.14.0",
+    "i18n-iso-countries": "7.14.0",
     "jsdom": "31.0.1",
     "prettier": "3.10.1",
     "tailwindcss": "4.3.5",
+    "topojson-client": "3.1.0",
     "typescript": "6.0.3",
     "typescript-eslint": "8.73.0",
     "vite": "8.3.8",
-    "vitest": "5.1.0"
+    "vitest": "5.1.0",
+    "world-atlas": "2.0.2"
   }
 }

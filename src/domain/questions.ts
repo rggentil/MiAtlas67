@@ -1,9 +1,9 @@
-import { isCapitalEligible, REGIONS, type Entity, type Tier } from './entity.ts';
+import { isCapitalEligible, isShapeEligible, REGIONS, type Entity, type Tier } from './entity.ts';
 import { shuffle, type Rng } from './random.ts';
 import type { Relations } from './relations.ts';
 
-/** Topics with data so far. Shapes, and its eligibility (SHAPE-03), arrive with the shapes data. */
-export const TOPICS = ['flags', 'capitals'] as const;
+/** The three topics of the games (spec §6). */
+export const TOPICS = ['flags', 'capitals', 'shapes'] as const;
 export type Topic = (typeof TOPICS)[number];
 
 /** 1 Fácil, 2 Medio, 3 Difícil (spec §7). Level 4 Experto arrives with the extended set. */
@@ -35,7 +35,9 @@ export const OPTIONS_PER_LEVEL: Readonly<Record<Level, number>> = { 1: 3, 2: 4, 
 const TIERS: readonly Tier[] = [1, 2, 3];
 
 function isEligible(entity: Entity, topic: Topic): boolean {
-  return topic === 'capitals' ? isCapitalEligible(entity) : true;
+  if (topic === 'capitals') return isCapitalEligible(entity);
+  if (topic === 'shapes') return isShapeEligible(entity);
+  return true;
 }
 
 /**

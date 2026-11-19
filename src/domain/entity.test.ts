@@ -9,6 +9,7 @@ const spain: Entity = {
   region: 'europe',
   category: 'un-member',
   tier: 1,
+  shapeEligible: true,
 };
 
 describe('entity', () => {
