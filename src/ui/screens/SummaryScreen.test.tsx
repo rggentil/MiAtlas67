@@ -242,4 +242,62 @@ describe('SummaryScreen', () => {
       within(screen.getByRole('list', { name: 'To review' })).getByRole('listitem'),
     ).toHaveTextContent(`${missedEntity.name.en}${missedEntity.capital.en}`);
   });
+
+  it('RND-08 CAP-B each missed capital is listed with its country', () => {
+    const settings: RoundSettings = { topic: 'capitals', region: 'europe', level: 1 };
+    const questions = generateRound(countries, settings, createRng(42), relations);
+    let state = startRound(questions);
+    questions.forEach((asked, index) => {
+      state = answer(state, index === 4 ? wrongCode(asked) : asked.entity.code);
+      state = next(state);
+    });
+    const [missedEntity] = roundResult(state).missed;
+    if (!missedEntity?.capital) throw new Error('The missed country has a capital');
+    renderWithI18n(
+      <SummaryScreen
+        game={playableGame('CAP-B')}
+        settings={settings}
+        result={roundResult(state)}
+        newRecord={false}
+        onPlayAgain={vi.fn()}
+        onMenu={vi.fn()}
+      />,
+    );
+
+    // The capital was the question, so it comes first; the country is the answer to learn.
+    expect(
+      within(screen.getByRole('list', { name: 'Para repasar' })).getByRole('listitem'),
+    ).toHaveTextContent(`${missedEntity.capital.es}${missedEntity.name.es}`);
+  });
+
+  it('RND-08 CAP-B NFR-06 in English the missed capital comes first, then its country', () => {
+    localStorage.setItem('miatlas67.language', 'en');
+    const settings: RoundSettings = { topic: 'capitals', region: 'europe', level: 1 };
+    const questions = generateRound(countries, settings, createRng(42), relations);
+    const missedAt = questions.findIndex(
+      (asked) => asked.entity.capital && asked.entity.capital.es !== asked.entity.capital.en,
+    );
+    expect(missedAt).toBeGreaterThanOrEqual(0);
+    let state = startRound(questions);
+    questions.forEach((asked, index) => {
+      state = answer(state, index === missedAt ? wrongCode(asked) : asked.entity.code);
+      state = next(state);
+    });
+    const [missedEntity] = roundResult(state).missed;
+    if (!missedEntity?.capital) throw new Error('The missed country has a capital');
+    renderWithI18n(
+      <SummaryScreen
+        game={playableGame('CAP-B')}
+        settings={settings}
+        result={roundResult(state)}
+        newRecord={false}
+        onPlayAgain={vi.fn()}
+        onMenu={vi.fn()}
+      />,
+    );
+
+    expect(
+      within(screen.getByRole('list', { name: 'To review' })).getByRole('listitem'),
+    ).toHaveTextContent(`${missedEntity.capital.en}${missedEntity.name.en}`);
+  });
 });
