@@ -66,6 +66,7 @@ test.describe('History of the rounds played', () => {
         'País → Bandera',
         'País → Capital',
         'Capital → País',
+        'Silueta → País',
       ]) {
         const box = await history.filter.getByText(name, { exact: true }).boundingBox();
         expect(box?.height).toBeGreaterThanOrEqual(48);

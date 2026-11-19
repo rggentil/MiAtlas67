@@ -27,7 +27,7 @@ export class SummaryPage {
     this.newRecord = page.getByRole('status').getByText('¡Nuevo récord!', { exact: true });
   }
 
-  /** The flag of the n-th missed entity (from 0). Its alt text is empty, next to the name, so it has no role. */
+  /** The picture (flag, or silhouette in the Shapes games) of the n-th missed entity (from 0). Its alt text is empty, next to the name, so it has no role. */
   missedFlag(index: number): Locator {
     return this.missed.nth(index).locator('img');
   }

@@ -16,6 +16,8 @@ export class RoundPage {
   readonly score: Locator;
   /** The flag to guess (FLAG-A). */
   readonly flag: Locator;
+  /** The silhouette to guess (SHAPE-A). */
+  readonly shape: Locator;
   /** The list of answers ("Respuestas"). */
   readonly answers: Locator;
   /** The answer buttons, in the order they are shown. */
@@ -39,6 +41,7 @@ export class RoundPage {
     this.progressText = page.getByText(/^\d+\/\d+$/);
     this.score = page.getByText(/^Aciertos: \d+$/);
     this.flag = page.getByRole('img', { name: 'La bandera que hay que adivinar' });
+    this.shape = page.getByRole('img', { name: 'La silueta que hay que adivinar' });
     this.answers = page.getByRole('list', { name: 'Respuestas' });
     this.options = this.answers.getByRole('button');
     this.feedback = page.getByRole('status');

@@ -24,6 +24,7 @@ import { CheckIcon, CloseIcon, NextIcon } from '../components/icons.tsx';
 import { ProgressBar } from '../components/ProgressBar.tsx';
 import { QuitDialog } from '../components/QuitDialog.tsx';
 import { ScreenTitle } from '../components/ScreenTitle.tsx';
+import { ShapeImage } from '../components/ShapeImage.tsx';
 import type { PlayableGame } from '../games.ts';
 import { LEVEL_NAMES } from '../labels.ts';
 
@@ -204,6 +205,13 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
                     {t('round.askedName', { name: capitalOf(question.entity, language) })}
                   </span>
                 </ScreenTitle>
+              ) : game.id === 'SHAPE-A' ? (
+                <>
+                  <ScreenTitle className="text-2xl">{t('round.SHAPE-A.prompt')}</ScreenTitle>
+                  <div className="mx-auto w-full max-w-56 rounded-block border-3 border-ink bg-paper p-3 shadow-block">
+                    <ShapeImage entity={question.entity} alt={t('round.shapeAlt')} />
+                  </div>
+                </>
               ) : (
                 <>
                   <ScreenTitle className="text-2xl">{t('round.FLAG-A.prompt')}</ScreenTitle>
@@ -374,7 +382,7 @@ function Feedback({ game, question, chosen, nextRef, onNext }: FeedbackProps) {
   const { t, language } = useI18n();
   const answered = chosen !== null;
   const correct = chosen === question.entity.code;
-  // FLAG-A and CAP-B name the right country and CAP-A the right capital; in FLAG-B the country is the question, so it
+  // FLAG-A, CAP-B and SHAPE-A name the right country and CAP-A the right capital; in FLAG-B the country is the question, so it
   // points at the ✓ flag. Names keep the article they take (DATA-09): «Era el Reino Unido».
   const miss =
     game.id === 'FLAG-B'
