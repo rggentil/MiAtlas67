@@ -71,11 +71,11 @@ Each topic is played in both directions, which makes **six games**:
 - **GAME-03** Text options are shown as a vertical list of large buttons. Image options (flags, silhouettes) are
   shown as a grid of large tappable cards.
 - **CAP-01** At level 1, Capitals games show the country's flag next to its name as a visual hint.
-- **SHAPE-01** Silhouettes have no labels and no neighbours.
+- **SHAPE-01** Silhouettes have no labels and no neighbours. Every island stays visible, at least as a dot.
 - **SHAPE-02** A silhouette shows the main territory; distant overseas territories are left out
-  (e.g. France without French Guiana).
-- **SHAPE-03** Entities whose silhouette is not recognizable (microstates such as Vatican City, Monaco or Nauru)
-  are excluded from Shapes games (`shapeEligible` in the data).
+  (e.g. France without French Guiana). Exceptions decided by the product owner are in D25.
+- **SHAPE-03** Entities whose silhouette is not recognizable are excluded from Shapes games (`shapeEligible` in
+  the data). None for now: microstates such as Vatican City, Monaco or Nauru stay in (D25).
 - **SHAPE-04** Entities without a reliable, undisputed open geometry (e.g. Puntland, whose boundary with
   Somalilandia is disputed) are excluded from Shapes games.
 - **CAP-02** Entities without a meaningful capital (e.g. Hong Kong, Macao, Gibraltar) are excluded from Capitals
@@ -184,7 +184,8 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
   (e.g. Rusia → Europa, Turquía → Asia, Egipto → África, Groenlandia → América), documented in the data.
   Extended entities belong to the region where they are located (e.g. Puntland → África, Bonaire → América).
 - **DATA-05** All data is bundled with the app (no runtime API calls). It uses openly licensed sources, which are
-  listed on an "Acerca de" screen (flags: *flag-icons*, MIT; shapes: *Natural Earth*, public domain; avatars:
+  listed on an "Acerca de" screen (flags: *flag-icons*, MIT; shapes: *Natural Earth*, public domain, and
+  Vatican City from *OpenStreetMap*, © OpenStreetMap contributors, ODbL; avatars:
   *OpenMoji*, CC BY-SA 4.0).
   Flags missing from *flag-icons* (e.g. Abjasia, Puntland), or shown there differently from the flag in de facto
   use (Afganistán, D13), come from *Wikimedia Commons*; the source and licence of each such file are recorded in
@@ -291,11 +292,14 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 | D22 | Back on the home screen | ✅ The game opens on "¿Quién juega?", so Back on the home screen goes there, and "¿Quién juega?" is the screen that asks "¿Salir del juego?" (NAV-01, NAV-02, story #61). Back always goes to the screen before. This moves the question of D20 to another screen; the rest of D20 stays |
 | D23 | "¡Nuevo récord!" | ✅ Only when a round beats the player's best score in the same game, region and level. A tie is not a record, and neither is the first round there: it would show very often at first, with 36 combinations in "Banderas" alone (RND-08, story #66) |
 | D24 | Devices | ✅ The family plays on Android and on iPhone. Safari on iPhone and iPad deletes the data of a website after 7 days of Safari use without opening it; a game added to the home screen keeps it. Not urgent for the product owner: a small story adds the home screen install in a later epic (#74), before the offline PWA of epic 7 (NFR-02) |
+| D25 | Silhouettes | ✅ Decided in the [shapes review page](https://claude.ai/artifact/XL55gaC5p8PzcQeadSiF39) (SHAPE-01…03, #79). Spain shows the Canary Islands in a small framed box in the bottom-left corner, as maps of Spain do; Ceuta and Melilla are drawn in their place. With their islands: Ecuador (Galápagos) and India (Andaman and Nicobar). Without them: United States (Alaska, Hawaii), Portugal (Azores, Madeira). Drawn whole: Somalia with Somalilandia, Cyprus with the north, Serbia with Kosovo; Morocco without the Western Sahara. Island countries keep every island group (Kiribati, Micronesia), each island at least a visible dot; Seychelles shows the islands around Mahé. Every country is shape-eligible, microstates included; Vatican City is drawn from OpenStreetMap, whose outline shows its walls and St Peter's Square (Natural Earth has a plain 7-point polygon) |
 
 No open questions.
 
 ## 18. Change log
 
+- **v1.11** (2026-11-19): D25 decided in the shapes review: overseas exceptions, de facto lines, the Canary
+  Islands box, islands always visible (SHAPE-01, SHAPE-02) and microstates kept in the Shapes games (SHAPE-03) · Vatican City outline from OpenStreetMap (DATA-05).
 - **v1.10** (2026-11-18): D24 decided: the home screen install comes as a small story in a later epic (#74), so iPhone keeps the players and history.
 - **v1.9** (2026-11-18): decisions of the epic 4 review page: the avatars are 11 OpenMoji animals, and two
   players may share one (PRF-02, DATA-05, D21) · Back on the home screen goes to "¿Quién juega?", which now asks

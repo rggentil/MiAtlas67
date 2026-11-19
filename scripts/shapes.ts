@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { geoArea, geoAzimuthalEqualArea, geoCentroid, geoDistance, geoPath } from 'd3-geo';
+import type { GeoProjection } from 'd3-geo';
 import type { Feature, MultiPolygon, Polygon, Position } from 'geojson';
 import { merge } from 'topojson-client';
 import type { GeometryCollection, Topology } from 'topojson-specification';
@@ -30,20 +31,57 @@ const SIZE = 200;
 const MARGIN = 8;
 /** Douglas–Peucker tolerance in drawing units: 0.35 of 200 keeps the coast recognizable. */
 const TOLERANCE = 0.6;
-/** Pieces smaller than this (in square drawing units) would be specks: they are left out. */
-const MIN_PIECE_AREA = 1.5;
+/** Pieces smaller than this (in square drawing units) are small islands, drawn with an outline (see draw). */
+const SMALL_PIECE_AREA = 20;
+/** Outline of the small islands, so the smallest one is still a dot of this size (bigger in island countries). */
+const DOT_STROKE = 3;
+const ISLAND_COUNTRY_DOT_STROKE = 5;
+/** Rings smaller than this after simplifying are left out (holes) or drawn as a dot (small islands). */
+const MIN_HOLE_AREA = 1.5;
+/** In a country with a mainland, smaller islands (in square drawing units) are specks and are left out. */
+const MIN_ISLAND_AREA = 0.3;
+/** A country whose largest piece covers less than this (of 200 × 200) is an island country (SHAPE-02). */
+const ISLAND_COUNTRY_AREA = 3000;
+/** The box of the overseas pieces drawn apart (Override.inset). */
+const INSET_WIDTH = 64;
+const INSET_HEIGHT = 34;
 
 export interface Override {
   /** Another distance than GAP_KM for this country. */
   readonly gapKm?: number;
   /** Natural Earth pieces named here are drawn together with the country (de facto vs official lines). */
   readonly mergeWith?: readonly string[];
+  /** The outline to draw instead of world-atlas, when its rounding flattens a tiny country. */
+  readonly outline?: readonly Position[];
+  /** The overseas pieces are drawn in a small framed box in the bottom-left corner, as in the maps of Spain. */
+  readonly inset?: boolean;
 }
 
-/** Changes to the default rule, each one decided by the product owner in the shapes review (#79). */
+/** Changes to the default rule, each one decided by the product owner in the shapes review (#79, D25). */
 export const OVERRIDES: Readonly<Record<string, Override>> = {
   // Malaysia: Borneo (Sabah and Sarawak) is ~600 km from the peninsula and part of the main territory.
   MY: { gapKm: 800 },
+  // Vatican City: world-atlas rounds it to a line and Natural Earth has a plain 7-point polygon. The outline
+  // of OpenStreetMap (relation 36989, © OpenStreetMap contributors, ODbL) shows its walls and St Peter's Square.
+  VA: {
+    outline: JSON.parse(
+      readFileSync(join(root, 'scripts', 'data', 'va-osm.json'), 'utf8'),
+    ) as Position[],
+  },
+  // Spain: the Canary Islands in a box, as Spanish maps draw them.
+  ES: { inset: true },
+  // Ecuador with the Galápagos, India with the Andaman and Nicobar Islands.
+  EC: { gapKm: 1300 },
+  IN: { gapKm: 1400 },
+  // De facto lines drawn as part of the country they belong to officially.
+  SO: { mergeWith: ['Somaliland'] },
+  CY: { mergeWith: ['N. Cyprus', 'Cyprus U.N. Buffer Zone'] },
+  // Island countries spread over the ocean: every island group, as on a map of the country.
+  KI: { gapKm: 2500 },
+  FM: { gapKm: 1200 },
+  // Seychelles: the granitic islands around Mahé, as maps of the country show it; the far atolls are specks.
+  SC: { gapKm: 100 },
+  RS: { mergeWith: ['Kosovo'] },
 };
 
 const geometries = topology.objects.countries.geometries;
@@ -52,13 +90,23 @@ function countryGeometry(
   code: string,
   override: Override | undefined,
 ): Feature<Polygon | MultiPolygon> {
+  if (override?.outline) {
+    return {
+      type: 'Feature',
+      properties: {},
+      geometry: { type: 'Polygon', coordinates: [[...override.outline]] },
+    };
+  }
   const numeric = iso.alpha2ToNumeric(code);
   const own = geometries.filter((geometry) => geometry.id === numeric);
   if (own.length === 0)
     throw new Error(`Natural Earth has no shape for ${code} (${String(numeric)})`);
   const extra = (override?.mergeWith ?? []).map((name) => {
     const found = geometries.find(
-      (geometry) => (geometry.properties as { name?: string } | undefined)?.name === name,
+      (geometry) =>
+        geometry.properties !== undefined &&
+        'name' in geometry.properties &&
+        geometry.properties.name === name,
     );
     if (!found) throw new Error(`Natural Earth has no piece named ${name}`);
     return found;
@@ -66,12 +114,19 @@ function countryGeometry(
   return {
     type: 'Feature',
     properties: {},
-    geometry: merge(topology, [...own, ...extra] as never) as MultiPolygon,
+    geometry: merge(topology, [...own, ...extra] as never),
   };
 }
 
+/**
+ * The pieces (polygons) of a geometry. A piece wound the wrong way would cover the whole globe but itself
+ * (a few Maldives atolls in Natural Earth): its rings are turned around.
+ */
 function polygonsOf(geometry: Polygon | MultiPolygon): Position[][][] {
-  return geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
+  const pieces = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
+  return pieces.map((piece) =>
+    geoArea(asFeature(piece)) > 2 * Math.PI ? piece.map((ring) => [...ring].reverse()) : piece,
+  );
 }
 
 function asFeature(rings: Position[][]): Feature<Polygon> {
@@ -167,37 +222,123 @@ function ringsOf(path: string): [number, number][][] {
 
 const round = (n: number): string => String(Math.round(n * 10) / 10);
 
-/** The silhouette as an SVG document: one ink-filled path, no label and no neighbours (SHAPE-01). */
+type Ring = [number, number][];
+
+/** The pieces drawn by a projection: big pieces as they are, small ones apart so they get a minimum size. */
+interface Drawn {
+  readonly big: Ring[];
+  readonly small: Ring[];
+}
+
+function centre(ring: Ring): [number, number] {
+  const sum = ring.reduce(([x, y], [px, py]) => [x + px, y + py], [0, 0]);
+  return [sum[0] / ring.length, sum[1] / ring.length];
+}
+
+/** A small piece that simplifies to almost nothing becomes a tiny square: the stroke turns it into a dot. */
+function speck(ring: Ring): Ring {
+  const [x, y] = centre(ring);
+  const h = 0.3;
+  return [
+    [x - h, y - h],
+    [x + h, y - h],
+    [x + h, y + h],
+    [x - h, y + h],
+  ];
+}
+
+function draw(pieces: readonly Position[][][], projection: GeoProjection, keepAll: boolean): Drawn {
+  const path = geoPath(projection);
+  const big: Ring[] = [];
+  const small: Ring[] = [];
+  for (const piece of pieces) {
+    const rings = ringsOf(path(asFeature(piece)) ?? '');
+    const [outer, ...holes] = rings;
+    if (!outer) continue;
+    const area = ringArea(outer);
+    if (area >= SMALL_PIECE_AREA) {
+      big.push(
+        ...[outer, ...holes]
+          .map((ring) => simplify(ring, TOLERANCE))
+          .filter((ring) => ring.length >= 3 && ringArea(ring) >= MIN_HOLE_AREA),
+      );
+      continue;
+    }
+    if (!keepAll && area < MIN_ISLAND_AREA) continue;
+    const ring = simplify(outer, keepAll ? TOLERANCE / 3 : TOLERANCE);
+    small.push(ring.length >= 3 && ringArea(ring) >= MIN_HOLE_AREA ? ring : speck(outer));
+  }
+  return { big, small };
+}
+
+const toD = (rings: readonly Ring[]): string =>
+  rings.map((ring) => `M${ring.map(([x, y]) => `${round(x)} ${round(y)}`).join('L')}Z`).join('');
+
+function projectionFor(pieces: readonly Position[][][], box: [[number, number], [number, number]]) {
+  const shape: Feature<MultiPolygon> = {
+    type: 'Feature',
+    properties: {},
+    geometry: { type: 'MultiPolygon', coordinates: [...pieces] },
+  };
+  const [lon, lat] = geoCentroid(shape);
+  return geoAzimuthalEqualArea().rotate([-lon, -lat]).fitExtent(box, shape);
+}
+
+/**
+ * The silhouette as an SVG document, in ink and with no label and no neighbours (SHAPE-01): the big pieces
+ * filled, the small islands filled and outlined so that each one shows as at least a dot, and, for Spain,
+ * the frame of the box with the Canary Islands.
+ */
 export function silhouette(
   code: string,
   override: Override | undefined = OVERRIDES[code],
 ): { svg: string; dropped: number } {
-  const geometry = countryGeometry(code, override).geometry;
-  const pieces = polygonsOf(geometry);
+  const pieces = polygonsOf(countryGeometry(code, override).geometry);
   const kept = mainTerritory(pieces, override?.gapKm ?? GAP_KM);
-  const shape: Feature<MultiPolygon> = {
-    type: 'Feature',
-    properties: {},
-    geometry: { type: 'MultiPolygon', coordinates: kept },
-  };
-  const [lon, lat] = geoCentroid(shape);
-  const projection = geoAzimuthalEqualArea()
-    .rotate([-lon, -lat])
-    .fitExtent(
-      [
-        [MARGIN, MARGIN],
-        [SIZE - MARGIN, SIZE - MARGIN],
-      ],
-      shape,
+  const overseas = pieces.filter((piece) => !kept.includes(piece));
+  const inset = override?.inset === true && overseas.length > 0;
+
+  const projection = projectionFor(kept, [
+    [MARGIN, MARGIN],
+    [SIZE - MARGIN, SIZE - MARGIN],
+  ]);
+  const largest = Math.max(
+    ...kept.map((piece) => ringArea(ringsOf(geoPath(projection)(asFeature(piece)) ?? '')[0] ?? [])),
+  );
+  // An island country (no piece fills much of the drawing) keeps every island, however small.
+  const islandCountry = largest < ISLAND_COUNTRY_AREA;
+  const main = draw(kept, projection, islandCountry);
+  const parts = [main];
+  let frame = '';
+  if (inset) {
+    const x0 = MARGIN;
+    const y1 = SIZE - MARGIN;
+    const x1 = x0 + INSET_WIDTH;
+    const y0 = y1 - INSET_HEIGHT;
+    const pad = 4;
+    parts.push(
+      draw(
+        overseas,
+        projectionFor(overseas, [
+          [x0 + pad, y0 + pad],
+          [x1 - pad, y1 - pad],
+        ]),
+        true,
+      ),
     );
-  const rings = ringsOf(geoPath(projection)(shape) ?? '')
-    .map((ring) => simplify(ring, TOLERANCE))
-    .filter((ring) => ring.length >= 3 && ringArea(ring) >= MIN_PIECE_AREA);
-  const d = rings
-    .map((ring) => `M${ring.map(([x, y]) => `${round(x)} ${round(y)}`).join('L')}Z`)
-    .join('');
+    frame = `M${String(x0)} ${String(y0)}H${String(x1)}V${String(y1)}H${String(x0)}Z`;
+  }
+
+  const ink = '#1a1a2e';
+  const big = toD(parts.flatMap((part) => part.big));
+  const small = toD(parts.flatMap((part) => part.small));
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${String(SIZE)} ${String(SIZE)}">` +
-    `<path fill="#1a1a2e" fill-rule="evenodd" d="${d}"/></svg>\n`;
-  return { svg, dropped: pieces.length - kept.length };
+    (big ? `<path fill="${ink}" fill-rule="evenodd" d="${big}"/>` : '') +
+    (small
+      ? `<path fill="${ink}" stroke="${ink}" stroke-width="${String(islandCountry ? ISLAND_COUNTRY_DOT_STROKE : DOT_STROKE)}" stroke-linejoin="round" d="${small}"/>`
+      : '') +
+    (frame ? `<path fill="none" stroke="${ink}" stroke-width="1.5" d="${frame}"/>` : '') +
+    '</svg>\n';
+  return { svg, dropped: inset ? 0 : overseas.length };
 }

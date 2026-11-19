@@ -87,7 +87,7 @@ export const countries: readonly Entity[] = [
   c('MT', ['Malta', 'Malta'], ['La Valeta', 'Valletta'], 'europe', 2),
   c('MD', ['Moldavia', 'Moldova'], ['Chisináu', 'Chișinău'], 'europe', 3),
   // City-state: the capital is the country itself. Too small for a silhouette (SHAPE-03).
-  c('MC', ['Mónaco', 'Monaco'], ['Mónaco', 'Monaco'], 'europe', 2, { shapeEligible: false }),
+  c('MC', ['Mónaco', 'Monaco'], ['Mónaco', 'Monaco'], 'europe', 2),
   c('ME', ['Montenegro', 'Montenegro'], ['Podgorica', 'Podgorica'], 'europe', 3),
   c('NO', ['Noruega', 'Norway'], ['Oslo', 'Oslo'], 'europe', 1),
   c('NL', ['Países Bajos', 'Netherlands'], ['Ámsterdam', 'Amsterdam'], 'europe', 1, {
@@ -112,10 +112,7 @@ export const countries: readonly Entity[] = [
     ['Ciudad del Vaticano', 'Vatican City'],
     'europe',
     2,
-    {
-      category: 'un-observer',
-      shapeEligible: false,
-    },
+    { category: 'un-observer' },
   ), // city-state: the capital is the country itself
 
   // ── América (35) ──────────────────────────────────────────────────────────
@@ -368,7 +365,7 @@ export const countries: readonly Entity[] = [
   c('KI', ['Kiribati', 'Kiribati'], ['Tarawa Sur', 'South Tarawa'], 'oceania', 3),
   c('FM', ['Micronesia', 'Micronesia'], ['Palikir', 'Palikir'], 'oceania', 3),
   // No official capital; Yaren is the de facto one. Too small for a silhouette (SHAPE-03).
-  c('NR', ['Nauru', 'Nauru'], ['Yaren', 'Yaren'], 'oceania', 3, { shapeEligible: false }),
+  c('NR', ['Nauru', 'Nauru'], ['Yaren', 'Yaren'], 'oceania', 3),
   c('NZ', ['Nueva Zelanda', 'New Zealand'], ['Wellington', 'Wellington'], 'oceania', 2),
   c('PW', ['Palaos', 'Palau'], ['Ngerulmud', 'Ngerulmud'], 'oceania', 3),
   c(

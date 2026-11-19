@@ -24,7 +24,7 @@ const bundledShapes = new Map(
 );
 
 /** A silhouette bigger than this would weigh too much on a phone: the build script simplifies it. */
-const MAX_SHAPE_BYTES = 16_000;
+const MAX_SHAPE_BYTES = 20_000;
 
 function codes(entities: readonly Entity[]): string[] {
   return entities.map((entity) => entity.code);
@@ -119,20 +119,37 @@ describe('countries dataset', () => {
     expect(codes(tooBig)).toEqual([]);
   });
 
-  it('SHAPE-01 a silhouette is one filled outline: no text, no image, no neighbouring country', () => {
+  it('SHAPE-01 a silhouette is only ink outlines: no text, no image, no neighbouring country', () => {
     for (const [file, svg] of bundledShapes) {
       expect(svg, file).toMatch(
-        /^<svg [^>]*viewBox="0 0 200 200"><path [^>]*d="M[^"]+"\/><\/svg>\n?$/,
+        /^<svg [^>]*viewBox="0 0 200 200">(<path [^>]*d="M[^"]+"\/>){1,3}<\/svg>\n?$/,
       );
+      const colours = svg.match(/(fill|stroke)="[^"]*"/g) ?? [];
+      expect(
+        colours.filter((colour) => !/"(#1a1a2e|none)"$/.test(colour)),
+        file,
+      ).toEqual([]);
     }
   });
 
-  it.each(['VA', 'MC', 'NR'])(
-    'SHAPE-03 %s, a microstate with no recognizable silhouette, is not shape-eligible',
+  it.each(['MV', 'TV', 'MH', 'KI', 'FM'])(
+    'SHAPE-01 the islands of %s are drawn with an outline, so each one shows at least as a dot',
     (code) => {
-      expect(byCode(code).shapeEligible).toBe(false);
+      expect(bundledShapes.get(`${code.toLowerCase()}.svg`)).toMatch(
+        /<path [^>]*stroke-width="[3-9]"[^>]*d="M/,
+      );
     },
   );
+
+  it('SHAPE-02 Spain shows the Canary Islands in a framed box (D25)', () => {
+    expect(bundledShapes.get('es.svg')).toMatch(
+      /<path fill="none" stroke="#1a1a2e" [^>]*d="M[^"]+Z"\/>/,
+    );
+  });
+
+  it('SHAPE-03 every country has a silhouette in the Shapes games, microstates included (D25)', () => {
+    expect(countries.filter((country) => !country.shapeEligible).map((c) => c.code)).toEqual([]);
+  });
 
   it.each([
     ['QA', 'Catar'],
