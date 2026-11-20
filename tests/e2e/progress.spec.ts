@@ -118,4 +118,31 @@ test.describe('Progress: stars per game, region and level', () => {
       await expect(progress.total('3 estrellas en total')).toBeVisible();
     },
   );
+
+  test(
+    'HIS-04 D29 Portugal right in 3 rounds of "Bandera → País" in a row: "Países dominados: 1/195"; a miss in "País → Bandera" counts only there',
+    { tag: '@HIS-04' },
+    async ({ page }) => {
+      const right = { game: 'FLAG-A', region: 'europe', level: 1, score: 10, stars: 3 } as const;
+      await saveResults(page, lucia, [
+        { ...right, asked: ['PT', 'ES'] },
+        { ...right, region: 'world', asked: ['PT'] },
+        { ...right, asked: ['PT', 'FR'], missed: ['FR'], score: 9, stars: 2 },
+        // "País → Bandera": right twice, then missed.
+        { ...right, game: 'FLAG-B', asked: ['PT'] },
+        { ...right, game: 'FLAG-B', asked: ['PT'] },
+        { ...right, game: 'FLAG-B', asked: ['PT'], missed: ['PT'], score: 9, stars: 2 },
+        // Saved before the counter arrived: no countries asked, so it does not count.
+        { ...right, game: 'CAP-A' },
+        { ...right, game: 'CAP-A' },
+        { ...right, game: 'CAP-A' },
+      ]);
+
+      await home.progressButton.click();
+
+      await expect(progress.mastered('Bandera → País')).toHaveText('Países dominados: 1/195');
+      await expect(progress.mastered('País → Bandera')).toHaveText('Países dominados: 0/195');
+      await expect(progress.mastered('País → Capital')).toHaveText('Países dominados: 0/195');
+    },
+  );
 });

@@ -7,6 +7,15 @@ import {
   type SavedRound,
 } from './store.ts';
 
+/** A copy the caller can change without changing the store. */
+function copyOf(round: SavedRound): SavedRound {
+  return {
+    ...round,
+    missed: [...round.missed],
+    ...(round.asked ? { asked: [...round.asked] } : {}),
+  };
+}
+
 /**
  * Keeps everything in memory. It is the fallback when the browser blocks IndexedDB: the game still works,
  * and its players and rounds last until the page is closed.
@@ -49,19 +58,16 @@ export function createMemoryStore(): GameStore {
       add: (data) => {
         const round: SavedRound = { ...roundFields(data), id: nextRoundId++ };
         rounds.push(round);
-        return Promise.resolve({ ...round, missed: [...round.missed] });
+        return Promise.resolve(copyOf(round));
       },
       listByPlayer: (playerId) =>
         Promise.resolve(
           rounds
             .filter((round) => round.playerId === playerId)
             .sort(newestFirst)
-            .map((round) => ({ ...round, missed: [...round.missed] })),
+            .map((round) => copyOf(round)),
         ),
-      listAll: () =>
-        Promise.resolve(
-          [...rounds].sort(newestFirst).map((round) => ({ ...round, missed: [...round.missed] })),
-        ),
+      listAll: () => Promise.resolve([...rounds].sort(newestFirst).map((round) => copyOf(round))),
     },
     close: () => {
       // Nothing to release.

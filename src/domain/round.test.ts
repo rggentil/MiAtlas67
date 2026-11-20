@@ -120,6 +120,11 @@ describe('round engine', () => {
     ]);
   });
 
+  it('HIS-01 HIS-04 the result lists every entity asked, in question order', () => {
+    const result = roundResult(play([0, 2, 3, 5, 6, 7, 9]));
+    expect(result.asked).toEqual(questions.map((question) => question.entity));
+  });
+
   it('RND-08 a perfect round has no missed entities', () => {
     expect(roundResult(play(firstN(10))).missed).toEqual([]);
   });

@@ -85,6 +85,10 @@ export interface Result {
   readonly stars: 0 | 1 | 2 | 3;
   /** When it was played; by default 1 November 2026 for the first result of a call, then one day more each. */
   readonly playedAt?: number;
+  /** Codes of the entities asked (HIS-04); left out, the round is like one saved before the counter arrived. */
+  readonly asked?: readonly string[];
+  /** Codes of the entities missed; none when left out. */
+  readonly missed?: readonly string[];
 }
 
 /** Saves the finished rounds `results` of the player `playerId` straight into the database (HIS-01). */
@@ -109,7 +113,7 @@ export async function saveResults(
               playerId: id,
               playedAt: round.playedAt ?? Date.UTC(2026, 10, 1 + index),
               total: 10,
-              missed: [],
+              missed: round.missed ?? [],
             });
           }
           transaction.oncomplete = () => {
@@ -164,6 +168,31 @@ export async function savedMissedOf(page: Page, playerId: number): Promise<strin
             db.close();
             const rounds = all.result as { playerId: number; missed: string[] }[];
             resolve(rounds.filter((round) => round.playerId === id).map((round) => round.missed));
+          };
+        };
+      }),
+    playerId,
+  );
+}
+
+/** The codes asked in each saved round of the player `playerId` (HIS-04), or `null` for a round without them. */
+export async function savedAskedOf(page: Page, playerId: number): Promise<(string[] | null)[]> {
+  return page.evaluate(
+    (id) =>
+      new Promise<(string[] | null)[]>((resolve, reject) => {
+        const request = indexedDB.open('miatlas67');
+        request.onerror = () => {
+          reject(new Error('The game database cannot be opened'));
+        };
+        request.onsuccess = () => {
+          const db = request.result;
+          const all = db.transaction('rounds', 'readonly').objectStore('rounds').getAll();
+          all.onsuccess = () => {
+            db.close();
+            const rounds = all.result as { playerId: number; asked?: string[] }[];
+            resolve(
+              rounds.filter((round) => round.playerId === id).map((round) => round.asked ?? null),
+            );
           };
         };
       }),

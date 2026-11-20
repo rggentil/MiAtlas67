@@ -1,4 +1,4 @@
-import { savedMissedOf, savedPlayerId, savedRoundsOf, saveRounds } from './device.ts';
+import { savedAskedOf, savedMissedOf, savedPlayerId, savedRoundsOf, saveRounds } from './device.ts';
 import { expectedRounds, questionAt } from './expected.ts';
 import { expect, test } from './fixtures.ts';
 import { GameSetupPage } from './pages/GameSetupPage.ts';
@@ -78,8 +78,8 @@ test.describe('History of the rounds played', () => {
   );
 
   test(
-    'HIS-01 the saved round keeps the 2 entities that were missed',
-    { tag: '@HIS-01' },
+    'HIS-01 HIS-04 the saved round keeps the 2 entities that were missed, and the 10 that were asked',
+    { tag: ['@HIS-01', '@HIS-04'] },
     async ({ page }) => {
       await startRound('Bandera → País');
       await round.playRound(FIRST_ROUND, [2, 5]);
@@ -91,6 +91,9 @@ test.describe('History of the rounds played', () => {
         .toEqual([
           [questionAt(FIRST_ROUND, 2).entity.code, questionAt(FIRST_ROUND, 5).entity.code],
         ]);
+      expect(await savedAskedOf(page, lucia)).toEqual([
+        FIRST_ROUND.map((question) => question.entity.code),
+      ]);
     },
   );
 

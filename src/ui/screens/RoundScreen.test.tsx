@@ -243,6 +243,7 @@ describe('RoundScreen · FLAG-A', () => {
       total: 10,
       stars: 2,
       missed: [questionAt(8).entity, questionAt(9).entity],
+      asked: Array.from({ length: 10 }, (_, index) => questionAt(index).entity),
     });
   });
 

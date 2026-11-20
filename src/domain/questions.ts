@@ -34,7 +34,8 @@ export const OPTIONS_PER_LEVEL: Readonly<Record<Level, number>> = { 1: 3, 2: 4, 
 
 const TIERS: readonly Tier[] = [1, 2, 3];
 
-function isEligible(entity: Entity, topic: Topic): boolean {
+/** Whether `entity` can be asked or offered in a game of `topic` (CAP-02, SHAPE-03, SHAPE-04). */
+export function isEligible(entity: Entity, topic: Topic): boolean {
   if (topic === 'capitals') return isCapitalEligible(entity);
   if (topic === 'shapes') return isShapeEligible(entity);
   return true;
