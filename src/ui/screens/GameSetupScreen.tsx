@@ -1,4 +1,5 @@
-import { useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
+import type { PlayedResult } from '../../domain/playerProgress.ts';
 import {
   LEVELS,
   REGION_CHOICES,
@@ -6,12 +7,13 @@ import {
   type RegionChoice,
   type RoundSettings,
 } from '../../domain/questions.ts';
+import { levelLocks, previousLevel } from '../../domain/unlocking.ts';
 import { useI18n } from '../../i18n/context.ts';
 import { useOnBack } from '../navigation/useOnBack.ts';
 import { Button } from '../components/Button.tsx';
 import { Chip } from '../components/Chip.tsx';
 import { IconButton } from '../components/IconButton.tsx';
-import { BackIcon } from '../components/icons.tsx';
+import { BackIcon, LockIcon } from '../components/icons.tsx';
 import { ScreenTitle } from '../components/ScreenTitle.tsx';
 import { useFocusOnMount } from '../components/useFocusOnMount.ts';
 import type { PlayableGame } from '../games.ts';
@@ -19,6 +21,8 @@ import { LEVEL_NAMES } from '../labels.ts';
 
 interface GameSetupScreenProps {
   game: PlayableGame;
+  /** Reads the rounds of the player who plays: they say which levels are open (LVL-04). */
+  loadRounds: () => Promise<readonly PlayedResult[]>;
   onBack: () => void;
   onStart: (settings: RoundSettings) => void;
 }
@@ -27,13 +31,28 @@ type Step = { readonly name: 'region' } | { readonly name: 'level'; readonly reg
 
 /**
  * Game → Region → Level (LVL-01): one decision per step, with big buttons. "Volver" goes back one step.
- * Every level is open until unlocking arrives (LVL-04, epic 6).
+ * A level opens with ★★ in the one before (LVL-04); a locked one shows a padlock and how to open it (LVL-05).
  */
-export function GameSetupScreen({ game, onBack, onStart }: GameSetupScreenProps) {
+export function GameSetupScreen({ game, loadRounds, onBack, onStart }: GameSetupScreenProps) {
   const { t } = useI18n();
   const [step, setStep] = useState<Step>({ name: 'region' });
   // The first step opens with the screen, whose h1 takes the focus; later steps take it themselves.
   const [moved, setMoved] = useState(false);
+  // `null` while the rounds are read: the levels are not shown until it is known which ones are open.
+  const [rounds, setRounds] = useState<readonly PlayedResult[] | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    // When the rounds cannot be read, only Fácil is open rather than no level at all.
+    void loadRounds()
+      .catch(() => [])
+      .then((read) => {
+        if (live) setRounds(read);
+      });
+    return () => {
+      live = false;
+    };
+  }, [loadRounds]);
 
   function goTo(next: Step) {
     setMoved(true);
@@ -83,23 +102,62 @@ export function GameSetupScreen({ game, onBack, onStart }: GameSetupScreenProps)
             chip={<Chip>{t(`region.${step.region}`)}</Chip>}
           >
             <div className="flex flex-col gap-3">
-              {LEVELS.map((level) => (
-                <Button
-                  key={level}
-                  variant="secondary"
-                  className="w-full"
-                  onClick={() => {
-                    onStart({ topic: game.topic, region: step.region, level });
-                  }}
-                >
-                  {t(LEVEL_NAMES[level])}
-                  <LevelBars level={level} />
-                </Button>
-              ))}
+              {rounds &&
+                levelLocks(rounds, game.id, step.region).map(({ level, open }) =>
+                  open ? (
+                    <Button
+                      key={level}
+                      variant="secondary"
+                      className="w-full"
+                      onClick={() => {
+                        onStart({ topic: game.topic, region: step.region, level });
+                      }}
+                    >
+                      {t(LEVEL_NAMES[level])}
+                      <LevelBars level={level} />
+                    </Button>
+                  ) : (
+                    <LockedLevel key={level} level={level} />
+                  ),
+                )}
             </div>
           </SetupStep>
         )}
       </main>
+    </div>
+  );
+}
+
+/**
+ * A level that is not open yet (LVL-05): a padlock, and under it how to open it. The button stays focusable
+ * (`aria-disabled`), so a screen reader hears "Medio, bloqueado" and the hint; tapping it does nothing.
+ * The name is set with `aria-label`: hidden text inside the button would be joined differently by each browser.
+ * It starts with the visible text, as WCAG 2.5.3 asks.
+ */
+function LockedLevel({ level }: { level: Level }) {
+  const { t } = useI18n();
+  const hintId = useId();
+  const before = previousLevel(level);
+  const name = t(LEVEL_NAMES[level]);
+
+  return (
+    <div className="flex flex-col gap-1">
+      <Button
+        variant="secondary"
+        className="w-full"
+        aria-disabled="true"
+        aria-label={`${name}, ${t('setup.locked')}`}
+        aria-describedby={hintId}
+      >
+        <LockIcon />
+        {name}
+        <LevelBars level={level} />
+      </Button>
+      {before !== null && (
+        <p id={hintId} className="px-1 text-sm font-extrabold text-ink-muted">
+          {t('setup.unlockHint', { level: t(LEVEL_NAMES[before]) })}
+        </p>
+      )}
     </div>
   );
 }

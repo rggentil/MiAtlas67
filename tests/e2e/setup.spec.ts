@@ -1,3 +1,4 @@
+import { openLevel, savedPlayerId, saveResults } from './device.ts';
 import { expect, test } from './fixtures.ts';
 import { GameSetupPage } from './pages/GameSetupPage.ts';
 import { HomePage } from './pages/HomePage.ts';
@@ -60,9 +61,11 @@ test.describe('Choose region and level', () => {
       await home.openGame('Bandera → País');
 
       await setup.chooseRegion('Oceanía');
-      await expect(setup.levelStep.getByRole('button')).toHaveText(['Fácil', 'Medio', 'Difícil']);
-      for (const level of await setup.levelStep.getByRole('button').all()) {
-        await expect(level).toBeEnabled();
+      await expect(setup.levelStep.getByRole('button')).toHaveCount(3);
+      for (const [index, name] of ['Fácil', 'Medio', 'Difícil'].entries()) {
+        await expect(setup.levelStep.getByRole('button').nth(index)).toHaveAccessibleName(
+          new RegExp(`^${name}`),
+        );
       }
       await expect(setup.regionStep).toHaveCount(0);
 
@@ -84,6 +87,8 @@ test.describe('Choose region and level', () => {
 
       for (const step of ['region', 'level'] as const) {
         await expect(step === 'region' ? setup.regionStep : setup.levelStep).toBeVisible();
+        // A new player: the level step has two locked levels too (LVL-05).
+        if (step === 'level') await expect(setup.level('Difícil')).toBeDisabled();
         expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
         for (const button of await page.getByRole('button').all()) {
           const box = await button.boundingBox();
@@ -92,6 +97,83 @@ test.describe('Choose region and level', () => {
         }
         if (step === 'region') await setup.chooseRegion('Europa');
       }
+    },
+  );
+
+  test(
+    'LVL-04 LVL-05 a new player has Fácil open; Medio and Difícil show a padlock and how to open them, and do nothing when tapped',
+    { tag: ['@LVL-04', '@LVL-05'] },
+    async ({ page }) => {
+      const home = new HomePage(page);
+      const setup = new GameSetupPage(page);
+      await home.goto();
+      await home.openGame('Bandera → País');
+      await setup.chooseRegion('Europa');
+
+      await expect(setup.level('Fácil')).toHaveAccessibleName('Fácil');
+      await expect(setup.level('Fácil')).toBeEnabled();
+      await expect(setup.level('Medio')).toHaveAccessibleName('Medio, bloqueado');
+      await expect(setup.level('Medio')).toBeDisabled();
+      await expect(setup.level('Medio')).toHaveAccessibleDescription(
+        'Consigue ★★ en Fácil para desbloquear',
+      );
+      await expect(setup.level('Difícil')).toHaveAccessibleName('Difícil, bloqueado');
+      await expect(setup.level('Difícil')).toHaveAccessibleDescription(
+        'Consigue ★★ en Medio para desbloquear',
+      );
+      await expect(page.getByText('Consigue ★★ en Fácil para desbloquear')).toBeVisible();
+
+      // force: Playwright waits for an enabled element, and a locked level is reported as disabled.
+      await setup.level('Medio').click({ force: true });
+      await expect(setup.levelStep).toBeVisible();
+      await expect(new RoundPage(page).progressText).toHaveCount(0);
+    },
+  );
+
+  test(
+    'LVL-04 ★★ in "Europa · Fácil" opens "Medio", which plays; "Difícil" and "África · Medio" stay locked',
+    { tag: '@LVL-04' },
+    async ({ page }) => {
+      const home = new HomePage(page);
+      const setup = new GameSetupPage(page);
+      const round = new RoundPage(page);
+      await home.goto('?seed=42');
+      await openLevel(page, 'FLAG-A', 'europe', 2);
+      await home.openGame('Bandera → País');
+
+      await setup.chooseRegion('Europa');
+      await expect(setup.level('Difícil')).toHaveAccessibleName('Difícil, bloqueado');
+      await setup.backButton.click();
+      await setup.chooseRegion('África');
+      await expect(setup.level('Medio')).toHaveAccessibleName('Medio, bloqueado');
+      await setup.backButton.click();
+      await setup.chooseRegion('Europa');
+      await setup.chooseLevel('Medio');
+
+      await expect(round.settings).toHaveText(['Banderas', 'Europa', 'Medio']);
+      await expect(round.options).toHaveCount(4);
+    },
+  );
+
+  test(
+    'LVL-04 D26 a level with a round played before unlocking arrived stays open',
+    { tag: '@LVL-04' },
+    async ({ page }) => {
+      const home = new HomePage(page);
+      const setup = new GameSetupPage(page);
+      await home.goto('?seed=42');
+      const lucia = await savedPlayerId(page, 'Lucía');
+      expect(lucia).not.toBeNull();
+      await saveResults(page, lucia ?? -1, [
+        { game: 'FLAG-A', region: 'europe', level: 1, score: 6, stars: 1 },
+        { game: 'FLAG-A', region: 'europe', level: 3, score: 4, stars: 0 },
+      ]);
+      await home.openGame('Bandera → País');
+      await setup.chooseRegion('Europa');
+
+      await expect(setup.level('Medio')).toHaveAccessibleName('Medio, bloqueado');
+      await expect(setup.level('Difícil')).toHaveAccessibleName('Difícil');
+      await expect(setup.level('Difícil')).toBeEnabled();
     },
   );
 });

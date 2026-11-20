@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import type { GameId } from '../../src/domain/games.ts';
 
 /**
  * What the game has saved on the device: read straight from its IndexedDB database ("miatlas67"), with the
@@ -77,7 +78,7 @@ export async function saveRounds(
 
 /** A finished round with its result, to save straight into the database. */
 export interface Result {
-  readonly game: 'FLAG-A' | 'FLAG-B';
+  readonly game: GameId;
   readonly region: string;
   readonly level: 1 | 2 | 3;
   readonly score: number;
@@ -196,5 +197,27 @@ export async function savedLastPlayer(page: Page): Promise<string | null> {
           };
         };
       }),
+  );
+}
+
+/**
+ * Opens `level` of `game` in `region` for the player `nickname` (LVL-04): saves a ★★ round (8/10) in every
+ * level before it, as if they had been played. Call it on the home screen, before the game is opened: the level
+ * step reads the rounds when the game opens.
+ */
+export async function openLevel(
+  page: Page,
+  game: GameId,
+  region: string,
+  level: 2 | 3,
+  nickname = 'Lucía',
+): Promise<void> {
+  const playerId = await savedPlayerId(page, nickname);
+  if (playerId === null) throw new Error(`There is no player called ${nickname}`);
+  const before = ([1, 2] as const).filter((earlier) => earlier < level);
+  await saveResults(
+    page,
+    playerId,
+    before.map((earlier) => ({ game, region, level: earlier, score: 8, stars: 2 })),
   );
 }

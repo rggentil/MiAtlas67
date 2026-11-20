@@ -50,7 +50,8 @@ async function startRound(nickname: string, level: Level): Promise<void> {
   await userEvent.click(screen.getByRole('button', { name: nickname }));
   await userEvent.click(screen.getByRole('button', { name: /^Bandera → País/ }));
   await userEvent.click(screen.getByRole('button', { name: 'Europa' }));
-  await userEvent.click(screen.getByRole('button', { name: LEVEL_NAMES[level] }));
+  // The levels show once the player's rounds are read: they say which ones are open (LVL-04).
+  await userEvent.click(await screen.findByRole('button', { name: LEVEL_NAMES[level] }));
 }
 
 /** The id of a player on the device, by nickname. */
@@ -181,7 +182,10 @@ describe('App · "¡Nuevo récord!" in the round summary (RND-08, SCR-03, D23)',
     const store = await deviceWith();
     await best(store, 1, 1, 8);
     const read = store.rounds.listByPlayer.bind(store.rounds);
-    // Every read of the earlier rounds waits until the test lets it go, in order.
+    await renderApp(store);
+    const [first = [], second = []] = rounds(1, 2);
+    await startRound('Lucía', 1);
+    // From now on, every read of the earlier rounds waits until the test lets it go, in order.
     const held: (() => void)[] = [];
     store.rounds.listByPlayer = (playerId) =>
       new Promise((resolve) => {
@@ -189,9 +193,6 @@ describe('App · "¡Nuevo récord!" in the round summary (RND-08, SCR-03, D23)',
           resolve(read(playerId));
         });
       });
-    await renderApp(store);
-    const [first = [], second = []] = rounds(1, 2);
-    await startRound('Lucía', 1);
     await finishWith(first, 9);
     await userEvent.click(screen.getByRole('button', { name: 'Jugar otra vez' }));
     await finishWith(second, 5);
@@ -235,6 +236,10 @@ describe('App · "¡Nuevo récord!" in the round summary (RND-08, SCR-03, D23)',
     const store = await deviceWith();
     await best(store, 1, 1, 6);
     const read = store.rounds.listByPlayer.bind(store.rounds);
+    await renderApp(store);
+    const [round = []] = rounds(1, 1);
+    await startRound('Lucía', 1);
+    // From now on, the read of the earlier rounds waits until the test lets it go.
     let finishReading: () => void = () => undefined;
     store.rounds.listByPlayer = (playerId) =>
       new Promise((resolve) => {
@@ -242,9 +247,6 @@ describe('App · "¡Nuevo récord!" in the round summary (RND-08, SCR-03, D23)',
           resolve(read(playerId));
         };
       });
-    await renderApp(store);
-    const [round = []] = rounds(1, 1);
-    await startRound('Lucía', 1);
     await finishWith(round, 8);
     const status = screen.getByRole('status', { hidden: true });
     expect(status).toBeEmptyDOMElement();

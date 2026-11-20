@@ -1,6 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { nameInSentence, wasWords } from '../../src/i18n/names.ts';
 import { flagFile } from '../../src/test/flags.ts';
+import { openLevel } from './device.ts';
 import { expectedRound, questionAt, wrongOption } from './expected.ts';
 import { isOnTop } from './layout.ts';
 import { expect, test } from './fixtures.ts';
@@ -222,6 +223,7 @@ test.describe('A long list of answers on a short screen', () => {
       const setup = new GameSetupPage(page);
       const round = new RoundPage(page);
       await home.goto('?seed=42');
+      await openLevel(page, 'FLAG-A', 'europe', 3);
       await home.openGame('Bandera → País');
       await setup.chooseRegion('Europa');
       await setup.chooseLevel('Difícil');

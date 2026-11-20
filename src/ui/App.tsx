@@ -326,6 +326,7 @@ function CurrentScreen({
       return (
         <GameSetupScreen
           game={screen.game}
+          loadRounds={loadRounds}
           onBack={() => {
             setScreen(HOME);
           }}

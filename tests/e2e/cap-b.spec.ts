@@ -3,6 +3,7 @@ import type { Entity } from '../../src/domain/entity.ts';
 import type { RoundSettings } from '../../src/domain/questions.ts';
 import { nameInSentence, wasWords } from '../../src/i18n/names.ts';
 import { flagFile } from '../../src/test/flags.ts';
+import { openLevel } from './device.ts';
 import { expectedRound, questionAt, wrongOption } from './expected.ts';
 import { isOnTop } from './layout.ts';
 import { expect, test } from './fixtures.ts';
@@ -28,6 +29,7 @@ test.describe('Play a CAP-B round', () => {
     const setup = new GameSetupPage(page);
     round = new RoundPage(page);
     await home.goto('?seed=42');
+    if (level === 'Medio') await openLevel(page, 'CAP-B', 'europe', 2);
     await home.openGame('Capital → País');
     await setup.chooseRegion('Europa');
     await setup.chooseLevel(level);
