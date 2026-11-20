@@ -71,10 +71,28 @@ function buildPool(entities: readonly Entity[], settings: RoundSettings, rng: Rn
   return pool;
 }
 
-/** True when the candidate's quiz capital is one of the other capitals of the answer (DATA-03). */
-function offersOtherCapital(answer: Entity, candidate: Entity): boolean {
-  return answer.otherCapitals.some(
-    (other) => other.es === candidate.capital?.es || other.en === candidate.capital?.en,
+/** A capital's name without case, accents, spaces or hyphens: «George Town» reads as «Georgetown». */
+export function capitalKey(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]/gu, '');
+}
+
+/**
+ * True when the candidate's quiz capital is a capital of the answer: its quiz capital, shared by a few entities
+ * such as Reino Unido and Inglaterra (CAP-03), or one of its other capitals (DATA-03). Offering it would give
+ * a Capitals question two right answers, or show the same capital twice.
+ */
+function sharesCapital(answer: Entity, candidate: Entity): boolean {
+  const offered = candidate.capital;
+  if (offered === null) return false;
+  return [answer.capital, ...answer.otherCapitals].some(
+    (capital) =>
+      capital !== null &&
+      (capitalKey(capital.es) === capitalKey(offered.es) ||
+        capitalKey(capital.en) === capitalKey(offered.en)),
   );
 }
 
@@ -120,11 +138,18 @@ function wrongOptionsFor(
   const candidates = pool.filter(
     (candidate) =>
       candidate.code !== answer.code &&
-      !(settings.topic === 'capitals' && offersOtherCapital(answer, candidate)),
+      !(settings.topic === 'capitals' && sharesCapital(answer, candidate)),
   );
+  // Two wrong options with the same quiz capital (Jamaica and Isla Norfolk, Kingston) would show the same
+  // capital twice (CAP-03).
+  const repeatsCapital = (candidate: Entity): boolean =>
+    settings.topic === 'capitals' && chosen.some((option) => sharesCapital(option, candidate));
   const chosen: Entity[] = [];
   for (const group of candidateGroups(answer, candidates, settings, relations)) {
-    chosen.push(...shuffle(group, rng).slice(0, needed - chosen.length));
+    for (const candidate of shuffle(group, rng)) {
+      if (chosen.length === needed) break;
+      if (!repeatsCapital(candidate)) chosen.push(candidate);
+    }
   }
   if (chosen.length < needed) {
     throw new Error(

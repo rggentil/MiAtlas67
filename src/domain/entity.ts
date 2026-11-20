@@ -26,7 +26,10 @@ export interface Articles {
 
 /** Anything that can be asked in a question (spec §4, DATA-01). */
 export interface Entity {
-  /** ISO 3166-1 alpha-2 code, upper case; it also names the flag file. */
+  /**
+   * Upper-case code: ISO 3166-1 alpha-2 where one exists (ES), otherwise ISO 3166-2 (GB-SCT) or a custom code
+   * (XS, Somalilandia) (DATA-01). It also names the flag file.
+   */
   readonly code: string;
   readonly name: Localized;
   /** The article the name takes in a sentence, if any (DATA-09). Options and lists show the name alone. */
@@ -43,6 +46,16 @@ export interface Entity {
    * (SHAPE-03) and entities without a reliable, undisputed geometry (SHAPE-04) do not.
    */
   readonly shapeEligible: boolean;
+}
+
+/**
+ * An entity of the extended set (§13.2, Appendix A): a territory, a state with limited recognition or an
+ * autonomous region, asked only at level 4 Experto (LVL-07).
+ */
+export interface ExtendedEntity extends Entity {
+  readonly category: 'limited-recognition' | 'territory' | 'subnational';
+  /** Its status in plain, factual words, for the Atlas: «Territorio autónomo de Dinamarca» (DATA-08). */
+  readonly status: Localized;
 }
 
 export function isCapitalEligible(entity: Entity): boolean {

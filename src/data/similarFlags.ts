@@ -29,3 +29,27 @@ export const similarFlagGroups: readonly (readonly string[])[] = [
   ['CN', 'VN'], // red with yellow stars
   ['AL', 'ME'], // red with a double-headed eagle
 ];
+
+/**
+ * Groups of similar flags with the extended entities, used only at level 4 Experto together with
+ * `similarFlagGroups` (LVL-06). Reviewed by the product owner in #93 (D30). A group that extends one of level 3
+ * lists it whole.
+ */
+export const extendedFlagGroups: readonly (readonly string[])[] = [
+  // the Union Jack in the corner, with the British territories, Islas Cook and Niue
+  ['AU', 'NZ', 'FJ', 'TV', 'KY', 'VG', 'TC', 'AI', 'MS', 'FK', 'SH-HL', 'BM', 'CK', 'NU'],
+  ['NO', 'IS', 'DK', 'FI', 'SE', 'FO', 'AX'], // Nordic cross
+  ['EG', 'SY', 'IQ', 'YE', 'JO', 'PS', 'SD', 'KW', 'AE', 'EH'], // pan-Arab
+  ['AT', 'LV', 'PF'], // red-white-red horizontal
+  // every flag with a crescent and a star (the product owner's choice in D30)
+  ['TR', 'TN', 'XC', 'DZ', 'AZ', 'MR', 'PK', 'MY', 'SG', 'TM', 'UZ', 'LY', 'KM', 'EH'],
+  ['CZ', 'PH', 'SX'], // blue triangle at the hoist
+  ['HU', 'BG', 'TJ', 'IQ-KR'], // red, white and green horizontal
+  ['NL', 'LU', 'PY', 'RU', 'SK', 'SI', 'RS', 'MD-GA'], // white, blue and red horizontal
+  ['CU', 'PR'], // the same design with the colours swapped
+  ['AW', 'CW'], // blue with yellow stripes and stars
+  ['TZ', 'XZ'], // Zanzíbar carries the flag of Tanzania
+  ['GB-ENG', 'GG', 'GE', 'JE'], // a red cross on white
+  ['SO', 'XP'], // Puntland carries the flag of Somalia
+  ['XK', 'BA'], // blue with stars and a map
+];

@@ -1,6 +1,6 @@
 # MiAtlas67 — Product Specification
 
-> **Status: APPROVED v1.14** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
+> **Status: APPROVED v1.15** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
 > [§18 Change log](#18-change-log).
 > Last updated: 2026-11-20
 
@@ -81,9 +81,11 @@ Each topic is played in both directions, which makes **six games**:
 - **CAP-02** Entities without a meaningful capital (e.g. Hong Kong, Macao, Gibraltar) are excluded from Capitals
   games (`capitalEligible` in the data). All 195 countries have a quiz capital (D13): a city-state's capital is
   the country itself (Mónaco, Singapur, Ciudad del Vaticano) and Nauru uses its de facto capital, Yaren.
-- **CAP-03** No two entities share a quiz capital. When they would (Chipre and Chipre del Norte → Nicosia;
-  Reino Unido and Inglaterra → Londres; Aruba and San Eustaquio → Oranjestad), the extended entity is excluded
-  from Capitals games.
+- **CAP-03** No two options of a Capitals question share a quiz capital, so the question has exactly one right
+  answer and never shows a capital twice. Names are compared without case, accents, spaces or hyphens. Only these
+  entities share a quiz capital (D30): Reino Unido and Inglaterra → Londres; Aruba and San Eustaquio → Oranjestad;
+  Jamaica and Isla Norfolk → Kingston, and Guyana and Islas Caimán → Georgetown / George Town (different towns with
+  the same name). Chipre del Norte is not in Capitals games (D30).
 
 ## 7. Levels and difficulty
 
@@ -116,7 +118,8 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
   region. In "Mundo" a similar flag or a neighbour can come from another region; a region round only uses its own
   countries. The similar-flag groups and the land borders are curated data reviewed by the product owner (D15):
   a territory counts when it is part of the country inside the EU, de facto lines are used, and in levels 1–3 only
-  the 195 countries count.
+  the 195 countries count. At level 4 the extended entities add their own land borders and similar-flag groups,
+  also reviewed by the product owner (D30).
 - **LVL-07** *(Should)* In a level 4 Experto round, 5 of the 10 questions ask an extended entity (§13.2) and the
   other 5 ask countries of any tier, in random order. When a topic and region have fewer than 5 eligible extended
   entities, all of them are asked and countries complete the round (D27).
@@ -212,11 +215,12 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 | `un-observer` (Vatican City, Palestine) | 2 | Levels 1–4 |
 | `limited-recognition`: partially recognized or de facto states (e.g. Kosovo, Taiwán, Abjasia, Somalilandia) | 8 | Level 4 |
 | `territory`: dependent and overseas territories (e.g. Groenlandia, Gibraltar, Puerto Rico, Hong Kong, Aruba) | 31 | Level 4 |
-| `subnational`: constituent countries and autonomous regions (e.g. Escocia, Åland, Puntland, Zanzíbar) | 15 | Level 4 |
+| `subnational`: constituent countries and autonomous regions (e.g. Escocia, Åland, Puntland, Zanzíbar) | 13 | Level 4 |
 
 - **DATA-07** The extended set is the list in Appendix A. The data story confirms, for each entity, the flag
   source, the quiz capital and whether a shape is available. An entity without a flag in official use in its
-  territory is dropped (that is why Irlanda del Norte is not included).
+  territory is dropped (that is why Irlanda del Norte is not included). The product owner may also leave one out
+  (D30: Azores and Madeira).
 - **DATA-08** The "Acerca de" screen states that including an entity reflects geography and flags, not a political
   position. Names use neutral, widely used forms. The Atlas describes each extended entity's status in plain,
   factual words (e.g. «Territorio autónomo de Dinamarca», «Estado con reconocimiento limitado»,
@@ -306,14 +310,18 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 | D24 | Devices | ✅ The family plays on Android and on iPhone. Safari on iPhone and iPad deletes the data of a website after 7 days of Safari use without opening it; a game added to the home screen keeps it. Not urgent for the product owner: a small story adds the home screen install in a later epic (#74), before the offline PWA of epic 7 (NFR-02) |
 | D25 | Silhouettes | ✅ Decided in the [shapes review page](https://claude.ai/artifact/XL55gaC5p8PzcQeadSiF39) (SHAPE-01…03, #79). Spain shows the Canary Islands in a small framed box in the bottom-left corner, as maps of Spain do; Ceuta and Melilla are drawn in their place. With their islands: Ecuador (Galápagos) and India (Andaman and Nicobar). Without them: United States (Alaska, Hawaii), Portugal (Azores, Madeira). Drawn whole: Somalia with Somalilandia, Cyprus with the north, Serbia with Kosovo; Morocco without the Western Sahara. Island countries keep every island group (Kiribati, Micronesia), each island at least a visible dot; Seychelles shows the islands around Mahé. Every country is shape-eligible, microstates included; Vatican City is drawn from OpenStreetMap, whose outline shows its walls and St Peter's Square (Natural Earth has a plain 7-point polygon) |
 | D26 | Unlocking the levels already played | ✅ Every level was open until unlocking arrived, and the children already play Medio and Difícil. A level where the player has completed a round stays open, so nobody loses one; from then on a level opens only with ★★ in the one before (LVL-04) |
-| D27 | Experto mix | ✅ Half of an Experto round (5 of 10) asks extended entities and the rest countries of any tier. Mixed at random, only about 2 of 10 would be extended entities in "Mundo" (54 of 249), and Experto would feel like Difícil (LVL-07) |
+| D27 | Experto mix | ✅ Half of an Experto round (5 of 10) asks extended entities and the rest countries of any tier. Mixed at random, only about 2 of 10 would be extended entities in "Mundo" (52 of 247), and Experto would feel like Difícil (LVL-07) |
 | D28 | Family records | ✅ A "Récords" button on the home screen, next to "Progreso" and "Historial", opens one table per game with the nickname and avatar of each record holder, without switching player. A tie keeps the first holder: as in sport, a record must be beaten (HIS-05) |
 | D29 | Mastered entities | ✅ An entity is mastered while its last 3 answers in a game were correct; a miss takes it out until it is answered right 3 times in a row again, so the counter can go down. Rounds saved before the counter arrived have no list of the entities asked and do not count (HIS-04) |
+| D30 | Extended set review (#93) | ✅ Reviewed in a [review page](https://claude.ai/artifact/N7fZE1GUqZAL2WWiPQozWy): 52 entities with their names, articles, capitals, flags, statuses, land borders and similar flags. Azores and Madeira are left out: for the family they are Portugal, not a territory of their own (DATA-07). Capitals: Islas Malvinas → «Puerto Argentino/Stanley» (en: «Stanley»); Montserrat → Brades, the de facto one (Plymouth as extra info); Guam → «Agaña» (en: «Hagåtña»); Zanzíbar → «Ciudad de Zanzíbar» (en: «Zanzibar City»); Bougainville → Buka (Arawa as extra info); Inglaterra → Londres and San Eustaquio → Oranjestad, shared with Reino Unido and Aruba, Isla Norfolk → Kingston and Islas Caimán → George Town, towns with the same name as the capitals of Jamaica and Guyana (Georgetown), so a Capitals question never offers both of a pair (CAP-03); Chipre del Norte, Gibraltar, Hong Kong, Macao and Tokelau have none (CAP-02). Nueva Caledonia shows the Kanak flag (the French one is already France's). Articles (DATA-09): «la» Isla de Man, Isla Norfolk and Polinesia Francesa, «el» Sahara Occidental and Kurdistán iraquí; Bermudas goes without one («de Bermudas», like D18). Similar flags at level 4: the reviewed groups, with Jersey among the red crosses on white (with Inglaterra, Guernsey and Georgia), and every flag with a crescent and a star in one group (Turquía, Túnez, Chipre del Norte, Argelia, Azerbaiyán, Mauritania, Pakistán, Malasia, Singapur, Turkmenistán, Uzbekistán, Libia, Comoras and Sahara Occidental) |
 
 No open questions.
 
 ## 18. Change log
 
+- **v1.15** (2026-11-20): extended set reviewed (D30, story #93): Azores and Madeira left out, so 52 entities
+  (Appendix A, DATA-07) · two entities may share a quiz capital, never in the same question (CAP-03) · level 4
+  land borders and similar flags (LVL-06).
 - **v1.14** (2026-11-20): RND-08 says when "¡Nivel desbloqueado!" shows (story #90).
 - **v1.13** (2026-11-20): decisions for epic 6: levels already played stay open when unlocking arrives (LVL-04,
   D26) · an Experto round asks half extended entities (new LVL-07, D27) · family records on a "Récords" screen
@@ -356,7 +364,7 @@ No open questions.
 
 ## Appendix A — Extended set (level 4 Experto)
 
-54 entities. Spanish names follow DATA-02; the English name is given where it differs noticeably. The data story
+52 entities. Spanish names follow DATA-02; the English name is given where it differs noticeably. The data story
 fills in codes, capitals and sources, and may drop an entity that fails DATA-07.
 
 ### A.1 `limited-recognition` — partially recognized or de facto states (8)
@@ -369,7 +377,7 @@ fills in codes, capitals and sources, and may drop an entity that fails DATA-07.
 | Abjasia *(Abkhazia)* | Flag from Wikimedia Commons |
 | Osetia del Sur *(South Ossetia)* | Flag from Wikimedia Commons |
 | Transnistria | Flag from Wikimedia Commons |
-| Chipre del Norte *(Northern Cyprus)* | Not in Capitals games (CAP-03, Nicosia) |
+| Chipre del Norte *(Northern Cyprus)* | Not in Capitals games (CAP-03, D30) |
 | Somalilandia *(Somaliland)* | Flag from Wikimedia Commons |
 
 ### A.2 `territory` — dependent and overseas territories (31)
@@ -385,12 +393,12 @@ fills in codes, capitals and sources, and may drop an entity that fails DATA-07.
 *Many British territories share the "blue ensign" design: perfect tricky distractors for Experto.*
 *Nueva Caledonia has two flags in official use; the data story picks one and documents the choice.*
 
-### A.3 `subnational` — constituent countries and autonomous regions (15)
+### A.3 `subnational` — constituent countries and autonomous regions (13)
 
 | Region | Entities | Notes for the data story |
 |---|---|---|
-| Europa | Inglaterra, Escocia, Gales, Åland, Azores, Madeira, Gagauzia | Inglaterra not in Capitals games (CAP-03, Londres) |
-| América | Bonaire, San Eustaquio, Saba (Caribe neerlandés) | San Eustaquio not in Capitals games (CAP-03, Oranjestad) |
+| Europa | Inglaterra, Escocia, Gales, Åland, Gagauzia | Inglaterra: Londres, shared with Reino Unido (CAP-03) |
+| América | Bonaire, San Eustaquio, Saba (Caribe neerlandés) | San Eustaquio: Oranjestad, shared with Aruba (CAP-03) |
 | Asia | Kurdistán iraquí *(Kurdistan Region)* | |
 | África | Puntland, Jubalandia *(Jubaland)*, Zanzíbar | Puntland and Jubalandia not in Shapes games (SHAPE-04) |
 | Oceanía | Bougainville | |
@@ -400,6 +408,7 @@ fills in codes, capitals and sources, and may drop an entity that fails DATA-07.
 | Entity | Reason |
 |---|---|
 | Irlanda del Norte | No flag in official use since 1972 (DATA-07) |
+| Azores, Madeira | Autonomous regions of Portugal: for the family they are Portugal, not a territory of their own (D30) |
 | Artsaj / Alto Karabaj | Dissolved on 1 January 2024 |
 | Wallis y Futuna, Guayana Francesa, Reunión, Mayotte | They officially use the French flag |
 | Spanish autonomous communities | Planned as a themed pack (Could, §5) |
