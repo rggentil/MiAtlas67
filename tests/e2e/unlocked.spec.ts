@@ -1,4 +1,4 @@
-import { savedPlayerId, savedRoundsOf } from './device.ts';
+import { openLevel, savedPlayerId, savedRoundsOf } from './device.ts';
 import { expectedRound } from './expected.ts';
 import { expect, test } from './fixtures.ts';
 import { GameSetupPage } from './pages/GameSetupPage.ts';
@@ -38,6 +38,43 @@ test.describe('«¡Nivel desbloqueado!» in the round summary', () => {
       await setup.chooseRegion('Europa');
       await expect(setup.level('Medio')).toHaveAccessibleName('Medio');
       await expect(setup.level('Difícil')).toHaveAccessibleName('Difícil, bloqueado');
+    },
+  );
+
+  test(
+    'RND-08 LVL-04 LVL-07 NFR-05 8/10 in "Europa · Difícil" shows "¡Nivel desbloqueado! Experto", and "Menú" then finds Experto open',
+    { tag: ['@RND-08', '@LVL-04', '@LVL-07', '@NFR-05'] },
+    async ({ page, makeAxeBuilder }) => {
+      const home = new HomePage(page);
+      const setup = new GameSetupPage(page);
+      const summary = new SummaryPage(page);
+      await home.goto('?seed=42');
+      const lucia = (await savedPlayerId(page, 'Lucía')) ?? -1;
+      // ★★ in Fácil and Medio: Difícil is open, but Experto needs ★★ in Difícil itself.
+      await openLevel(page, 'FLAG-A', 'europe', 3);
+      await home.openGame('Bandera → País');
+      await setup.chooseRegion('Europa');
+      await expect(setup.level('Difícil')).toHaveAccessibleName('Difícil');
+      await expect(setup.level('Experto')).toHaveAccessibleName('Experto, bloqueado');
+      await setup.chooseLevel('Difícil');
+
+      // The first two questions are missed: 8/10, ★★.
+      await new RoundPage(page).playRound(
+        expectedRound({ topic: 'flags', region: 'europe', level: 3 }),
+        [0, 1],
+      );
+
+      await expect(summary.score('8/10')).toBeVisible();
+      await expect(summary.unlocked).toHaveText('¡Nivel desbloqueado! Experto');
+      expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
+
+      // The 2 rounds of openLevel and this one.
+      await expect.poll(() => savedRoundsOf(page, lucia)).toBe(3);
+      await summary.menuButton.click();
+      await home.openGame('Bandera → País');
+      await setup.chooseRegion('Europa');
+      await expect(setup.level('Experto')).toHaveAccessibleName('Experto');
+      await expect(setup.level('Experto')).toBeEnabled();
     },
   );
 

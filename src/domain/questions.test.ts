@@ -5,7 +5,9 @@ import { expertRelations, relations } from '../data/relations.ts';
 import { isCountry, type Entity, type Region, type Tier } from './entity.ts';
 import {
   capitalKey,
+  EXTENDED_PER_ROUND,
   generateRound,
+  isEligible,
   LEVELS,
   OPTIONS_PER_LEVEL,
   QUESTIONS_PER_ROUND,
@@ -50,6 +52,13 @@ function entity(code: string, overrides: Partial<Entity> = {}): Entity {
 
 function fixture(count: number, overrides: Partial<Entity> = {}): Entity[] {
   return Array.from({ length: count }, (_, index) => entity(`X${String(index)}`, overrides));
+}
+
+/** `count` entities of the extended set (territories): only Experto asks them (LVL-07). */
+function extendedFixture(count: number): Entity[] {
+  return Array.from({ length: count }, (_, index) =>
+    entity(`E${String(index)}`, { category: 'territory' }),
+  );
 }
 
 describe('generateRound', () => {
@@ -306,8 +315,9 @@ describe('generateRound', () => {
 
   it('CAP-03 with the countries and the extended set together, no Capitals question repeats a capital', () => {
     const entities = [...countries, ...extendedEntities];
-    const pairs = ['GB-ENG', 'BQ-SE', 'KY', 'NF'];
-    let asked = 0;
+    // The four extended entities that share their quiz capital with a country or another entity (D30).
+    const sharing = ['GB-ENG', 'BQ-SE', 'KY', 'NF'];
+    const asked = new Map(sharing.map((code) => [code, 0]));
     for (const region of REGION_CHOICES) {
       const questions = SEEDS.flatMap((seed) =>
         generateRound(
@@ -318,7 +328,8 @@ describe('generateRound', () => {
         ),
       );
       for (const question of questions) {
-        if (pairs.includes(question.entity.code)) asked += 1;
+        const count = asked.get(question.entity.code);
+        if (count !== undefined) asked.set(question.entity.code, count + 1);
         for (const language of ['es', 'en'] as const) {
           const capitals = question.options.map((option) =>
             capitalKey(option.capital?.[language] ?? ''),
@@ -327,7 +338,11 @@ describe('generateRound', () => {
         }
       }
     }
-    expect(asked).toBeGreaterThan(0);
+    // Each of them is asked, so the check above really covers its pair: Inglaterra, San Eustaquio, Islas Caimán
+    // and Isla Norfolk.
+    for (const code of sharing) {
+      expect(asked.get(code), `${code} is asked in a Capitals round`).toBeGreaterThan(0);
+    }
   });
 
   it('CAP-03 entities with the same quiz capital can still meet in a Flags question', () => {
@@ -499,15 +514,57 @@ describe('generateRound at level 4 Experto', () => {
     expect(tiers).toEqual(new Set([1, 2, 3]));
   });
 
-  it('LVL-07 with fewer than 5 eligible extended entities, all of them are asked and countries complete the round', () => {
-    // "Capital → País" in Asia: Taiwán, Abjasia, Osetia del Sur and Kurdistán iraquí have a quiz capital.
+  it('LVL-07 every topic and region asks min(5, eligible) extended entities; with fewer than 5, all of them, and countries complete the round', () => {
+    const fewer: string[] = [];
+    for (const topic of TOPICS) {
+      for (const region of REGION_CHOICES) {
+        const available = extendedEntities.filter(
+          (extended) =>
+            isEligible(extended, topic) && (region === 'world' || extended.region === region),
+        );
+        if (available.length < EXTENDED_PER_ROUND) fewer.push(`${topic} / ${region}`);
+        for (const round of expertRounds({ topic, region })) {
+          const asked = round.map((question) => question.entity);
+          const askedExtended = asked.filter(isExtended);
+          const where = `${topic} / ${region}`;
+          expect(askedExtended, where).toHaveLength(Math.min(EXTENDED_PER_ROUND, available.length));
+          if (available.length < EXTENDED_PER_ROUND) {
+            expect(codes(askedExtended).sort(), where).toEqual(codes(available).sort());
+          }
+          expect(round, where).toHaveLength(QUESTIONS_PER_ROUND);
+          expect(asked.filter((entity) => !isExtended(entity)).every(isCountry), where).toBe(true);
+        }
+      }
+    }
+    // The "fewer than 5" branch is exercised, not skipped: "Capital → País" in Asia is one of them.
+    expect(fewer).toContain('capitals / asia');
+  });
+
+  it('LVL-07 "Capital → País" in Asia asks Taiwán, Abjasia, Osetia del Sur and Kurdistán iraquí every round, and 6 countries', () => {
+    // Only these four extended entities of Asia have a quiz capital (CAP-02).
     for (const round of expertRounds({ topic: 'capitals', region: 'asia' })) {
-      expect(codes(round.map((q) => q.entity).filter(isExtended)).sort()).toEqual(
-        ['GE-AB', 'IQ-KR', 'TW', 'XO'].sort(),
-      );
-      expect(round).toHaveLength(QUESTIONS_PER_ROUND);
+      const asked = round.map((question) => question.entity);
+      expect(codes(asked.filter(isExtended)).sort()).toEqual(['GE-AB', 'IQ-KR', 'TW', 'XO']);
+      expect(asked.filter(isCountry)).toHaveLength(6);
     }
   });
+
+  it.each([
+    ['9 countries', fixture(9)],
+    ['4 countries and 5 extended entities', [...fixture(4), ...extendedFixture(5)]],
+  ] as const)(
+    'RND-01 LVL-07 refuses to build an Experto round from fewer than 10 entities it can ask (%s)',
+    (_case, entities) => {
+      expect(() =>
+        generateRound(
+          entities,
+          { topic: 'flags', region: 'europe', level: 4 },
+          createRng(1),
+          expertRelations,
+        ),
+      ).toThrow(/10 entities/);
+    },
+  );
 
   it('§7 RND-02 an Experto question has 6 options with the correct one exactly once', () => {
     for (const question of expertRounds({ topic: 'flags', region: 'world' }).flat()) {
@@ -519,20 +576,57 @@ describe('generateRound at level 4 Experto', () => {
     }
   });
 
-  it('LVL-06 the wrong options mix countries and extended entities: Bosnia and Serbia for the flag of Kosovo', () => {
+  it('LVL-06 the wrong options of the flag of Kosovo are its similar flags, then its neighbours, then Europe: Serbia is one', () => {
+    const similar = expertRelations.similarFlags.get('XK') ?? [];
+    const neighbours = (expertRelations.neighbours.get('XK') ?? []).filter(
+      (code) => !similar.includes(code),
+    );
+    // The related entities fit in the 5 wrong options: all of them are offered, and Europe fills what is left.
+    expect(similar.length + neighbours.length).toBeLessThanOrEqual(5);
+    expect(neighbours).toContain('RS');
     const aboutKosovo = expertRounds({ topic: 'flags', region: 'europe' })
       .flat()
       .filter((question) => question.entity.code === 'XK');
     expect(aboutKosovo.length).toBeGreaterThan(0);
     for (const question of aboutKosovo) {
-      // Similar flag first (Bosnia), then its 4 land neighbours.
-      expect(codes(question.options).sort()).toEqual(['AL', 'BA', 'ME', 'MK', 'RS', 'XK']);
+      const wrong = wrongOptions(question);
+      expect(wrong).toHaveLength(5);
+      expect(codes(wrong)).toEqual(expect.arrayContaining([...similar, ...neighbours]));
+      for (const option of wrong) {
+        if (!similar.includes(option.code) && !neighbours.includes(option.code)) {
+          expect(option.region).toBe('europe');
+        }
+      }
     }
+  });
+
+  it('LVL-06 the wrong options mix countries and extended entities', () => {
     const wrong = expertRounds({ topic: 'flags', region: 'world' })
       .flat()
       .flatMap((question) => wrongOptions(question));
     expect(wrong.some(isExtended)).toBe(true);
     expect(wrong.some((option) => !isExtended(option))).toBe(true);
+  });
+
+  it('LVL-06 at level 4 the wrong options are similar flags first, then neighbours, then the same region', () => {
+    for (const question of expertRounds({ topic: 'flags', region: 'world' }).flat()) {
+      const similar = expertRelations.similarFlags.get(question.entity.code) ?? [];
+      const neighbours = (expertRelations.neighbours.get(question.entity.code) ?? []).filter(
+        (code) => !similar.includes(code),
+      );
+      const wrong = wrongOptions(question);
+      const similarShown = wrong.filter((option) => similar.includes(option.code));
+      const neighboursShown = wrong.filter((option) => neighbours.includes(option.code));
+      expect(similarShown, question.entity.code).toHaveLength(Math.min(5, similar.length));
+      expect(neighboursShown, question.entity.code).toHaveLength(
+        Math.min(5 - similarShown.length, neighbours.length),
+      );
+      for (const option of wrong) {
+        if (!similar.includes(option.code) && !neighbours.includes(option.code)) {
+          expect(option.region, question.entity.code).toBe(question.entity.region);
+        }
+      }
+    }
   });
 
   it('CAP-02 SHAPE-04 each topic asks and offers only its eligible entities', () => {
@@ -541,22 +635,37 @@ describe('generateRound at level 4 Experto', () => {
         expect(question.options.filter((option) => option.capital === null)).toEqual([]);
       }
       for (const question of expertRounds({ topic: 'shapes', region }).flat()) {
-        expect(codes(question.options)).not.toContain('XP');
-        expect(codes(question.options)).not.toContain('XJ');
+        expect(question.options.every((option) => option.shapeEligible)).toBe(true);
       }
+    }
+  });
+
+  it('SHAPE-04 Shapes rounds in África still ask the extended entities that have a silhouette', () => {
+    // Puntland and Jubalandia have none, but Sahara Occidental, Somalilandia, Santa Elena and Zanzíbar do.
+    const available = extendedEntities.filter(
+      (extended) => extended.region === 'africa' && extended.shapeEligible,
+    );
+    expect(available.length).toBeGreaterThan(0);
+    for (const round of expertRounds({ topic: 'shapes', region: 'africa' })) {
+      const askedExtended = round.map((question) => question.entity).filter(isExtended);
+      expect(askedExtended.length).toBeGreaterThan(0);
+      expect(askedExtended.every((extended) => extended.shapeEligible)).toBe(true);
+      expect(askedExtended).toHaveLength(Math.min(EXTENDED_PER_ROUND, available.length));
     }
   });
 
   it('LVL-07 levels 1–3 never ask or offer an extended entity, even when they are given', () => {
     for (const level of [1, 2, 3] as const) {
-      for (const seed of SEEDS.slice(0, 10)) {
-        const round = generateRound(
-          everyEntity,
-          { topic: 'flags', region: 'world', level },
-          createRng(seed),
-          relations,
-        );
-        expect(round.flatMap((question) => question.options).filter(isExtended)).toEqual([]);
+      for (const region of ['world', 'oceania'] as const) {
+        for (const seed of SEEDS.slice(0, 10)) {
+          const round = generateRound(
+            everyEntity,
+            { topic: 'flags', region, level },
+            createRng(seed),
+            relations,
+          );
+          expect(round.flatMap((question) => question.options).filter(isExtended)).toEqual([]);
+        }
       }
     }
   });
@@ -571,10 +680,11 @@ describe('generateRound at level 4 Experto', () => {
   it('RND-01 RND-02 every game and region gives valid Experto rounds', () => {
     for (const topic of TOPICS) {
       for (const region of REGION_CHOICES) {
-        for (const round of expertRounds({ topic, region }).slice(0, 10)) {
+        for (const round of expertRounds({ topic, region })) {
           expect(new Set(codes(round.map((q) => q.entity))).size).toBe(QUESTIONS_PER_ROUND);
           for (const question of round) {
             expect(new Set(codes(question.options)).size).toBe(6);
+            expect(codes(question.options)).toContain(question.entity.code);
           }
         }
       }

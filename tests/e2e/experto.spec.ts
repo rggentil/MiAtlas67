@@ -1,13 +1,24 @@
+import type { Page } from '@playwright/test';
 import { countries } from '../../src/data/countries.ts';
 import { extendedEntities } from '../../src/data/extended.ts';
-import { isEligible } from '../../src/domain/questions.ts';
+import { isEligible, LEVELS, REGION_CHOICES } from '../../src/domain/questions.ts';
 import { flagFile } from '../../src/test/flags.ts';
-import { openLevel, savedPlayerId, savedRoundsOf, saveResults } from './device.ts';
+import {
+  openLevel,
+  savedAskedOf,
+  savedPlayerId,
+  savedRoundsOf,
+  saveResults,
+  type Result,
+} from './device.ts';
 import { expectedRound } from './expected.ts';
 import { expect, test } from './fixtures.ts';
+import { countOverflowing } from './layout.ts';
 import { GameSetupPage } from './pages/GameSetupPage.ts';
 import { HistoryPage } from './pages/HistoryPage.ts';
 import { HomePage } from './pages/HomePage.ts';
+import { NewPlayerPage } from './pages/NewPlayerPage.ts';
+import { PlayersPage } from './pages/PlayersPage.ts';
 import { ProgressPage } from './pages/ProgressPage.ts';
 import { RecordsPage } from './pages/RecordsPage.ts';
 import { RoundPage } from './pages/RoundPage.ts';
@@ -17,6 +28,25 @@ import { SummaryPage } from './pages/SummaryPage.ts';
 const ROUND = expectedRound({ topic: 'flags', region: 'oceania', level: 4 });
 const EXTENDED_CODES = new Set(extendedEntities.map((entity) => entity.code));
 const COUNTRY_CODES = new Set(countries.map((entity) => entity.code));
+
+/**
+ * The page and every table of the screen fit the phone: no horizontal scrolling, and neither the box of a table
+ * nor the header of a level clips its content (NFR-01). Both screens show 6 tables of 4 level columns.
+ */
+async function expectToFitThePhone(page: Page): Promise<void> {
+  const widths = await page.evaluate(() => ({
+    content: document.documentElement.scrollWidth,
+    window: window.innerWidth,
+  }));
+  expect(widths.content).toBeLessThanOrEqual(widths.window);
+  // The box of a table is its parent: it clips what does not fit.
+  const boxes = page.getByRole('table').locator('xpath=..');
+  await expect(boxes).toHaveCount(6);
+  expect(await countOverflowing(boxes)).toBe(0);
+  const headers = page.getByRole('columnheader', { name: 'Experto' });
+  await expect(headers).toHaveCount(6);
+  expect(await countOverflowing(headers)).toBe(0);
+}
 
 /** The code of the entity whose flag is shown, read from the flag's file name: "…/gl.svg" is "GL". */
 function flagCode(src: string | null): string {
@@ -143,6 +173,13 @@ test.describe('Level 4 Experto', () => {
 
       await expect(summary.score('10/10')).toBeVisible();
       await expect.poll(() => savedRoundsOf(page, lucia)).toBe(before + 1);
+      // The round keeps the 10 entities asked, 5 of them extended: HIS-04 counts them apart (HIS-01, D29).
+      const asked = ROUND.map((question) => question.entity.code);
+      expect(asked.filter((code) => EXTENDED_CODES.has(code))).toHaveLength(5);
+      const savedAsked = (await savedAskedOf(page, lucia)).at(-1) ?? [];
+      expect(savedAsked).toHaveLength(10);
+      expect([...savedAsked].sort()).toEqual([...asked].sort());
+      expect(savedAsked.filter((code) => EXTENDED_CODES.has(code))).toHaveLength(5);
       await summary.menuButton.click();
 
       await home.historyButton.click();
@@ -186,6 +223,43 @@ test.describe('Level 4 Experto', () => {
       );
       await expect(records.cell('Bandera → País', 'Europa', 'Experto')).toHaveText('Sin récord');
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
+    },
+  );
+
+  test(
+    'NFR-01 HIS-03 HIS-05 LVL-07 with every region and level played and a 12-letter nickname, the 4 level columns of "Progreso" and "Récords" fit a 360 px phone',
+    { tag: ['@NFR-01', '@HIS-03', '@HIS-05'] },
+    async ({ page }) => {
+      const progress = new ProgressPage(page);
+      const records = new RecordsPage(page);
+      await page.setViewportSize({ width: 360, height: 640 });
+      // "Mariaisabela" has the longest nickname PRF-02 allows, and plays now.
+      await home.switchPlayerButton.click();
+      await new PlayersPage(page).newPlayerButton.click();
+      await new NewPlayerPage(page).create('Mariaisabela', 'Unicornio');
+      await expect(home.switchPlayerButton).toHaveAccessibleName('Mariaisabela');
+      const long = await savedPlayerId(page, 'Mariaisabela');
+      expect(long).not.toBeNull();
+      // 10/10 and ★★★ in every region ("Mundo" included) and level of "Bandera → País": the widest cells.
+      const results: Result[] = REGION_CHOICES.flatMap((region) =>
+        LEVELS.map((level) => ({ game: 'FLAG-A', region, level, score: 10, stars: 3 })),
+      );
+      await saveResults(page, long ?? -1, results);
+
+      await home.progressButton.click();
+      await expect(progress.heading).toHaveText('Progreso');
+      await expect(progress.cell('Bandera → País', 'Mundo', 'Experto')).toHaveText(
+        '3 de 3 estrellas',
+      );
+      await expectToFitThePhone(page);
+      await page.goBack();
+
+      await home.recordsButton.click();
+      await expect(records.heading).toHaveText('Récords de la familia');
+      await expect(records.cell('Bandera → País', 'Mundo', 'Experto')).toContainText(
+        '10 de 10,Mariaisabela',
+      );
+      await expectToFitThePhone(page);
     },
   );
 
