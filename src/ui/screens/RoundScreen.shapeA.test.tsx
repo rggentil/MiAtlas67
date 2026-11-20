@@ -87,6 +87,7 @@ describe('RoundScreen · SHAPE-A', () => {
     await userEvent.click(screen.getByRole('button', { name: FIRST.entity.name.es }));
 
     expect(screen.getByRole('status')).toHaveTextContent('¡Correcto!');
+    expect(within(screen.getByRole('status')).getByRole('img', { name: 'Correcta' })).toBeVisible();
     expect(
       within(optionItem(FIRST.entity.name.es)).getByRole('img', { name: 'Correcta' }),
     ).toBeVisible();
@@ -107,6 +108,9 @@ describe('RoundScreen · SHAPE-A', () => {
     expect(screen.getByRole('status')).toHaveTextContent(
       `¡Uy! ${wasWords(FIRST.entity, 'es')} ${nameInSentence(FIRST.entity, 'es')}`,
     );
+    expect(
+      within(screen.getByRole('status')).getByRole('img', { name: 'Incorrecta' }),
+    ).toBeVisible();
     expect(screen.getByText('Aciertos: 0')).toBeVisible();
   });
 
@@ -117,7 +121,8 @@ describe('RoundScreen · SHAPE-A', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
       'Which country has this shape?',
     );
-    expect(screen.getByRole('img', { name: 'The shape to guess' })).toBeVisible();
+    const alt = screen.getByRole('img', { name: 'The shape to guess' }).getAttribute('alt') ?? '';
+    expect(countries.filter((country) => alt.includes(country.name.en))).toEqual([]);
     await userEvent.click(screen.getByRole('button', { name: wrongOption(FIRST).name.en }));
 
     expect(screen.getByRole('status')).toHaveTextContent(

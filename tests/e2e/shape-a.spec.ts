@@ -5,6 +5,7 @@ import { nameInSentence, wasWords } from '../../src/i18n/names.ts';
 import { shapeFile } from '../../src/test/shapes.ts';
 import { expectedRound, questionAt, wrongOption } from './expected.ts';
 import { expect, test } from './fixtures.ts';
+import { isOnTop } from './layout.ts';
 import { GameSetupPage } from './pages/GameSetupPage.ts';
 import { HomePage } from './pages/HomePage.ts';
 import { RoundPage } from './pages/RoundPage.ts';
@@ -71,6 +72,7 @@ test.describe('Play a SHAPE-A round', () => {
       await round.answer(first.entity.name.es);
 
       await expect(round.feedback).toHaveText('¡Correcto!');
+      await expect(round.feedbackMark('Correcta')).toBeVisible();
       await expect(round.mark(first.entity.name.es, 'Correcta')).toBeVisible();
       await expect(round.score).toHaveText('Aciertos: 1');
     },
@@ -91,6 +93,7 @@ test.describe('Play a SHAPE-A round', () => {
       await expect(round.feedback).toHaveText(
         `¡Uy! ${wasWords(first.entity, 'es')} ${nameInSentence(first.entity, 'es')}`,
       );
+      await expect(round.feedbackMark('Incorrecta')).toBeVisible();
       await expect(round.score).toHaveText('Aciertos: 0');
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
     },
@@ -109,7 +112,25 @@ test.describe('Play a SHAPE-A round', () => {
       const missed = [questionAt(questions, 1).entity, questionAt(questions, 6).entity];
       await expect(summary.missed).toHaveText(missed.map((entity) => entity.name.es));
       await expect(summary.missedFlag(0)).toHaveAttribute('src', shapeFile(missed[0]?.code ?? ''));
+      await expect(summary.missedFlag(1)).toHaveAttribute('src', shapeFile(missed[1]?.code ?? ''));
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
+    },
+  );
+
+  test(
+    'RND-04 below the silhouette, the ✓ and the ✗ are not hidden behind the feedback panel',
+    { tag: ['@SHAPE-A', '@RND-04'] },
+    async ({ page }) => {
+      const first = questionAt(expectedRound(MEDIUM), 0);
+      await play(page, 'Medio');
+      const last = first.options.at(-1);
+      const tapped = last && last.code !== first.entity.code ? last : wrongOption(first);
+
+      await round.answer(tapped.name.es);
+
+      await expect(round.nextButton).toBeFocused();
+      expect(await isOnTop(round.mark(tapped.name.es, 'Incorrecta'))).toBe(true);
+      expect(await isOnTop(round.mark(first.entity.name.es, 'Correcta'))).toBe(true);
     },
   );
 });
