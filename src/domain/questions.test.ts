@@ -4,6 +4,7 @@ import { extendedEntities } from '../data/extended.ts';
 import { expertRelations, relations } from '../data/relations.ts';
 import type { Entity, Region, Tier } from './entity.ts';
 import {
+  capitalKey,
   generateRound,
   LEVELS,
   OPTIONS_PER_LEVEL,
@@ -248,21 +249,63 @@ describe('generateRound', () => {
     }
   });
 
-  it('CAP-03 no two options share a quiz capital, wrong ones included, in either language (Kingston)', () => {
-    const jamaica = entity('JM', { capital: { es: 'Kingston', en: 'Kingston' } });
-    const norfolk = entity('NF', { capital: { es: 'Kingstón', en: 'Kingston' } });
-    const entities = [jamaica, norfolk, ...fixture(8)];
+  it.each([
+    ['es', { es: 'Kingston', en: 'Kingston Town' }, { es: 'Kingston', en: 'Kingston Village' }],
+    ['en', { es: 'Kingston A', en: 'Kingston' }, { es: 'Kingston B', en: 'Kingston' }],
+    ['es, written another way', { es: 'Georgetown', en: 'G1' }, { es: 'George Town', en: 'G2' }],
+  ] as const)(
+    'CAP-03 no two options share a quiz capital, wrong ones included (same %s)',
+    (_case, first, second) => {
+      const entities = [
+        entity('A1', { capital: first }),
+        entity('A2', { capital: second }),
+        ...fixture(8),
+      ];
+      const questions = questionsOf({ topic: 'capitals', region: 'europe', level: 1 }, entities);
+      expect(questions.some((question) => !['A1', 'A2'].includes(question.entity.code))).toBe(true);
+      for (const question of questions) {
+        const offered = codes(question.options);
+        expect(offered.includes('A1') && offered.includes('A2')).toBe(false);
+      }
+    },
+  );
 
-    const questions = questionsOf({ topic: 'capitals', region: 'europe', level: 1 }, entities);
-    expect(questions.some((question) => !['JM', 'NF'].includes(question.entity.code))).toBe(true);
-    for (const question of questions) {
-      const offered = codes(question.options);
-      expect(offered.includes('JM') && offered.includes('NF')).toBe(false);
-    }
-  });
+  it.each([
+    ['GB', 'GB-ENG'],
+    ['AW', 'BQ-SE'],
+    ['JM', 'NF'],
+    ['GY', 'KY'],
+  ] as const)(
+    'CAP-03 D30 with the real data, %s and %s never meet in a Capitals question',
+    (first, second) => {
+      const pair: readonly string[] = [first, second];
+      const all = [...countries, ...extendedEntities];
+      const others = all.filter(
+        (other) =>
+          other.region === 'europe' &&
+          other.capital !== null &&
+          !['GB', ...pair].includes(other.code),
+      );
+      const entities = [
+        ...all.filter((candidate) => pair.includes(candidate.code)),
+        ...others.slice(0, 8),
+      ];
+      // "Mundo" at level 1: every entity of the pool can be a wrong option of every question.
+      const questions = questionsOf({ topic: 'capitals', region: 'world', level: 1 }, entities);
+      expect(
+        questions.filter((question) => pair.includes(question.entity.code)).length,
+      ).toBeGreaterThan(0);
+      for (const question of questions) {
+        const offered = codes(question.options);
+        expect(offered.filter((code) => pair.includes(code)).length).toBeLessThanOrEqual(1);
+      }
+    },
+  );
 
   it('CAP-03 with the countries and the extended set together, no Capitals question repeats a capital', () => {
     const entities = [...countries, ...extendedEntities];
+    const pairs = ['GB', 'GB-ENG', 'AW', 'BQ-SE', 'GY', 'KY'];
+    let asked = 0;
     for (const region of REGION_CHOICES) {
       const questions = SEEDS.flatMap((seed) =>
         generateRound(
@@ -273,10 +316,16 @@ describe('generateRound', () => {
         ),
       );
       for (const question of questions) {
-        const capitals = question.options.map((option) => option.capital?.es);
-        expect(new Set(capitals).size, question.entity.code).toBe(capitals.length);
+        if (pairs.includes(question.entity.code)) asked += 1;
+        for (const language of ['es', 'en'] as const) {
+          const capitals = question.options.map((option) =>
+            capitalKey(option.capital?.[language] ?? ''),
+          );
+          expect(new Set(capitals).size, question.entity.code).toBe(capitals.length);
+        }
       }
     }
+    expect(asked).toBeGreaterThan(0);
   });
 
   it('CAP-03 entities with the same quiz capital can still meet in a Flags question', () => {

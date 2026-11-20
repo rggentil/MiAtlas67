@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { flagFileName, isCapitalEligible, REGIONS, type Entity } from '../domain/entity.ts';
+import { capitalKey, generateRound, LEVELS, REGION_CHOICES, TOPICS } from '../domain/questions.ts';
+import { createRng } from '../domain/random.ts';
 import { countries } from './countries.ts';
 import { extendedEntities } from './extended.ts';
 import { extendedLandBorders } from './neighbours.ts';
@@ -18,28 +20,114 @@ const flagSources = Object.values(
   }),
 ).join('');
 
-/** Appendix A of the spec after the review (D30), by category and region. */
-const APPENDIX_A = {
-  'limited-recognition': {
-    europe: ['XK', 'MD-SN', 'XC'],
-    asia: ['TW', 'GE-AB', 'XO'],
-    africa: ['EH', 'XS'],
-  },
-  territory: {
-    europe: ['FO', 'GI', 'IM', 'JE', 'GG'],
-    americas: ['GL', 'PR', 'AW', 'CW', 'SX', 'BM', 'KY', 'VG', 'VI', 'TC', 'AI', 'MS', 'FK', 'PM'],
-    asia: ['HK', 'MO'],
-    africa: ['SH-HL'],
-    oceania: ['NC', 'PF', 'GU', 'AS', 'MP', 'CK', 'NU', 'TK', 'NF'],
-  },
-  subnational: {
-    europe: ['GB-ENG', 'GB-SCT', 'GB-WLS', 'AX', 'MD-GA'],
-    americas: ['BQ-BO', 'BQ-SE', 'BQ-SA'],
-    asia: ['IQ-KR'],
-    africa: ['XP', 'XJ', 'XZ'],
-    oceania: ['PG-NSB'],
-  },
-} as const;
+type Pair = readonly [es: string, en: string];
+type Row = readonly [
+  category: string,
+  region: string,
+  name: Pair,
+  capital: Pair | null,
+  status: string,
+];
+
+/**
+ * Appendix A as the product owner reviewed it (D30): category, region, name, quiz capital and status in Spanish.
+ * Azores and Madeira are left out (Appendix A.4).
+ */
+// prettier-ignore
+const REVIEWED: Readonly<Record<string, Row>> = {
+  XK: ['limited-recognition', 'europe', ['Kosovo', 'Kosovo'], ['Pristina', 'Pristina'], 'Estado con reconocimiento limitado'],
+  TW: ['limited-recognition', 'asia', ['Taiwán', 'Taiwan'], ['Taipéi', 'Taipei'], 'Estado con reconocimiento limitado'],
+  EH: ['limited-recognition', 'africa', ['Sahara Occidental', 'Western Sahara'], ['El Aaiún', 'Laayoune'], 'Territorio en disputa'],
+  'GE-AB': ['limited-recognition', 'asia', ['Abjasia', 'Abkhazia'], ['Sujumi', 'Sukhumi'], 'Estado de facto con reconocimiento limitado'],
+  XO: ['limited-recognition', 'asia', ['Osetia del Sur', 'South Ossetia'], ['Tsjinvali', 'Tskhinvali'], 'Estado de facto con reconocimiento limitado'],
+  'MD-SN': ['limited-recognition', 'europe', ['Transnistria', 'Transnistria'], ['Tiráspol', 'Tiraspol'], 'Estado de facto sin reconocimiento'],
+  XC: ['limited-recognition', 'europe', ['Chipre del Norte', 'Northern Cyprus'], null, 'Estado de facto reconocido solo por Turquía'],
+  XS: ['limited-recognition', 'africa', ['Somalilandia', 'Somaliland'], ['Hargeisa', 'Hargeisa'], 'Estado de facto con reconocimiento limitado'],
+  FO: ['territory', 'europe', ['Islas Feroe', 'Faroe Islands'], ['Tórshavn', 'Tórshavn'], 'Territorio autónomo de Dinamarca'],
+  GI: ['territory', 'europe', ['Gibraltar', 'Gibraltar'], null, 'Territorio británico de ultramar'],
+  IM: ['territory', 'europe', ['Isla de Man', 'Isle of Man'], ['Douglas', 'Douglas'], 'Dependencia de la Corona británica'],
+  JE: ['territory', 'europe', ['Jersey', 'Jersey'], ['Saint Helier', 'Saint Helier'], 'Dependencia de la Corona británica'],
+  GG: ['territory', 'europe', ['Guernsey', 'Guernsey'], ['Saint Peter Port', 'Saint Peter Port'], 'Dependencia de la Corona británica'],
+  GL: ['territory', 'americas', ['Groenlandia', 'Greenland'], ['Nuuk', 'Nuuk'], 'Territorio autónomo de Dinamarca'],
+  PR: ['territory', 'americas', ['Puerto Rico', 'Puerto Rico'], ['San Juan', 'San Juan'], 'Territorio no incorporado de los Estados Unidos'],
+  AW: ['territory', 'americas', ['Aruba', 'Aruba'], ['Oranjestad', 'Oranjestad'], 'País constituyente del Reino de los Países Bajos'],
+  CW: ['territory', 'americas', ['Curazao', 'Curaçao'], ['Willemstad', 'Willemstad'], 'País constituyente del Reino de los Países Bajos'],
+  SX: ['territory', 'americas', ['Sint Maarten', 'Sint Maarten'], ['Philipsburg', 'Philipsburg'], 'País constituyente del Reino de los Países Bajos'],
+  BM: ['territory', 'americas', ['Bermudas', 'Bermuda'], ['Hamilton', 'Hamilton'], 'Territorio británico de ultramar'],
+  KY: ['territory', 'americas', ['Islas Caimán', 'Cayman Islands'], ['George Town', 'George Town'], 'Territorio británico de ultramar'],
+  VG: ['territory', 'americas', ['Islas Vírgenes Británicas', 'British Virgin Islands'], ['Road Town', 'Road Town'], 'Territorio británico de ultramar'],
+  VI: ['territory', 'americas', ['Islas Vírgenes de los Estados Unidos', 'United States Virgin Islands'], ['Charlotte Amalie', 'Charlotte Amalie'], 'Territorio no incorporado de los Estados Unidos'],
+  TC: ['territory', 'americas', ['Islas Turcas y Caicos', 'Turks and Caicos Islands'], ['Cockburn Town', 'Cockburn Town'], 'Territorio británico de ultramar'],
+  AI: ['territory', 'americas', ['Anguila', 'Anguilla'], ['The Valley', 'The Valley'], 'Territorio británico de ultramar'],
+  MS: ['territory', 'americas', ['Montserrat', 'Montserrat'], ['Brades', 'Brades'], 'Territorio británico de ultramar'],
+  FK: ['territory', 'americas', ['Islas Malvinas', 'Falkland Islands'], ['Puerto Argentino/Stanley', 'Stanley'], 'Territorio británico de ultramar, reclamado por Argentina'],
+  PM: ['territory', 'americas', ['San Pedro y Miquelón', 'Saint Pierre and Miquelon'], ['San Pedro', 'Saint-Pierre'], 'Colectividad de ultramar de Francia'],
+  HK: ['territory', 'asia', ['Hong Kong', 'Hong Kong'], null, 'Región administrativa especial de China'],
+  MO: ['territory', 'asia', ['Macao', 'Macau'], null, 'Región administrativa especial de China'],
+  'SH-HL': ['territory', 'africa', ['Santa Elena', 'Saint Helena'], ['Jamestown', 'Jamestown'], 'Territorio británico de ultramar'],
+  NC: ['territory', 'oceania', ['Nueva Caledonia', 'New Caledonia'], ['Numea', 'Nouméa'], 'Colectividad especial de Francia'],
+  PF: ['territory', 'oceania', ['Polinesia Francesa', 'French Polynesia'], ['Papeete', 'Papeete'], 'Colectividad de ultramar de Francia'],
+  GU: ['territory', 'oceania', ['Guam', 'Guam'], ['Agaña', 'Hagåtña'], 'Territorio no incorporado de los Estados Unidos'],
+  AS: ['territory', 'oceania', ['Samoa Americana', 'American Samoa'], ['Pago Pago', 'Pago Pago'], 'Territorio no incorporado de los Estados Unidos'],
+  MP: ['territory', 'oceania', ['Islas Marianas del Norte', 'Northern Mariana Islands'], ['Saipán', 'Saipan'], 'Estado libre asociado a los Estados Unidos'],
+  CK: ['territory', 'oceania', ['Islas Cook', 'Cook Islands'], ['Avarua', 'Avarua'], 'Estado en libre asociación con Nueva Zelanda'],
+  NU: ['territory', 'oceania', ['Niue', 'Niue'], ['Alofi', 'Alofi'], 'Estado en libre asociación con Nueva Zelanda'],
+  TK: ['territory', 'oceania', ['Tokelau', 'Tokelau'], null, 'Territorio dependiente de Nueva Zelanda'],
+  NF: ['territory', 'oceania', ['Isla Norfolk', 'Norfolk Island'], ['Kingston', 'Kingston'], 'Territorio externo de Australia'],
+  'GB-ENG': ['subnational', 'europe', ['Inglaterra', 'England'], ['Londres', 'London'], 'País constituyente del Reino Unido'],
+  'GB-SCT': ['subnational', 'europe', ['Escocia', 'Scotland'], ['Edimburgo', 'Edinburgh'], 'País constituyente del Reino Unido'],
+  'GB-WLS': ['subnational', 'europe', ['Gales', 'Wales'], ['Cardiff', 'Cardiff'], 'País constituyente del Reino Unido'],
+  AX: ['subnational', 'europe', ['Åland', 'Åland'], ['Mariehamn', 'Mariehamn'], 'Región autónoma de Finlandia'],
+  'MD-GA': ['subnational', 'europe', ['Gagauzia', 'Gagauzia'], ['Comrat', 'Comrat'], 'Unidad territorial autónoma de Moldavia'],
+  'BQ-BO': ['subnational', 'americas', ['Bonaire', 'Bonaire'], ['Kralendijk', 'Kralendijk'], 'Municipio especial de los Países Bajos'],
+  'BQ-SE': ['subnational', 'americas', ['San Eustaquio', 'Sint Eustatius'], ['Oranjestad', 'Oranjestad'], 'Municipio especial de los Países Bajos'],
+  'BQ-SA': ['subnational', 'americas', ['Saba', 'Saba'], ['The Bottom', 'The Bottom'], 'Municipio especial de los Países Bajos'],
+  'IQ-KR': ['subnational', 'asia', ['Kurdistán iraquí', 'Kurdistan Region'], ['Erbil', 'Erbil'], 'Región autónoma de Irak'],
+  XP: ['subnational', 'africa', ['Puntland', 'Puntland'], ['Garowe', 'Garowe'], 'Estado federado de Somalia'],
+  XJ: ['subnational', 'africa', ['Jubalandia', 'Jubaland'], ['Kismayo', 'Kismayo'], 'Estado federado de Somalia'],
+  XZ: ['subnational', 'africa', ['Zanzíbar', 'Zanzibar'], ['Ciudad de Zanzíbar', 'Zanzibar City'], 'Región semiautónoma de Tanzania'],
+  'PG-NSB': ['subnational', 'oceania', ['Bougainville', 'Bougainville'], ['Buka', 'Buka'], 'Región autónoma de Papúa Nueva Guinea'],
+};
+
+/** Land neighbours of each extended entity at level 4, as reviewed (D15, D30). The others have none. */
+const REVIEWED_NEIGHBOURS: Readonly<Record<string, readonly string[]>> = {
+  XK: ['AL', 'RS', 'ME', 'MK'],
+  EH: ['MA', 'MR', 'DZ'],
+  'GE-AB': ['GE', 'RU'],
+  XO: ['GE', 'RU'],
+  'MD-SN': ['MD', 'UA'],
+  XC: ['CY'],
+  XS: ['SO', 'ET', 'DJ', 'XP'],
+  XP: ['SO', 'XS', 'ET'],
+  XJ: ['SO', 'KE', 'ET'],
+  'MD-GA': ['MD', 'UA'],
+  'IQ-KR': ['IQ', 'IR', 'TR', 'SY'],
+  'GB-ENG': ['GB-SCT', 'GB-WLS'],
+  'GB-SCT': ['GB-ENG'],
+  'GB-WLS': ['GB-ENG'],
+  GI: ['ES'],
+  HK: ['CN'],
+  MO: ['CN'],
+  SX: ['FR'],
+};
+
+/** The similar-flag groups of level 4, as reviewed (D30). */
+const REVIEWED_GROUPS: readonly (readonly string[])[] = [
+  ['AU', 'NZ', 'FJ', 'TV', 'KY', 'VG', 'TC', 'AI', 'MS', 'FK', 'SH-HL', 'BM', 'CK', 'NU'],
+  ['NO', 'IS', 'DK', 'FI', 'SE', 'FO', 'AX'],
+  ['EG', 'SY', 'IQ', 'YE', 'JO', 'PS', 'SD', 'KW', 'AE', 'EH'],
+  ['AT', 'LV', 'PF'],
+  ['TR', 'TN', 'XC', 'DZ', 'AZ', 'MR', 'PK', 'MY', 'SG', 'TM', 'UZ', 'LY', 'KM', 'EH'],
+  ['CZ', 'PH', 'SX'],
+  ['HU', 'BG', 'TJ', 'IQ-KR'],
+  ['NL', 'LU', 'PY', 'RU', 'SK', 'SI', 'RS', 'MD-GA'],
+  ['CU', 'PR'],
+  ['AW', 'CW'],
+  ['TZ', 'XZ'],
+  ['GB-ENG', 'GG', 'GE', 'JE'],
+  ['SO', 'XP'],
+  ['XK', 'BA'],
+];
 
 /** Flags that flag-icons does not have: they come from Wikimedia Commons (DATA-05). */
 const COMMONS_FLAGS = [
@@ -80,20 +168,15 @@ function sorted(values: readonly string[]): string[] {
 }
 
 describe('extended set dataset', () => {
-  it('DATA-07 has the 52 entities of Appendix A, each in its category and region (DATA-04)', () => {
-    expect(extendedEntities).toHaveLength(52);
-    for (const [category, regions] of Object.entries(APPENDIX_A)) {
-      const byRegion: Readonly<Record<string, readonly string[]>> = regions;
-      for (const [region, expected] of Object.entries(byRegion)) {
-        const actual = extendedEntities.filter(
-          (entity) => entity.category === category && entity.region === region,
-        );
-        expect(sorted(codes(actual)), `${category} / ${region}`).toEqual(sorted(expected));
-      }
+  it('DATA-07 DATA-04 has the 52 entities of Appendix A, each with its reviewed category and region', () => {
+    expect(sorted(codes(extendedEntities))).toEqual(sorted(Object.keys(REVIEWED)));
+    for (const entity of extendedEntities) {
+      const [category, region] = REVIEWED[entity.code] ?? [];
+      expect([entity.category, entity.region], entity.code).toEqual([category, region]);
     }
   });
 
-  it('§13.2 has 8 states with limited recognition, 31 territories and 13 autonomous regions', () => {
+  it('DATA-07 has 8 states with limited recognition, 31 territories and 13 autonomous regions', () => {
     const size = (category: string) =>
       extendedEntities.filter((entity) => entity.category === category).length;
     expect(size('limited-recognition')).toBe(8);
@@ -124,17 +207,11 @@ describe('extended set dataset', () => {
     expect(duplicates(everyEntity.map((entity) => entity.name.en))).toEqual([]);
   });
 
-  it.each([
-    ['FK', 'Islas Malvinas', 'Falkland Islands'],
-    ['GL', 'Groenlandia', 'Greenland'],
-    ['CW', 'Curazao', 'Curaçao'],
-    ['XS', 'Somalilandia', 'Somaliland'],
-    ['GE-AB', 'Abjasia', 'Abkhazia'],
-    ['XJ', 'Jubalandia', 'Jubaland'],
-    ['IQ-KR', 'Kurdistán iraquí', 'Kurdistan Region'],
-    ['BQ-SE', 'San Eustaquio', 'Sint Eustatius'],
-  ])('DATA-02 %s is called "%s" in Spanish and "%s" in English', (code, es, en) => {
-    expect(byCode(code).name).toEqual({ es, en });
+  it('DATA-02 D30 every entity has the reviewed name in Spanish and in English', () => {
+    for (const entity of extendedEntities) {
+      const [es, en] = REVIEWED[entity.code]?.[2] ?? [];
+      expect(entity.name, entity.code).toEqual({ es, en });
+    }
   });
 
   it('DATA-01 DATA-06 every quiz capital and other capital has both languages', () => {
@@ -147,44 +224,40 @@ describe('extended set dataset', () => {
     }
   });
 
-  it('CAP-02 D30 only Chipre del Norte, Gibraltar, Hong Kong, Macao and Tokelau have no quiz capital', () => {
+  it('CAP-02 D30 every entity has the reviewed quiz capital, or none', () => {
+    for (const entity of extendedEntities) {
+      const capital = REVIEWED[entity.code]?.[3];
+      expect(entity.capital, entity.code).toEqual(
+        capital ? { es: capital[0], en: capital[1] } : null,
+      );
+    }
     const without = extendedEntities.filter((entity) => !isCapitalEligible(entity));
     expect(sorted(codes(without))).toEqual(sorted(['XC', 'GI', 'HK', 'MO', 'TK']));
   });
 
-  it('CAP-03 D30 only Londres, Oranjestad and Kingston are the quiz capital of two entities', () => {
+  it('CAP-03 D30 only Londres, Oranjestad, Kingston and Georgetown are the quiz capital of two entities', () => {
     for (const language of ['es', 'en'] as const) {
       const holders = new Map<string, string[]>();
       for (const entity of everyEntity) {
         if (entity.capital === null) continue;
-        const name = entity.capital[language];
-        holders.set(name, [...(holders.get(name) ?? []), entity.code]);
+        const key = capitalKey(entity.capital[language]);
+        holders.set(key, [...(holders.get(key) ?? []), entity.code]);
       }
       const shared = [...holders.values()].filter((entities) => entities.length > 1).map(sorted);
       expect(sorted(shared.map((pair) => pair.join(' ')))).toEqual([
         'AW BQ-SE',
         'GB GB-ENG',
+        'GY KY',
         'JM NF',
       ]);
     }
   });
 
-  it.each([
-    ['FK', 'Puerto Argentino/Stanley', 'Stanley'],
-    ['MS', 'Brades', 'Brades'],
-    ['GU', 'Agaña', 'Hagåtña'],
-    ['XZ', 'Ciudad de Zanzíbar', 'Zanzibar City'],
-    ['PG-NSB', 'Buka', 'Buka'],
-    ['GB-ENG', 'Londres', 'London'],
-    ['BQ-SE', 'Oranjestad', 'Oranjestad'],
-    ['EH', 'El Aaiún', 'Laayoune'],
-  ])('D30 the quiz capital of %s is "%s" (en: "%s")', (code, es, en) => {
-    expect(byCode(code).capital).toEqual({ es, en });
-  });
-
   it('DATA-03 D30 Plymouth (Montserrat) and Arawa (Bougainville) are other capitals, not quiz capitals', () => {
     expect(byCode('MS').otherCapitals).toEqual([{ es: 'Plymouth', en: 'Plymouth' }]);
     expect(byCode('PG-NSB').otherCapitals).toEqual([{ es: 'Arawa', en: 'Arawa' }]);
+    const others = extendedEntities.filter((entity) => entity.otherCapitals.length > 0);
+    expect(sorted(codes(others))).toEqual(['MS', 'PG-NSB']);
     const quizCapitals = everyEntity.flatMap((entity) =>
       entity.capital ? [entity.capital.es] : [],
     );
@@ -207,16 +280,15 @@ describe('extended set dataset', () => {
     expect(byCode('FO').article?.es).toBeUndefined();
   });
 
-  it('DATA-08 every entity has its status in plain words, in both languages', () => {
+  it('DATA-08 D30 every entity has its reviewed status in plain words, in both languages', () => {
     for (const entity of extendedEntities) {
-      expect(entity.status.es.trim(), entity.code).not.toBe('');
+      expect(entity.status.es, entity.code).toBe(REVIEWED[entity.code]?.[4]);
       expect(entity.status.en.trim(), entity.code).not.toBe('');
+      expect(entity.status.en, entity.code).not.toBe(entity.status.es);
     }
     expect(byCode('FO')).toMatchObject({
-      status: { es: 'Territorio autónomo de Dinamarca', en: 'Self-governing territory of Denmark' },
+      status: { en: 'Self-governing territory of Denmark' },
     });
-    expect(byCode('TW')).toMatchObject({ status: { es: 'Estado con reconocimiento limitado' } });
-    expect(byCode('XP')).toMatchObject({ status: { es: 'Estado federado de Somalia' } });
   });
 
   it('SHAPE-04 Puntland and Jubalandia are not in the Shapes games', () => {
@@ -230,13 +302,12 @@ describe('extended set dataset', () => {
   });
 
   it('DATA-05 every flag from Wikimedia Commons is listed in SOURCES.md with its source and licence', () => {
-    for (const code of COMMONS_FLAGS) {
-      const row = flagSources
-        .split('\n')
-        .find((line) => line.startsWith(`| \`${code.toLowerCase()}.svg\``));
-      expect(row, code).toBeDefined();
-      expect(row, code).toContain('https://commons.wikimedia.org/wiki/File:');
-      expect(row, code).toMatch(/\| (Public domain|CC BY-SA [0-9.]+) \|$/);
+    const rows = flagSources.split('\n').filter((line) => /^\| `[a-z-]+\.svg` \|/.test(line));
+    const listed = rows.map((row) => row.slice(3, row.indexOf('.svg')).toUpperCase());
+    expect(sorted(listed)).toEqual(sorted(['AF', ...COMMONS_FLAGS]));
+    for (const row of rows) {
+      expect(row).toContain('https://commons.wikimedia.org/wiki/File:');
+      expect(row).toMatch(/\| (Public domain|CC BY-SA [0-9.]+) \|$/);
     }
   });
 });
@@ -244,7 +315,7 @@ describe('extended set dataset', () => {
 describe('level 4 land borders and similar flags', () => {
   const known = new Set(codes(everyEntity));
   const neighboursOf = (code: string) => sorted(expertRelations.neighbours.get(code) ?? []);
-  const similarTo = (code: string) => expertRelations.similarFlags.get(code) ?? [];
+  const groupKey = (group: readonly string[]) => sorted(group).join(' ');
 
   it('DATA-06 every extended border joins two different known entities, once', () => {
     const seen = new Set<string>();
@@ -266,71 +337,30 @@ describe('level 4 land borders and similar flags', () => {
     }
   });
 
-  it.each([
-    ['XK', ['AL', 'RS', 'ME', 'MK']],
-    ['EH', ['MA', 'MR', 'DZ']],
-    ['GE-AB', ['GE', 'RU']],
-    ['XS', ['SO', 'ET', 'DJ', 'XP']],
-    ['GB-ENG', ['GB-SCT', 'GB-WLS']],
-    ['GI', ['ES']],
-    ['SX', ['FR']],
-  ] as const)('LVL-06 D30 %s has the reviewed land neighbours', (code, expected) => {
-    expect(neighboursOf(code)).toEqual(sorted(expected));
+  it('LVL-06 D30 every extended entity has exactly its reviewed land neighbours', () => {
+    for (const entity of extendedEntities) {
+      expect(neighboursOf(entity.code), entity.code).toEqual(
+        sorted(REVIEWED_NEIGHBOURS[entity.code] ?? []),
+      );
+    }
   });
 
   it('LVL-06 D30 at level 4 a country also borders its extended neighbours (Serbia–Kosovo)', () => {
     expect(neighboursOf('RS')).toContain('XK');
     expect(neighboursOf('MA')).toContain('EH');
     expect(neighboursOf('ES')).toContain('GI');
+    expect(neighboursOf('CN')).toEqual(expect.arrayContaining(['HK', 'MO']));
   });
 
-  it('LVL-06 island territories have no land neighbours', () => {
-    for (const code of [
-      'TW',
-      'FO',
-      'IM',
-      'JE',
-      'GL',
-      'PR',
-      'BM',
-      'FK',
-      'NC',
-      'GU',
-      'BQ-BO',
-      'XZ',
-    ]) {
-      expect(expertRelations.neighbours.get(code), code).toBeUndefined();
-    }
+  it('LVL-06 D30 the level 4 similar-flag groups are exactly the reviewed ones', () => {
+    expect(sorted(extendedFlagGroups.map(groupKey))).toEqual(sorted(REVIEWED_GROUPS.map(groupKey)));
   });
 
-  it('LVL-06 D30 the British territories share the group of the Union Jack in the corner', () => {
-    expect(similarTo('AU')).toEqual(expect.arrayContaining(['NZ', 'KY', 'FK', 'BM', 'CK', 'NU']));
-  });
-
-  it('LVL-06 D30 Jersey is among the red crosses on white, not with Escocia', () => {
-    expect(similarTo('JE')).toEqual(expect.arrayContaining(['GB-ENG', 'GG', 'GE']));
-    expect(similarTo('JE')).not.toContain('GB-SCT');
-    expect(similarTo('GB-SCT')).toEqual([]);
-  });
-
-  it('LVL-06 D30 every flag with a crescent and a star is in one group', () => {
-    expect(similarTo('TR')).toEqual(
-      expect.arrayContaining([
-        'TN',
-        'XC',
-        'DZ',
-        'AZ',
-        'MR',
-        'PK',
-        'MY',
-        'SG',
-        'TM',
-        'UZ',
-        'LY',
-        'KM',
-        'EH',
-      ]),
+  it('LVL-06 D30 Jersey is among the red crosses on white, and Escocia has no similar flag', () => {
+    expect(expertRelations.similarFlags.get('JE')).toEqual(
+      expect.arrayContaining(['GB-ENG', 'GG', 'GE']),
     );
+    expect(expertRelations.similarFlags.get('GB-SCT')).toBeUndefined();
   });
 
   it('LVL-06 level 4 keeps every level 3 relation', () => {
@@ -350,7 +380,7 @@ describe('level 4 land borders and similar flags', () => {
 describe('levels 1–3 do not change', () => {
   const extendedCodes = new Set(codes(extendedEntities));
 
-  it('§13.2 the 195 countries of levels 1–3 have no extended entity', () => {
+  it('LVL-06 the 195 countries of levels 1–3 have no extended entity', () => {
     expect(countries).toHaveLength(195);
     expect(countries.filter((country) => extendedCodes.has(country.code))).toEqual([]);
     expect(
@@ -367,5 +397,24 @@ describe('levels 1–3 do not change', () => {
       ...similarFlagGroups.flat(),
     ];
     expect(used.filter((code) => extendedCodes.has(code))).toEqual([]);
+  });
+
+  it('LVL-06 a round of level 1, 2 or 3, as the app builds it, never asks or offers an extended entity', () => {
+    for (const topic of TOPICS) {
+      for (const region of REGION_CHOICES) {
+        for (const level of LEVELS) {
+          for (const seed of [1, 2, 3]) {
+            const round = generateRound(
+              countries,
+              { topic, region, level },
+              createRng(seed),
+              relations,
+            );
+            const used = round.flatMap((question) => codes(question.options));
+            expect(used.filter((code) => extendedCodes.has(code))).toEqual([]);
+          }
+        }
+      }
+    }
   });
 });

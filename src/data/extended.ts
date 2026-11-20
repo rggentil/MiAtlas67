@@ -10,11 +10,14 @@ import type { Articles, ExtendedEntity, Localized, Region } from '../domain/enti
  *   Georgia, Puntland → África.
  * - Capitals (D30): Malvinas «Puerto Argentino/Stanley» in Spanish and «Stanley» in English; Montserrat its de
  *   facto capital, Brades. Chipre del Norte, Gibraltar, Hong Kong, Macao and Tokelau have none (CAP-02, CAP-03).
- *   Inglaterra (Londres), San Eustaquio (Oranjestad) and Isla Norfolk (Kingston) share a quiz capital with
- *   a country, so a Capitals question never offers both (CAP-03).
+ *   Inglaterra (Londres), San Eustaquio (Oranjestad), Isla Norfolk (Kingston) and Islas Caimán (George Town,
+ *   like Georgetown in Guyana) share a quiz capital with a country, so a Capitals question never offers both
+ *   (CAP-03).
  * - Articles in sentences (DATA-09, D30): «la» Isla de Man, Isla Norfolk and Polinesia Francesa, «el» Sahara
  *   Occidental and Kurdistán iraquí; the plural names go without one, as in D18 («de Bermudas»).
  * - Every entity is asked only at level 4, where tiers do not choose the entities (LVL-07): they all have tier 3.
+ * - `shapeEligible` is provisional until the silhouettes of the extended set are built and reviewed (#94); only
+ *   Puntland and Jubalandia are out for sure (SHAPE-04).
  * - Azores and Madeira are left out (D30, Appendix A.4).
  */
 

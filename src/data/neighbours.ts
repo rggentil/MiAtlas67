@@ -61,7 +61,8 @@ export const landBorders: readonly string[] = [
  * Reviewed by the product owner in #93 (D15, D30), with the same rules:
  * - De facto lines: Abjasia and Osetia del Sur with Georgia and Rusia, Transnistria with Moldavia and Ucrania,
  *   the Green Line of Chipre, Somalilandia with Puntland.
- * - A country does not border its own part: Inglaterra borders Escocia and Gales, not the Reino Unido.
+ * - An entity borders the rest of its country (Abjasia–Georgia, Hong Kong–China, Puntland–Somalia), but
+ *   Inglaterra borders Escocia and Gales, not the Reino Unido, which is made of them.
  * - A territory inside the EU counts as its country: Sint Maarten borders Francia (the French Saint-Martin).
  * - Islands and island territories have none (Taiwán, Islas Feroe, Groenlandia, the Caribbean, Oceanía).
  */

@@ -71,16 +71,28 @@ function buildPool(entities: readonly Entity[], settings: RoundSettings, rng: Rn
   return pool;
 }
 
+/** A capital's name without case, accents, spaces or hyphens: «George Town» reads as «Georgetown». */
+export function capitalKey(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]/gu, '');
+}
+
 /**
  * True when the candidate's quiz capital is a capital of the answer: its quiz capital, shared by a few entities
  * such as Reino Unido and Inglaterra (CAP-03), or one of its other capitals (DATA-03). Offering it would give
- * a Capitals question two right answers.
+ * a Capitals question two right answers, or show the same capital twice.
  */
 function sharesCapital(answer: Entity, candidate: Entity): boolean {
   const offered = candidate.capital;
   if (offered === null) return false;
   return [answer.capital, ...answer.otherCapitals].some(
-    (capital) => capital !== null && (capital.es === offered.es || capital.en === offered.en),
+    (capital) =>
+      capital !== null &&
+      (capitalKey(capital.es) === capitalKey(offered.es) ||
+        capitalKey(capital.en) === capitalKey(offered.en)),
   );
 }
 
