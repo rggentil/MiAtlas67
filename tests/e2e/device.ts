@@ -80,7 +80,7 @@ export async function saveRounds(
 export interface Result {
   readonly game: GameId;
   readonly region: string;
-  readonly level: 1 | 2 | 3;
+  readonly level: 1 | 2 | 3 | 4;
   readonly score: number;
   readonly stars: 0 | 1 | 2 | 3;
   /** When it was played; by default 1 November 2026 for the first result of a call, then one day more each. */
@@ -240,12 +240,12 @@ export async function openLevel(
   page: Page,
   game: GameId,
   region: string,
-  level: 2 | 3,
+  level: 2 | 3 | 4,
   nickname = 'Lucía',
 ): Promise<void> {
   const playerId = await savedPlayerId(page, nickname);
   if (playerId === null) throw new Error(`There is no player called ${nickname}`);
-  const before = ([1, 2] as const).filter((earlier) => earlier < level);
+  const before = ([1, 2, 3] as const).filter((earlier) => earlier < level);
   await saveResults(
     page,
     playerId,

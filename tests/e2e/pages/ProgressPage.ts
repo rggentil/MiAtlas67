@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 
-const LEVEL_COLUMNS = { Fácil: 0, Medio: 1, Difícil: 2 } as const;
+const LEVEL_COLUMNS = { Fácil: 0, Medio: 1, Difícil: 2, Experto: 3 } as const;
 
 /** Page object for "Progreso": the total stars and one table per game, regions × levels (HIS-03). */
 export class ProgressPage {
@@ -33,6 +33,13 @@ export class ProgressPage {
   /** "Países dominados: 1/195" of a game (HIS-04). */
   mastered(game: string): Locator {
     return this.page.getByRole('region', { name: game }).getByText(/^Países dominados:/);
+  }
+
+  /** "Territorios y otros dominados: 3/52" of a game: the extended entities mastered, counted apart (HIS-04). */
+  masteredExtended(game: string): Locator {
+    return this.page
+      .getByRole('region', { name: game })
+      .getByText(/^Territorios y otros dominados:/);
   }
 
   /** "6 estrellas en total" */

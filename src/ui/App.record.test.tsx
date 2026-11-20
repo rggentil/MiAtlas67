@@ -1,9 +1,8 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { countries } from '../data/countries.ts';
-import { relations } from '../data/relations.ts';
-import { generateRound, type Level, type Question } from '../domain/questions.ts';
+import { newRound } from '../data/rounds.ts';
+import type { Level, Question } from '../domain/questions.ts';
 import { createRng } from '../domain/random.ts';
 import type { Stars } from '../domain/round.ts';
 import type { GameStore, PlayerData } from '../storage/store.ts';
@@ -16,7 +15,7 @@ const LEVEL_NAMES = { 1: 'Fácil', 2: 'Medio', 3: 'Difícil', 4: 'Experto' } as 
 function rounds(level: Level, count: number): Question[][] {
   const rng = createRng(42);
   return Array.from({ length: count }, () =>
-    generateRound(countries, { topic: 'flags', region: 'europe', level }, rng, relations),
+    newRound({ topic: 'flags', region: 'europe', level }, rng),
   );
 }
 

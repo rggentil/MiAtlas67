@@ -52,7 +52,7 @@ test.describe('Choose region and level', () => {
   );
 
   test(
-    'LVL-01 after a region, the levels are Fácil, Medio and Difícil; "Volver" goes back a step',
+    'LVL-01 after a region, the levels are Fácil, Medio, Difícil and Experto; "Volver" goes back a step',
     { tag: '@LVL-01' },
     async ({ page }) => {
       const home = new HomePage(page);
@@ -61,8 +61,8 @@ test.describe('Choose region and level', () => {
       await home.openGame('Bandera → País');
 
       await setup.chooseRegion('Oceanía');
-      await expect(setup.levelStep.getByRole('button')).toHaveCount(3);
-      for (const [index, name] of ['Fácil', 'Medio', 'Difícil'].entries()) {
+      await expect(setup.levelStep.getByRole('button')).toHaveCount(4);
+      for (const [index, name] of ['Fácil', 'Medio', 'Difícil', 'Experto'].entries()) {
         await expect(setup.levelStep.getByRole('button').nth(index)).toHaveAccessibleName(
           new RegExp(`^${name}`),
         );
@@ -87,7 +87,7 @@ test.describe('Choose region and level', () => {
 
       for (const step of ['region', 'level'] as const) {
         await expect(step === 'region' ? setup.regionStep : setup.levelStep).toBeVisible();
-        // A new player: the level step has two locked levels too (LVL-05).
+        // A new player: the level step has three locked levels too (LVL-05).
         if (step === 'level') await expect(setup.level('Difícil')).toBeDisabled();
         expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
         for (const button of await page.getByRole('button').all()) {

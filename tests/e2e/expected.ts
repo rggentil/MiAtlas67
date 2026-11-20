@@ -1,15 +1,15 @@
-import { countries } from '../../src/data/countries.ts';
-import { relations } from '../../src/data/relations.ts';
+import { newRound } from '../../src/data/rounds.ts';
 import type { Entity } from '../../src/domain/entity.ts';
-import { generateRound, type Question, type RoundSettings } from '../../src/domain/questions.ts';
+import type { Question, RoundSettings } from '../../src/domain/questions.ts';
 import { createRng } from '../../src/domain/random.ts';
 
 /**
  * The questions the app plays as its first round after opening it with `?seed=<seed>` (NFR-07): the same
- * domain call, so the tests follow the data instead of hard-coding country names.
+ * call the app makes, so the tests follow the data instead of hard-coding country names. Levels 1–3 use the
+ * 195 countries, Experto the extended set too.
  */
 export function expectedRound(settings: RoundSettings, seed = 42): Question[] {
-  return generateRound(countries, settings, createRng(seed), relations);
+  return newRound(settings, createRng(seed));
 }
 
 /**
@@ -18,7 +18,7 @@ export function expectedRound(settings: RoundSettings, seed = 42): Question[] {
  */
 export function expectedRounds(settings: RoundSettings, count: number, seed = 42): Question[][] {
   const rng = createRng(seed);
-  return Array.from({ length: count }, () => generateRound(countries, settings, rng, relations));
+  return Array.from({ length: count }, () => newRound(settings, rng));
 }
 
 export function questionAt(questions: readonly Question[], index: number): Question {
