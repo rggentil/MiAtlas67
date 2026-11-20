@@ -95,6 +95,7 @@ describe('HistoryScreen', () => {
       'País → Capital',
       'Capital → País',
       'Silueta → País',
+      'País → Silueta',
     ]);
     expect(filter('Todos')).toBeChecked();
   });
@@ -195,6 +196,7 @@ describe('HistoryScreen', () => {
       'Country → Capital',
       'Capital → Country',
       'Shape → Country',
+      'Country → Shape',
     ]);
   });
 

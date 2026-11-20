@@ -45,7 +45,7 @@ test.describe('Progress: stars per game, region and level', () => {
         '3 de 3 estrellas',
       );
       await expect(progress.cell('Bandera → País', 'Asia', 'Medio')).toHaveText('Sin jugar');
-      await expect(progress.tables).toHaveCount(5);
+      await expect(progress.tables).toHaveCount(6);
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
     },
   );
