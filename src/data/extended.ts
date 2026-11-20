@@ -16,8 +16,7 @@ import type { Articles, ExtendedEntity, Localized, Region } from '../domain/enti
  * - Articles in sentences (DATA-09, D30): «la» Isla de Man, Isla Norfolk and Polinesia Francesa, «el» Sahara
  *   Occidental and Kurdistán iraquí; the plural names go without one, as in D18 («de Bermudas»).
  * - Every entity is asked only at level 4, where tiers do not choose the entities (LVL-07): they all have tier 3.
- * - `shapeEligible` is provisional until the silhouettes of the extended set are built and reviewed (#94); only
- *   Puntland and Jubalandia are out for sure (SHAPE-04).
+ * - Every entity has a silhouette, reviewed in D31, except Puntland and Jubalandia (SHAPE-04).
  * - Azores and Madeira are left out (D30, Appendix A.4).
  */
 
