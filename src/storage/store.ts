@@ -50,6 +50,8 @@ export interface RoundRepository {
   add(data: RoundData): Promise<SavedRound>;
   /** The rounds of one player, newest first (HIS-02). */
   listByPlayer(playerId: number): Promise<SavedRound[]>;
+  /** The rounds of every player on the device, newest first: the family records (HIS-05). */
+  listAll(): Promise<SavedRound[]>;
 }
 
 /** Everything the game keeps on the device, behind interfaces so the storage can change later. */

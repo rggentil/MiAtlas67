@@ -19,6 +19,7 @@ function renderHome(
   onSwitchPlayer: () => void = vi.fn(),
   onOpenHistory: () => void = vi.fn(),
   onOpenProgress: () => void = vi.fn(),
+  onOpenRecords: () => void = vi.fn(),
 ) {
   renderWithI18n(
     <HomeScreen
@@ -27,6 +28,7 @@ function renderHome(
       onSwitchPlayer={onSwitchPlayer}
       onOpenHistory={onOpenHistory}
       onOpenProgress={onOpenProgress}
+      onOpenRecords={onOpenRecords}
       onBack={vi.fn()}
     />,
   );
@@ -59,6 +61,25 @@ describe('HomeScreen', () => {
 
     expect(onOpenProgress).toHaveBeenCalledOnce();
     expect(onOpenHistory).not.toHaveBeenCalled();
+  });
+
+  it('HIS-05 D28 "Récords" opens the family records', async () => {
+    const onOpenRecords = vi.fn();
+    const onOpenProgress = vi.fn();
+    renderHome(vi.fn(), LUCIA, vi.fn(), vi.fn(), onOpenProgress, onOpenRecords);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Récords' }));
+
+    expect(onOpenRecords).toHaveBeenCalledOnce();
+    expect(onOpenProgress).not.toHaveBeenCalled();
+  });
+
+  it('HIS-05 NFR-06 "Records" in English', async () => {
+    renderHome();
+
+    await userEvent.click(screen.getByRole('radio', { name: 'English' }));
+
+    expect(screen.getByRole('button', { name: 'Records' })).toBeVisible();
   });
 
   it('HIS-03 NFR-06 "Progress" in English', async () => {

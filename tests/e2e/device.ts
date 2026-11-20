@@ -83,6 +83,8 @@ export interface Result {
   readonly level: 1 | 2 | 3;
   readonly score: number;
   readonly stars: 0 | 1 | 2 | 3;
+  /** When it was played; by default 1 November 2026 for the first result of a call, then one day more each. */
+  readonly playedAt?: number;
 }
 
 /** Saves the finished rounds `results` of the player `playerId` straight into the database (HIS-01). */
@@ -105,7 +107,7 @@ export async function saveResults(
             transaction.objectStore('rounds').add({
               ...round,
               playerId: id,
-              playedAt: Date.UTC(2026, 10, 1 + index),
+              playedAt: round.playedAt ?? Date.UTC(2026, 10, 1 + index),
               total: 10,
               missed: [],
             });

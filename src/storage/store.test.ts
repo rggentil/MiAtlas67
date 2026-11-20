@@ -164,6 +164,33 @@ describe.each([
     ]);
   });
 
+  it('HIS-05 lists the rounds of every player, newest first', async () => {
+    const lucia = await store.players.create({ nickname: 'Lucía', avatar: 'fox' });
+    const pablo = await store.players.create({ nickname: 'Pablo', avatar: 'panda' });
+    await store.rounds.add(round(lucia.id, 1_000, { score: 5, stars: 1 }));
+    await store.rounds.add(round(pablo.id, 3_000, { score: 10, stars: 3 }));
+    await store.rounds.add(round(lucia.id, 2_000, { score: 7 }));
+
+    const rounds = await store.rounds.listAll();
+
+    expect(rounds.map((saved) => [saved.playerId, saved.playedAt, saved.score])).toEqual([
+      [pablo.id, 3_000, 10],
+      [lucia.id, 2_000, 7],
+      [lucia.id, 1_000, 5],
+    ]);
+  });
+
+  it('PRF-04 HIS-05 the rounds of a deleted player are no longer listed for the family', async () => {
+    const lucia = await store.players.create({ nickname: 'Lucía', avatar: 'fox' });
+    const pablo = await store.players.create({ nickname: 'Pablo', avatar: 'panda' });
+    await store.rounds.add(round(lucia.id, 1_000));
+    await store.rounds.add(round(pablo.id, 2_000));
+
+    await store.players.delete(pablo.id);
+
+    expect((await store.rounds.listAll()).map((saved) => saved.playerId)).toEqual([lucia.id]);
+  });
+
   it('HIS-01 rounds saved in the same millisecond are listed newest first', async () => {
     const lucia = await store.players.create({ nickname: 'Lucía', avatar: 'fox' });
     await store.rounds.add(round(lucia.id, 1_000, { score: 4 }));

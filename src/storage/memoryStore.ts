@@ -58,6 +58,10 @@ export function createMemoryStore(): GameStore {
             .sort(newestFirst)
             .map((round) => ({ ...round, missed: [...round.missed] })),
         ),
+      listAll: () =>
+        Promise.resolve(
+          [...rounds].sort(newestFirst).map((round) => ({ ...round, missed: [...round.missed] })),
+        ),
     },
     close: () => {
       // Nothing to release.
