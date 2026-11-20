@@ -9,7 +9,8 @@ import type { Articles, ExtendedEntity, Localized, Region } from '../domain/enti
  * - Each entity belongs to the region where it is located (DATA-04): Groenlandia → América, Abjasia → Asia like
  *   Georgia, Puntland → África.
  * - Capitals (D30): Malvinas «Puerto Argentino/Stanley» in Spanish and «Stanley» in English; Montserrat its de
- *   facto capital, Brades. Chipre del Norte, Gibraltar, Hong Kong, Macao and Tokelau have none (CAP-02, CAP-03).
+ *   facto capital, Brades. Gibraltar, Hong Kong, Macao and Tokelau have none (CAP-02); Chipre del Norte has
+ *   Nicosia del Norte, apart from Chipre's Nicosia (D32).
  *   Inglaterra (Londres), San Eustaquio (Oranjestad), Isla Norfolk (Kingston) and Islas Caimán (George Town,
  *   like Georgetown in Guyana) share a quiz capital with a country, so a Capitals question never offers both
  *   (CAP-03).
@@ -131,11 +132,15 @@ export const extendedEntities: readonly ExtendedEntity[] = [
     'europe',
     ['Estado de facto sin reconocimiento', 'Unrecognized de facto state'],
   ),
-  // Not in Capitals games (D30): its capital is the northern half of Nicosia, the quiz capital of Chipre.
-  x('XC', 'limited-recognition', ['Chipre del Norte', 'Northern Cyprus'], null, 'europe', [
-    'Estado de facto reconocido solo por Turquía',
-    'De facto state recognized only by Turkey',
-  ]),
+  // Its capital is the northern half of the divided city of Nicosia (Lefkoşa), named apart from Chipre's (D32).
+  x(
+    'XC',
+    'limited-recognition',
+    ['Chipre del Norte', 'Northern Cyprus'],
+    ['Nicosia del Norte', 'North Nicosia'],
+    'europe',
+    ['Estado de facto reconocido solo por Turquía', 'De facto state recognized only by Turkey'],
+  ),
   x(
     'XS',
     'limited-recognition',

@@ -62,7 +62,7 @@ const REVIEWED: Readonly<Record<string, Row>> = {
   'GE-AB': ['limited-recognition', 'asia', ['Abjasia', 'Abkhazia'], ['Sujumi', 'Sukhumi'], 'Estado de facto con reconocimiento limitado'],
   XO: ['limited-recognition', 'asia', ['Osetia del Sur', 'South Ossetia'], ['Tsjinvali', 'Tskhinvali'], 'Estado de facto con reconocimiento limitado'],
   'MD-SN': ['limited-recognition', 'europe', ['Transnistria', 'Transnistria'], ['Tiráspol', 'Tiraspol'], 'Estado de facto sin reconocimiento'],
-  XC: ['limited-recognition', 'europe', ['Chipre del Norte', 'Northern Cyprus'], null, 'Estado de facto reconocido solo por Turquía'],
+  XC: ['limited-recognition', 'europe', ['Chipre del Norte', 'Northern Cyprus'], ['Nicosia del Norte', 'North Nicosia'], 'Estado de facto reconocido solo por Turquía'],
   XS: ['limited-recognition', 'africa', ['Somalilandia', 'Somaliland'], ['Hargeisa', 'Hargeisa'], 'Estado de facto con reconocimiento limitado'],
   FO: ['territory', 'europe', ['Islas Feroe', 'Faroe Islands'], ['Tórshavn', 'Tórshavn'], 'Territorio autónomo de Dinamarca'],
   GI: ['territory', 'europe', ['Gibraltar', 'Gibraltar'], null, 'Territorio británico de ultramar'],
@@ -253,7 +253,26 @@ describe('extended set dataset', () => {
       );
     }
     const without = extendedEntities.filter((entity) => !isCapitalEligible(entity));
-    expect(sorted(codes(without))).toEqual(sorted(['XC', 'GI', 'HK', 'MO', 'TK']));
+    expect(sorted(codes(without))).toEqual(sorted(['GI', 'HK', 'MO', 'TK']));
+  });
+
+  it('CAP-03 D32 Chipre del Norte has its own quiz capital, Nicosia del Norte, so Chipre can be a wrong option for it', () => {
+    expect(byCode('XC').capital).toEqual({ es: 'Nicosia del Norte', en: 'North Nicosia' });
+    for (const language of ['es', 'en'] as const) {
+      expect(capitalKey(byCode('XC').capital?.[language] ?? '')).not.toBe(
+        capitalKey(byCode('CY').capital?.[language] ?? ''),
+      );
+    }
+    // At Experto, Chipre borders Chipre del Norte (LVL-06), so it is the first wrong option in Europe.
+    const aboutNorthernCyprus = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      .flatMap((seed) =>
+        newRound({ topic: 'capitals', region: 'europe', level: 4 }, createRng(seed)),
+      )
+      .filter((question) => question.entity.code === 'XC');
+    expect(aboutNorthernCyprus.length).toBeGreaterThan(0);
+    for (const question of aboutNorthernCyprus) {
+      expect(codes(question.options)).toContain('CY');
+    }
   });
 
   it('CAP-03 D30 only Londres, Oranjestad, Kingston and Georgetown are the quiz capital of two entities', () => {
