@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { countries } from '../data/countries.ts';
-import { relations } from '../data/relations.ts';
+import { extendedEntities } from '../data/extended.ts';
+import { expertRelations, relations } from '../data/relations.ts';
 import type { Entity, Region, Tier } from './entity.ts';
 import {
   generateRound,
@@ -226,6 +227,70 @@ describe('generateRound', () => {
     for (const question of aboutPalestine) {
       expect(codes(question.options)).not.toContain('RA');
     }
+  });
+
+  it('CAP-03 an entity with the same quiz capital as the asked one is never offered (Inglaterra for Reino Unido)', () => {
+    const london = { es: 'Londres', en: 'London' };
+    const unitedKingdom = entity('GB', { capital: london });
+    const england = entity('GB-ENG', { capital: london, category: 'subnational' });
+    const entities = [unitedKingdom, england, ...fixture(8)];
+
+    const aboutThePair = questionsOf(
+      { topic: 'capitals', region: 'europe', level: 1 },
+      entities,
+    ).filter((question) => ['GB', 'GB-ENG'].includes(question.entity.code));
+    expect(new Set(codes(aboutThePair.map((question) => question.entity)))).toEqual(
+      new Set(['GB', 'GB-ENG']),
+    );
+    for (const question of aboutThePair) {
+      const offered = codes(question.options);
+      expect(offered.filter((code) => code === 'GB' || code === 'GB-ENG')).toHaveLength(1);
+    }
+  });
+
+  it('CAP-03 no two options share a quiz capital, wrong ones included, in either language (Kingston)', () => {
+    const jamaica = entity('JM', { capital: { es: 'Kingston', en: 'Kingston' } });
+    const norfolk = entity('NF', { capital: { es: 'Kingstón', en: 'Kingston' } });
+    const entities = [jamaica, norfolk, ...fixture(8)];
+
+    const questions = questionsOf({ topic: 'capitals', region: 'europe', level: 1 }, entities);
+    expect(questions.some((question) => !['JM', 'NF'].includes(question.entity.code))).toBe(true);
+    for (const question of questions) {
+      const offered = codes(question.options);
+      expect(offered.includes('JM') && offered.includes('NF')).toBe(false);
+    }
+  });
+
+  it('CAP-03 with the countries and the extended set together, no Capitals question repeats a capital', () => {
+    const entities = [...countries, ...extendedEntities];
+    for (const region of REGION_CHOICES) {
+      const questions = SEEDS.flatMap((seed) =>
+        generateRound(
+          entities,
+          { topic: 'capitals', region, level: 3 },
+          createRng(seed),
+          expertRelations,
+        ),
+      );
+      for (const question of questions) {
+        const capitals = question.options.map((option) => option.capital?.es);
+        expect(new Set(capitals).size, question.entity.code).toBe(capitals.length);
+      }
+    }
+  });
+
+  it('CAP-03 entities with the same quiz capital can still meet in a Flags question', () => {
+    const london = { es: 'Londres', en: 'London' };
+    const entities = [
+      entity('GB', { capital: london }),
+      entity('GB-ENG', { capital: london }),
+      ...fixture(8),
+    ];
+    const together = questionsOf({ topic: 'flags', region: 'europe', level: 1 }, entities).filter(
+      (question) =>
+        codes(question.options).includes('GB') && codes(question.options).includes('GB-ENG'),
+    );
+    expect(together.length).toBeGreaterThan(0);
   });
 
   it('DATA-03 in the real data, no other capital (Bolivia: La Paz) is ever offered for the asked country', () => {

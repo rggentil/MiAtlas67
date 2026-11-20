@@ -81,10 +81,10 @@ Each topic is played in both directions, which makes **six games**:
 - **CAP-02** Entities without a meaningful capital (e.g. Hong Kong, Macao, Gibraltar) are excluded from Capitals
   games (`capitalEligible` in the data). All 195 countries have a quiz capital (D13): a city-state's capital is
   the country itself (Mónaco, Singapur, Ciudad del Vaticano) and Nauru uses its de facto capital, Yaren.
-- **CAP-03** A Capitals question has exactly one right answer: it never offers, as a wrong option, an entity
-  whose quiz capital is the answer's. Only these entities share a quiz capital (D30): Reino Unido and Inglaterra
-  → Londres; Aruba and San Eustaquio → Oranjestad; Jamaica and Isla Norfolk → Kingston (two towns with the same
-  name). Chipre del Norte is not in Capitals games (D30).
+- **CAP-03** No two options of a Capitals question share a quiz capital, so the question has exactly one right
+  answer and never shows a capital twice. Only these entities share a quiz capital (D30): Reino Unido and
+  Inglaterra → Londres; Aruba and San Eustaquio → Oranjestad; Jamaica and Isla Norfolk → Kingston (two towns with
+  the same name). Chipre del Norte is not in Capitals games (D30).
 
 ## 7. Levels and difficulty
 

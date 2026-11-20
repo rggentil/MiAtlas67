@@ -1,3 +1,5 @@
+import type { BorderPair } from '../domain/relations.ts';
+
 /**
  * Land borders between the 195 countries, one pair per border (codes sorted: "AD-ES"). Used for the
  * "tricky" wrong options of level 3 (LVL-06). Curated by hand and reviewed by the product owner (#37).
@@ -52,4 +54,33 @@ export const landBorders: readonly string[] = [
   // Across regions (14)
   'AZ-RU', 'BG-TR', 'BR-FR', 'CN-RU', 'EG-IL', 'EG-PS', 'ES-MA', 'FR-SR', 'GE-RU', 'GR-TR',
   'ID-PG', 'KP-RU', 'KZ-RU', 'MN-RU',
+];
+
+/**
+ * Land borders of the extended entities, used only at level 4 Experto together with `landBorders` (LVL-06).
+ * Reviewed by the product owner in #93 (D15, D30), with the same rules:
+ * - De facto lines: Abjasia and Osetia del Sur with Georgia and Rusia, Transnistria with Moldavia and Ucrania,
+ *   the Green Line of Chipre, Somalilandia with Puntland.
+ * - A country does not border its own part: Inglaterra borders Escocia and Gales, not the Reino Unido.
+ * - A territory inside the EU counts as its country: Sint Maarten borders Francia (the French Saint-Martin).
+ * - Islands and island territories have none (Taiwán, Islas Feroe, Groenlandia, the Caribbean, Oceanía).
+ */
+// prettier-ignore
+export const extendedLandBorders: readonly BorderPair[] = [
+  ['XK', 'AL'], ['XK', 'RS'], ['XK', 'ME'], ['XK', 'MK'],
+  ['EH', 'MA'], ['EH', 'MR'], ['EH', 'DZ'],
+  ['GE-AB', 'GE'], ['GE-AB', 'RU'],
+  ['XO', 'GE'], ['XO', 'RU'],
+  ['MD-SN', 'MD'], ['MD-SN', 'UA'],
+  ['XC', 'CY'],
+  ['XS', 'SO'], ['XS', 'ET'], ['XS', 'DJ'], ['XS', 'XP'],
+  ['XP', 'SO'], ['XP', 'ET'],
+  ['XJ', 'SO'], ['XJ', 'KE'], ['XJ', 'ET'],
+  ['MD-GA', 'MD'], ['MD-GA', 'UA'],
+  ['IQ-KR', 'IQ'], ['IQ-KR', 'IR'], ['IQ-KR', 'TR'], ['IQ-KR', 'SY'],
+  ['GB-ENG', 'GB-SCT'], ['GB-ENG', 'GB-WLS'],
+  ['GI', 'ES'],
+  ['HK', 'CN'],
+  ['MO', 'CN'],
+  ['SX', 'FR'],
 ];
