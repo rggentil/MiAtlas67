@@ -119,18 +119,32 @@ test.describe('Play a SHAPE-B round', () => {
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
     },
   );
+});
+
+test.describe('A tall grid of silhouettes on a short screen', () => {
+  // Level Difícil has 6 silhouettes in 3 rows: on a phone the grid goes below the feedback panel.
+  const HARD = questionAt(expectedRound({ topic: 'shapes', region: 'europe', level: 3 }), 0);
 
   test(
     'RND-04 after answering a silhouette, the ✓ and the ✗ are not hidden behind the feedback panel',
     { tag: ['@SHAPE-B', '@RND-04'] },
-    async () => {
-      const last = FIRST.options.at(-1);
-      const tapped = last && last.code !== FIRST.entity.code ? last : wrongOption(FIRST);
-      await round.answer(card(FIRST, tapped));
+    async ({ page }) => {
+      const home = new HomePage(page);
+      const setup = new GameSetupPage(page);
+      const round = new RoundPage(page);
+      await home.goto('?seed=42');
+      await home.openGame('País → Silueta');
+      await setup.chooseRegion('Europa');
+      await setup.chooseLevel('Difícil');
+      await expect(round.options).toHaveCount(6);
+
+      const last = HARD.options.at(-1);
+      const tapped = last && last.code !== HARD.entity.code ? last : wrongOption(HARD);
+      await round.answer(card(HARD, tapped));
 
       await expect(round.nextButton).toBeFocused();
-      expect(await isOnTop(round.mark(card(FIRST, tapped), 'Incorrecta'))).toBe(true);
-      expect(await isOnTop(round.mark(card(FIRST, FIRST.entity), 'Correcta'))).toBe(true);
+      expect(await isOnTop(round.mark(card(HARD, tapped), 'Incorrecta'))).toBe(true);
+      expect(await isOnTop(round.mark(card(HARD, HARD.entity), 'Correcta'))).toBe(true);
     },
   );
 });
