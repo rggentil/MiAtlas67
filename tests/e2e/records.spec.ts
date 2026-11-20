@@ -35,8 +35,8 @@ test.describe('Family records', () => {
   });
 
   test(
-    'HIS-05 NAV-01 NFR-05 "Récords" opens "Récords de la familia"; "Volver" and Back go home',
-    { tag: ['@HIS-05', '@NAV-01', '@NFR-05'] },
+    'HIS-05 GAME-02 NAV-01 NFR-05 "Récords" opens "Récords de la familia" with the six games; "Volver" and Back go home',
+    { tag: ['@HIS-05', '@GAME-02', '@NAV-01', '@NFR-05'] },
     async ({ page, makeAxeBuilder }) => {
       await home.recordsButton.click();
 
@@ -65,17 +65,22 @@ test.describe('Family records', () => {
     { tag: ['@HIS-05', '@NFR-05'] },
     async ({ page, makeAxeBuilder }) => {
       const { lucia, pablo } = await luciaAndPablo(page);
-      // Pablo's 9/10 is saved first, so Lucía's 9/10 is a tie and the record stays his.
-      await saveResults(page, pablo, [europeEasy(9)]);
-      await saveResults(page, lucia, [europeEasy(9), { ...europeEasy(8), region: 'africa' }]);
+      // Lucía's 9/10 is saved first but played today; Pablo's 9/10 was played yesterday, so the record is his.
+      await saveResults(page, lucia, [
+        { ...europeEasy(9), playedAt: Date.UTC(2026, 10, 2) },
+        { ...europeEasy(8), region: 'africa' },
+      ]);
+      await saveResults(page, pablo, [{ ...europeEasy(9), playedAt: Date.UTC(2026, 10, 1) }]);
 
       await home.recordsButton.click();
 
       const europe = records.cell('Bandera → País', 'Europa', 'Fácil');
-      await expect(europe).toContainText('9/10');
+      await expect(europe).toContainText('9 de 10');
       await expect(europe).toContainText('Pablo');
       await expect(europe).not.toContainText('Lucía');
-      await expect(records.cell('Bandera → País', 'África', 'Fácil')).toHaveText('8/10Lucía');
+      await expect(records.cell('Bandera → País', 'África', 'Fácil')).toContainText(
+        '8 de 10,Lucía',
+      );
       await expect(records.cell('País → Bandera', 'Europa', 'Fácil')).toHaveText('Sin récord');
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
     },
@@ -89,7 +94,9 @@ test.describe('Family records', () => {
       await saveResults(page, pablo, [europeEasy(10)]);
       await saveResults(page, lucia, [europeEasy(8)]);
       await home.recordsButton.click();
-      await expect(records.cell('Bandera → País', 'Europa', 'Fácil')).toHaveText('10/10Pablo');
+      await expect(records.cell('Bandera → País', 'Europa', 'Fácil')).toContainText(
+        '10 de 10,Pablo',
+      );
 
       await records.backButton.click();
       await home.switchPlayerButton.click();
@@ -101,7 +108,9 @@ test.describe('Family records', () => {
       await players.choose('Lucía');
       await home.recordsButton.click();
 
-      await expect(records.cell('Bandera → País', 'Europa', 'Fácil')).toHaveText('8/10Lucía');
+      await expect(records.cell('Bandera → País', 'Europa', 'Fácil')).toContainText(
+        '8 de 10,Lucía',
+      );
     },
   );
 
@@ -113,8 +122,8 @@ test.describe('Family records', () => {
       await page.getByRole('button', { name: 'Records' }).click();
 
       await expect(records.heading).toHaveText('Family records');
-      await expect(page.getByRole('table', { name: 'Flag → Country' })).toBeVisible();
-      await expect(page.getByText('No record').first()).toBeVisible();
+      // The level columns are found by position, so the Spanish level name picks the first column.
+      await expect(records.cell('Flag → Country', 'Europe', 'Fácil')).toHaveText('No record');
     },
   );
 });

@@ -45,7 +45,7 @@ describe('App · family records (HIS-05)', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Récords' }));
 
     expect(screen.getByRole('heading', { level: 1, name: 'Récords de la familia' })).toBeVisible();
-    expect(await europeEasy()).toHaveTextContent('9/10Pablo');
+    expect(await europeEasy()).toHaveTextContent('9 de 10,Pablo');
     await userEvent.click(screen.getByRole('button', { name: 'Volver' }));
     expect(screen.getByRole('heading', { level: 1, name: '¿A qué jugamos?' })).toBeVisible();
   });
@@ -73,6 +73,6 @@ describe('App · family records (HIS-05)', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Récords' }));
 
-    expect(await europeEasy()).toHaveTextContent('8/10Lucía');
+    expect(await europeEasy()).toHaveTextContent('8 de 10,Lucía');
   }, 30_000);
 });

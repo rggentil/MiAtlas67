@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { familyRecord, familyRecordsOf, type RecordRound } from './familyRecords.ts';
 import type { GameId } from './games.ts';
-import type { Level, RegionChoice } from './questions.ts';
+import { LEVELS, REGION_CHOICES, type Level, type RegionChoice } from './questions.ts';
 
 function played(
   playerId: number,
@@ -41,6 +41,13 @@ describe('familyRecord', () => {
     expect(familyRecord(rounds, 'FLAG-A', 'europe', 1)?.playerId).toBe(2);
   });
 
+  it('HIS-05 D28 the date decides a tie, not the saving order: the older round wins even if saved later', () => {
+    const older = { ...played(2, 1_000, 9), id: 50 };
+    const newer = { ...played(1, 2_000, 9), id: 10 };
+
+    expect(familyRecord([newer, older], 'FLAG-A', 'europe', 1)?.playerId).toBe(2);
+  });
+
   it('HIS-05 D28 a tie in the same millisecond keeps the round saved first', () => {
     const first = { ...played(2, 1_000, 9), id: 7 };
     const second = { ...played(1, 1_000, 9), id: 8 };
@@ -78,7 +85,7 @@ describe('familyRecordsOf', () => {
     );
 
     expect(records.map((game) => game.game)).toEqual(['FLAG-A', 'CAP-B']);
-    expect(records[0]?.cells).toHaveLength(18);
+    expect(records[0]?.cells).toHaveLength(REGION_CHOICES.length * LEVELS.length);
     expect(records[0]?.cells.slice(0, 3).map((cell) => [cell.region, cell.level])).toEqual([
       ['world', 1],
       ['world', 2],

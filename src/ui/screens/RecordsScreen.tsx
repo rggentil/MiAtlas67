@@ -32,7 +32,7 @@ const RECORD_GAMES = GAMES.filter(isPlayable).map((game) => game.id);
 /**
  * "Récords de la familia" (HIS-05, D28): one table per game with the best score of the family in every region
  * and level, and the nickname and avatar of the player who holds it, or "Sin récord". It does not depend on who
- * plays. A screen reader reads "Europa, Fácil, 9/10 Pablo".
+ * plays. A screen reader reads "Europa, Fácil, 9 de 10, Pablo".
  */
 export function RecordsScreen({ loadRounds, players, onBack }: RecordsScreenProps) {
   const { t } = useI18n();
@@ -142,8 +142,12 @@ function RecordCell({
   }
   return (
     <span className="flex flex-col items-center gap-0.5">
-      <span className="font-display text-lg leading-none tabular-nums">
+      {/* "9/10" is drawn; a screen reader hears "9 de 10", not a date or a fraction. */}
+      <span aria-hidden="true" className="font-display text-lg leading-none tabular-nums">
         {formatProgress(record.score, record.total)}
+      </span>
+      <span className="sr-only">
+        {t('records.score', { n: record.score, total: record.total })}
       </span>
       <span className="flex max-w-full items-center gap-1">
         <AvatarImage avatar={holder.avatar} size={20} decorative />

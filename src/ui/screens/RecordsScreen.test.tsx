@@ -57,7 +57,7 @@ async function cell(game: string, region: string, level: string) {
 }
 
 describe('RecordsScreen', () => {
-  it('HIS-05 shows "Récords de la familia" with a table for each of the six games', async () => {
+  it('HIS-05 GAME-02 shows "Récords de la familia" with a table for each of the six games', async () => {
     renderRecords([]);
 
     expect(screen.getByRole('heading', { level: 1, name: 'Récords de la familia' })).toBeVisible();
@@ -70,33 +70,51 @@ describe('RecordsScreen', () => {
       'Silueta → País',
       'País → Silueta',
     ]);
+    const first = await screen.findByRole('table', { name: 'Bandera → País' });
+    expect(
+      within(first)
+        .getAllByRole('columnheader')
+        .map((h) => h.textContent),
+    ).toEqual(['Región', 'Fácil', 'Medio', 'Difícil']);
+    expect(
+      within(first)
+        .getAllByRole('rowheader')
+        .map((h) => h.textContent),
+    ).toEqual(['Mundo', 'Europa', 'África', 'América', 'Asia', 'Oceanía']);
+    // Nobody has played: every place of every game says so.
+    expect(screen.getAllByText('Sin récord')).toHaveLength(6 * 6 * 3);
   });
 
   it('HIS-05 the best score of the family, with the nickname and avatar of who holds it', async () => {
     renderRecords([played(1, 1_000, 8), played(2, 2_000, 9)]);
 
     const record = await cell('Bandera → País', 'Europa', 'Fácil');
-    expect(record).toHaveTextContent('9/10Pablo');
+    expect(record).toHaveTextContent('9 de 10,Pablo');
+    expect(within(record).getByText('9/10')).toBeVisible();
     expect(within(record).getByText('Pablo')).toBeVisible();
     expect(record.querySelector('img')).toHaveAttribute('src', expect.stringContaining('owl'));
   });
 
-  it('HIS-05 D28 a tie keeps the player who reached it first', async () => {
-    renderRecords([played(2, 1_000, 9), played(1, 2_000, 9)]);
+  it('HIS-05 D28 a tie keeps the player who reached it first, even when that round was saved later', async () => {
+    const yesterday = { ...played(2, 1_000, 9), id: 900 };
+    const today = { ...played(1, 2_000, 9), id: 100 };
+    renderRecords([today, yesterday]);
 
-    expect(await cell('Bandera → País', 'Europa', 'Fácil')).toHaveTextContent('9/10Pablo');
+    expect(await cell('Bandera → País', 'Europa', 'Fácil')).toHaveTextContent('9 de 10,Pablo');
   });
 
   it('HIS-05 beating a record changes its holder', async () => {
     renderRecords([played(2, 1_000, 9), played(1, 2_000, 10)]);
 
-    expect(await cell('Bandera → País', 'Europa', 'Fácil')).toHaveTextContent('10/10Lucía');
+    const record = await cell('Bandera → País', 'Europa', 'Fácil');
+    expect(record).toHaveTextContent('10 de 10,Lucía');
+    expect(record.querySelector('img')).toHaveAttribute('src', expect.stringContaining('fox'));
   });
 
   it('HIS-05 GAME-02 places nobody played say "Sin récord"; games, regions and levels do not mix', async () => {
     renderRecords([played(2, 1_000, 10)]);
 
-    expect(await cell('Bandera → País', 'Europa', 'Fácil')).toHaveTextContent('10/10Pablo');
+    expect(await cell('Bandera → País', 'Europa', 'Fácil')).toHaveTextContent('10 de 10,Pablo');
     expect(await cell('País → Bandera', 'Europa', 'Fácil')).toHaveTextContent('Sin récord');
     expect(await cell('Bandera → País', 'África', 'Fácil')).toHaveTextContent('Sin récord');
     expect(await cell('Bandera → País', 'Europa', 'Medio')).toHaveTextContent('Sin récord');
@@ -105,7 +123,7 @@ describe('RecordsScreen', () => {
   it('PRF-04 HIS-05 rounds of a player who is no longer on the device do not count', async () => {
     renderRecords([played(2, 1_000, 9), played(1, 2_000, 8)], [LUCIA]);
 
-    expect(await cell('Bandera → País', 'Europa', 'Fácil')).toHaveTextContent('8/10Lucía');
+    expect(await cell('Bandera → País', 'Europa', 'Fácil')).toHaveTextContent('8 de 10,Lucía');
   });
 
   it('HIS-05 when the rounds cannot be read, every place says "Sin récord"', async () => {
@@ -133,7 +151,7 @@ describe('RecordsScreen', () => {
     renderRecords([played(1, 1_000, 7)]);
 
     expect(screen.getByRole('heading', { level: 1, name: 'Family records' })).toBeVisible();
-    expect(await cell('Flag → Country', 'Europe', 'Easy')).toHaveTextContent('7/10Lucía');
+    expect(await cell('Flag → Country', 'Europe', 'Easy')).toHaveTextContent('7 of 10,Lucía');
     expect(await cell('Flag → Country', 'Africa', 'Easy')).toHaveTextContent('No record');
   });
 });
