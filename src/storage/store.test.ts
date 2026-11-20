@@ -287,6 +287,29 @@ describe.each([
 
     expect(saved?.missed).toEqual(['PT', 'BE']);
   });
+
+  it('HIS-04 the entities asked of a saved round do not change when the caller changes its copy', async () => {
+    const lucia = await store.players.create({ nickname: 'Lucía', avatar: 'fox' });
+    const asked = ['ES', 'PT'];
+    await store.rounds.add(round(lucia.id, 1_000, { asked }));
+    asked.push('FR');
+    const [read] = await store.rounds.listByPlayer(lucia.id);
+    (read?.asked as string[] | undefined)?.push('IT');
+
+    const [saved] = await store.rounds.listByPlayer(lucia.id);
+
+    expect(saved?.asked).toEqual(['ES', 'PT']);
+  });
+
+  it('NFR-04 HIS-04 keeps the entities asked and still drops fields that are not a result', async () => {
+    const lucia = await store.players.create({ nickname: 'Lucía', avatar: 'fox' });
+    const extraRound = { ...round(lucia.id, 1_000, { asked: ['ES'] }), question: { flag: 'PT' } };
+    await store.rounds.add(extraRound);
+
+    const [saved] = await store.rounds.listByPlayer(lucia.id);
+
+    expect(Object.keys(saved ?? {}).sort()).toEqual([...HIS_01_FIELDS, 'asked'].sort());
+  });
 });
 
 describe('game store on the device (IndexedDB)', () => {

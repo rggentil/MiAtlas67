@@ -7,10 +7,6 @@ import {
   type SavedRound,
 } from './store.ts';
 
-/**
- * Keeps everything in memory. It is the fallback when the browser blocks IndexedDB: the game still works,
- * and its players and rounds last until the page is closed.
- */
 /** A copy the caller can change without changing the store. */
 function copyOf(round: SavedRound): SavedRound {
   return {
@@ -20,6 +16,10 @@ function copyOf(round: SavedRound): SavedRound {
   };
 }
 
+/**
+ * Keeps everything in memory. It is the fallback when the browser blocks IndexedDB: the game still works,
+ * and its players and rounds last until the page is closed.
+ */
 export function createMemoryStore(): GameStore {
   const players = new Map<number, Player>();
   let rounds: SavedRound[] = [];

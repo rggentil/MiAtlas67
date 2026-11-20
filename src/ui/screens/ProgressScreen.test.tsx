@@ -196,8 +196,8 @@ describe('ProgressScreen', () => {
       played('FLAG-A', 'europe', 3, 9, 2, { asked: ['PT', 'FR'], missed: ['FR'] }),
     ]);
 
-    const flagA = (await table('Bandera → País')).closest('section');
-    const flagB = (await table('País → Bandera')).closest('section');
+    const flagA = await screen.findByRole('region', { name: 'Bandera → País' });
+    const flagB = await screen.findByRole('region', { name: 'País → Bandera' });
     expect(flagA).toHaveTextContent('Países dominados: 1/195');
     expect(flagB).toHaveTextContent('Países dominados: 0/195');
   });
@@ -210,7 +210,7 @@ describe('ProgressScreen', () => {
       played('FLAG-A', 'europe', 1, 9, 2, { asked: ['PT'], missed: ['PT'] }),
     ]);
 
-    const flagA = (await table('Bandera → País')).closest('section');
+    const flagA = await screen.findByRole('region', { name: 'Bandera → País' });
     expect(flagA).toHaveTextContent('Países dominados: 0/195');
   });
 
@@ -221,14 +221,20 @@ describe('ProgressScreen', () => {
       played('FLAG-A', 'europe', 1, 10, 3),
     ]);
 
-    const flagA = (await table('Bandera → País')).closest('section');
+    const flagA = await screen.findByRole('region', { name: 'Bandera → País' });
     expect(flagA).toHaveTextContent('Países dominados: 0/195');
   });
 
-  it('HIS-04 NFR-06 in English: "Countries mastered: 0/195"', async () => {
+  it('HIS-04 NFR-06 in English: "Countries mastered: 1/195"', async () => {
     localStorage.setItem('miatlas67.language', 'en');
-    renderProgress([]);
+    renderProgress([
+      played('FLAG-A', 'europe', 1, 10, 3, { asked: ['PT'] }),
+      played('FLAG-A', 'europe', 1, 10, 3, { asked: ['PT'] }),
+      played('FLAG-A', 'europe', 1, 10, 3, { asked: ['PT'] }),
+    ]);
 
-    expect(await screen.findAllByText('Countries mastered: 0/195')).toHaveLength(6);
+    const flagA = await screen.findByRole('region', { name: 'Flag → Country' });
+    expect(flagA).toHaveTextContent('Countries mastered: 1/195');
+    expect(screen.getAllByText('Countries mastered: 0/195')).toHaveLength(5);
   });
 });
