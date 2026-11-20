@@ -88,7 +88,14 @@ describe('HistoryScreen', () => {
       within(screen.getByRole('group', { name: 'Juego' }))
         .getAllByRole('radio')
         .map((radio) => radio.closest('label')?.textContent),
-    ).toEqual(['Todos', 'Bandera → País', 'País → Bandera', 'País → Capital', 'Capital → País']);
+    ).toEqual([
+      'Todos',
+      'Bandera → País',
+      'País → Bandera',
+      'País → Capital',
+      'Capital → País',
+      'Silueta → País',
+    ]);
     expect(filter('Todos')).toBeChecked();
   });
 
@@ -187,6 +194,7 @@ describe('HistoryScreen', () => {
       'Country → Flag',
       'Country → Capital',
       'Capital → Country',
+      'Shape → Country',
     ]);
   });
 

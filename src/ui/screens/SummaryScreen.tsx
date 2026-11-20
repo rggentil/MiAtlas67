@@ -11,6 +11,7 @@ import { Chip } from '../components/Chip.tsx';
 import { FlagImage } from '../components/FlagImage.tsx';
 import { NextIcon, StarIcon } from '../components/icons.tsx';
 import { ScreenTitle } from '../components/ScreenTitle.tsx';
+import { ShapeImage } from '../components/ShapeImage.tsx';
 import type { PlayableGame } from '../games.ts';
 import { LEVEL_NAMES } from '../labels.ts';
 
@@ -101,7 +102,12 @@ export function SummaryScreen({
                   className="flex items-center gap-3 rounded-block border-3 border-ink bg-paper p-2 shadow-block-sm"
                 >
                   <span className="w-16 flex-none">
-                    <FlagImage entity={entity} alt="" className="rounded-md" />
+                    {/* The picture of the topic: the silhouette in the Shapes games, the flag otherwise. */}
+                    {game.topic === 'shapes' ? (
+                      <ShapeImage entity={entity} alt="" />
+                    ) : (
+                      <FlagImage entity={entity} alt="" className="rounded-md" />
+                    )}
                   </span>
                   <MissedText game={game} entity={entity} />
                 </li>

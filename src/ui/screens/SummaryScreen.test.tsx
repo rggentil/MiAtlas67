@@ -9,6 +9,7 @@ import { answer, next, roundResult, startRound, type RoundResult } from '../../d
 import { flagFile } from '../../test/flags.ts';
 import { playableGame } from '../../test/games.ts';
 import { renderWithI18n } from '../../test/render.tsx';
+import { shapeFile } from '../../test/shapes.ts';
 import { SummaryScreen } from './SummaryScreen.tsx';
 
 const SETTINGS: RoundSettings = { topic: 'flags', region: 'europe', level: 1 };
@@ -299,5 +300,33 @@ describe('SummaryScreen', () => {
     expect(
       within(screen.getByRole('list', { name: 'To review' })).getByRole('listitem'),
     ).toHaveTextContent(`${missedEntity.capital.en}${missedEntity.name.en}`);
+  });
+
+  it('RND-08 SHAPE-A each missed country is listed with its silhouette and its name', () => {
+    const settings: RoundSettings = { topic: 'shapes', region: 'europe', level: 1 };
+    const questions = generateRound(countries, settings, createRng(42), relations);
+    let state = startRound(questions);
+    questions.forEach((asked, index) => {
+      state = answer(state, index === 3 ? wrongCode(asked) : asked.entity.code);
+      state = next(state);
+    });
+    const [missedEntity] = roundResult(state).missed;
+    if (!missedEntity) throw new Error('One country was missed');
+    renderWithI18n(
+      <SummaryScreen
+        game={playableGame('SHAPE-A')}
+        settings={settings}
+        result={roundResult(state)}
+        newRecord={false}
+        onPlayAgain={vi.fn()}
+        onMenu={vi.fn()}
+      />,
+    );
+
+    const item = within(screen.getByRole('list', { name: 'Para repasar' })).getByRole('listitem');
+    expect(item).toHaveTextContent(missedEntity.name.es);
+    const images = item.querySelectorAll('img');
+    expect(images).toHaveLength(1);
+    expect(images[0]).toHaveAttribute('src', expect.stringMatching(shapeFile(missedEntity.code)));
   });
 });
