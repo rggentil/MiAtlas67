@@ -1,6 +1,6 @@
 # MiAtlas67 — Product Specification
 
-> **Status: APPROVED v1.16** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
+> **Status: APPROVED v1.17** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
 > [§18 Change log](#18-change-log).
 > Last updated: 2026-11-20
 
@@ -172,7 +172,9 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 - **HIS-04** *(Should)* Mastered entities per game: "Países dominados: 37/195". An entity is mastered while its
   last 3 answers in that game, in any region and level, were correct; a miss takes it out until it is answered
   right 3 times in a row again (D29). Only the rounds that keep every entity asked count, so rounds played before
-  this counter arrived do not. Extended entities are counted separately.
+  this counter arrived do not. Extended entities are counted separately: "Territorios y otros dominados: 3/52".
+  Each counter counts only the entities its game can ask: Capitals leave out those without a quiz capital (CAP-02)
+  and Shapes those without a silhouette (SHAPE-03, SHAPE-04).
 - **HIS-05** *(Should)* Family records: best score per game/region/level across all profiles on the device, with
   the nickname and avatar of the player who holds it, on a "Récords" screen opened from the home screen. A tie
   does not take a record away: the player who reached it first keeps it (D28).
@@ -320,6 +322,8 @@ No open questions.
 
 ## 18. Change log
 
+- **v1.17** (2026-11-20): HIS-04 names the counter of the extended entities and says that each game counts only
+  the entities it can ask (story #95).
 - **v1.16** (2026-11-20): silhouettes of the extended set reviewed (D31, story #94): Western Sahara whole and
   Morocco cut at 27° 40′ N, French Polynesia and the Cook Islands with all their islands (SHAPE-02).
 - **v1.15** (2026-11-20): extended set reviewed (D30, story #93): Azores and Madeira left out, so 52 entities
