@@ -27,7 +27,13 @@ export class GameSetupPage {
     await this.regionStep.getByRole('button', { name, exact: true }).click();
   }
 
+  /** Taps an open level. Its name is the level alone: a locked one is called "Medio, bloqueado" (LVL-05). */
   async chooseLevel(name: string): Promise<void> {
     await this.levelStep.getByRole('button', { name, exact: true }).click();
+  }
+
+  /** A level button, open ("Medio") or locked ("Medio, bloqueado"), by the level's name. */
+  level(name: string): Locator {
+    return this.levelStep.getByRole('button', { name: new RegExp(`^${name}(,|$)`) });
   }
 }

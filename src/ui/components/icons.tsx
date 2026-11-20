@@ -37,6 +37,16 @@ export function FlagIcon(props: IconProps) {
   );
 }
 
+/** A closed padlock: a level that is not open yet (LVL-05). */
+export function LockIcon(props: IconProps) {
+  return (
+    <StrokeIcon {...props}>
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </StrokeIcon>
+  );
+}
+
 export function CapitalIcon(props: IconProps) {
   return (
     <StrokeIcon {...props}>
