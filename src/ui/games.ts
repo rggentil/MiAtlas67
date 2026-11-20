@@ -6,13 +6,14 @@ export interface PlayableGame extends Game {
   readonly topic: Topic;
 }
 
-/** Games with a playable screen so far: Flags (epic 3), Capitals and SHAPE-A. SHAPE-B arrives later in epic 5. */
+/** Games with a playable screen: all six since epic 5. */
 const PLAYABLE_GAMES: ReadonlySet<GameId> = new Set<GameId>([
   'FLAG-A',
   'FLAG-B',
   'CAP-A',
   'CAP-B',
   'SHAPE-A',
+  'SHAPE-B',
 ]);
 
 /** Playable games open from the home screen; the others show "Pronto" (GAME-01). */

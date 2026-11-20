@@ -6,8 +6,6 @@ import type { PlayableGame } from '../games.ts';
 import { renderWithI18n } from '../../test/render.tsx';
 import { HomeScreen } from './HomeScreen.tsx';
 
-const SOON_GAMES = ['País → Silueta'];
-
 const LUCIA: Player = { id: 1, nickname: 'Lucía', avatar: 'fox' };
 
 /** A game button, found by the start of its name: "Bandera → País ¿De qué país es?". */
@@ -172,27 +170,25 @@ describe('HomeScreen', () => {
     expect(onOpenGame.mock.calls.map(([opened]) => opened.id)).toEqual(['CAP-A', 'CAP-B']);
   });
 
-  it('SHAPE-A GAME-01 "Silueta → País" can be opened', async () => {
+  it('SHAPE-A SHAPE-B GAME-01 both Shapes games can be opened', async () => {
     const onOpenGame = vi.fn<(game: PlayableGame) => void>();
     renderHome(onOpenGame);
 
     await userEvent.click(game('Silueta → País'));
+    await userEvent.click(game('País → Silueta'));
 
-    expect(onOpenGame.mock.calls.map(([opened]) => opened.id)).toEqual(['SHAPE-A']);
+    expect(onOpenGame.mock.calls.map(([opened]) => opened.id)).toEqual(['SHAPE-A', 'SHAPE-B']);
   });
 
-  it('GAME-01 the games still to come show "Pronto" and cannot be opened', async () => {
-    const onOpenGame = vi.fn();
-    renderHome(onOpenGame);
+  it('GAME-01 all six games can be played: none says "Pronto"', () => {
+    renderHome();
 
-    for (const name of SOON_GAMES) {
-      const soon = game(name);
-      expect(soon).toBeDisabled();
-      expect(within(soon).getByText('Pronto')).toBeVisible();
-      expect(soon).toHaveAccessibleName(/ Pronto$/);
-      await userEvent.click(soon);
-    }
-    expect(onOpenGame).not.toHaveBeenCalled();
+    expect(screen.queryByText('Pronto')).not.toBeInTheDocument();
+    const games = within(screen.getByRole('main')).getAllByRole('button', {
+      name: /→/,
+    });
+    expect(games).toHaveLength(6);
+    for (const button of games) expect(button).toBeEnabled();
   });
 
   it('GAME-01 the home screen speaks English when English is chosen', async () => {
@@ -205,6 +201,6 @@ describe('HomeScreen', () => {
     expect(
       screen.getByRole('button', { name: 'Flag → Country Which country is it?' }),
     ).toBeEnabled();
-    expect(game('Country → Shape')).toHaveAccessibleName(/ Soon$/);
+    expect(game('Country → Shape')).toHaveAccessibleName('Country → Shape Which one is its shape?');
   });
 });

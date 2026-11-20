@@ -150,12 +150,12 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
 
         {/* A new key per question: the new question's title takes the focus (NFR-05). */}
         <main key={state.current} className="flex flex-col gap-4">
-          {game.id === 'FLAG-B' ? (
+          {game.id === 'FLAG-B' || game.id === 'SHAPE-B' ? (
             <>
-              {/* FLAG-B: the country's name is the question, large, as in the «Bloques» mockup. */}
+              {/* FLAG-B, SHAPE-B: the country's name is the question, large, as in the «Bloques» mockup. */}
               <ScreenTitle className="flex flex-col gap-1">
                 <span className="font-body text-lg font-extrabold text-ink-muted">
-                  {t('round.FLAG-B.prompt', { of: ofWords(question.entity, language) })}
+                  {t(`round.${game.id}.prompt`, { of: ofWords(question.entity, language) })}
                 </span>{' '}
                 <span className="text-4xl">
                   {t('round.askedName', { name: question.entity.name[language] })}
@@ -167,9 +167,10 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
                 className="grid scroll-mb-56 grid-cols-2 gap-4"
               >
                 {question.options.map((option, index) => (
-                  <FlagOption
+                  <ImageOption
                     key={option.code}
                     option={option}
+                    shape={game.id === 'SHAPE-B'}
                     label={t('round.option', { n: index + 1 })}
                     state={optionState(option, question, chosen)}
                     onChoose={() => {
@@ -298,16 +299,19 @@ function TextOption({
 }
 
 /**
- * A flag as a large card (GAME-03), named only by its position, "Opción 2": its name and alt text never tell
- * the country, or the question would answer itself (FLAG-B).
+ * A flag or a silhouette as a large card (GAME-03), named only by its position, "Opción 2": its name and alt
+ * text never tell the country, or the question would answer itself (FLAG-B, SHAPE-B, SHAPE-01).
  */
-function FlagOption({
+function ImageOption({
   option,
+  shape,
   label,
   state,
   onChoose,
 }: {
   option: Entity;
+  /** SHAPE-B shows the option's silhouette; FLAG-B its flag. */
+  shape: boolean;
   label: string;
   state: OptionState;
   onChoose: () => void;
@@ -327,7 +331,7 @@ function FlagOption({
           OPTION_TONES[state],
         ].join(' ')}
       >
-        <FlagImage entity={option} alt="" />
+        {shape ? <ShapeImage entity={option} alt="" /> : <FlagImage entity={option} alt="" />}
       </button>
       {(state === 'correct' || state === 'wrong') && (
         <AnswerMark correct={state === 'correct'} variant="badge" />
@@ -382,17 +386,19 @@ function Feedback({ game, question, chosen, nextRef, onNext }: FeedbackProps) {
   const { t, language } = useI18n();
   const answered = chosen !== null;
   const correct = chosen === question.entity.code;
-  // FLAG-A, CAP-B and SHAPE-A name the right country and CAP-A the right capital; in FLAG-B the country is the question, so it
-  // points at the ✓ flag. Names keep the article they take (DATA-09): «Era el Reino Unido».
+  // FLAG-A, CAP-B and SHAPE-A name the right country and CAP-A the right capital; in FLAG-B and SHAPE-B the
+  // country is the question, so it points at the ✓ card. Names keep their article (DATA-09): «Era el Reino Unido».
   const miss =
     game.id === 'FLAG-B'
       ? t('round.wrongFlag', { ofName: ofName(question.entity, language) })
-      : game.id === 'CAP-A'
-        ? t('round.wrongCapital', { name: optionText(game, question.entity, language) })
-        : t('round.wrong', {
-            was: wasWords(question.entity, language),
-            name: nameInSentence(question.entity, language),
-          });
+      : game.id === 'SHAPE-B'
+        ? t('round.wrongShape', { ofName: ofName(question.entity, language) })
+        : game.id === 'CAP-A'
+          ? t('round.wrongCapital', { name: optionText(game, question.entity, language) })
+          : t('round.wrong', {
+              was: wasWords(question.entity, language),
+              name: nameInSentence(question.entity, language),
+            });
 
   return (
     <section
@@ -408,7 +414,7 @@ function Feedback({ game, question, chosen, nextRef, onNext }: FeedbackProps) {
             <>
               <AnswerMark correct={correct} variant="tile" />
               <p
-                className={`font-display leading-tight ${correct || game.id !== 'FLAG-B' ? 'text-3xl' : 'text-2xl'}`}
+                className={`font-display leading-tight ${correct || (game.id !== 'FLAG-B' && game.id !== 'SHAPE-B') ? 'text-3xl' : 'text-2xl'}`}
               >
                 {correct ? t('round.correct') : miss}
               </p>
