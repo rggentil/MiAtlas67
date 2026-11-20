@@ -14,10 +14,11 @@ function played(region: RoundSettings['region'], level: Level, stars: Stars): Pl
   return { game: 'FLAG-A', region, level, score: [3, 5, 8, 10][stars] ?? 0, total: 10, stars };
 }
 
-/** Rounds of "Bandera → País" that open every level of every region: ★★ in Fácil and in Medio (LVL-04). */
+/** Rounds of "Bandera → País" that open every level of every region: ★★ in Fácil, Medio and Difícil (LVL-04). */
 const OPEN_EVERYWHERE: readonly PlayedResult[] = REGION_CHOICES.flatMap((region) => [
   played(region, 1, 2),
   played(region, 2, 2),
+  played(region, 3, 2),
 ]);
 
 function renderSetup(rounds: readonly PlayedResult[] = OPEN_EVERYWHERE) {
@@ -63,12 +64,12 @@ describe('GameSetupScreen', () => {
     expect(screen.queryByRole('region', { name: '¿Qué nivel?' })).not.toBeInTheDocument();
   });
 
-  it('LVL-01 after choosing a region, offers the levels Fácil, Medio and Difícil', async () => {
+  it('LVL-01 after choosing a region, offers the levels Fácil, Medio, Difícil and Experto', async () => {
     renderSetup();
 
     await chooseRegion('Europa');
 
-    expect(choices('¿Qué nivel?')).toEqual(['Fácil', 'Medio', 'Difícil']);
+    expect(choices('¿Qué nivel?')).toEqual(['Fácil', 'Medio', 'Difícil', 'Experto']);
     expect(screen.getByText('Europa')).toBeVisible();
     expect(screen.queryByRole('region', { name: '¿Dónde jugamos?' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: '¿Qué nivel?' })).toHaveFocus();
@@ -121,7 +122,7 @@ describe('GameSetupScreen', () => {
       'Oceania',
     ]);
     await chooseRegion('Oceania');
-    expect(choices('Which level?')).toEqual(['Easy', 'Medium', 'Hard']);
+    expect(choices('Which level?')).toEqual(['Easy', 'Medium', 'Hard', 'Expert']);
     expect(screen.getByRole('button', { name: 'Back' })).toBeVisible();
   });
 });
@@ -248,6 +249,82 @@ describe('GameSetupScreen level locks', () => {
 
     expect(levelButton('Fácil')).toHaveAccessibleName('Fácil');
     expect(levelButton('Medio')).toHaveAccessibleName('Medio, bloqueado');
+  });
+
+  it('LVL-01 LVL-04 LVL-05 Experto shows after Difícil, locked with "Consigue ★★ en Difícil para desbloquear"', async () => {
+    renderSetup([played('europe', 1, 2), played('europe', 2, 2)]);
+
+    await chooseRegion('Europa');
+
+    expect(choices('¿Qué nivel?')).toEqual(['Fácil', 'Medio', 'Difícil', 'Experto']);
+    expect(levelButton('Difícil')).toHaveAccessibleName('Difícil');
+    expect(levelButton('Experto')).toHaveAccessibleName('Experto, bloqueado');
+    expect(levelButton('Experto')).toHaveAttribute('aria-disabled', 'true');
+    expect(levelButton('Experto')).toHaveAccessibleDescription(
+      'Consigue ★★ en Difícil para desbloquear',
+    );
+    expect(screen.getByText('Consigue ★★ en Difícil para desbloquear')).toBeVisible();
+    // The padlock: a decorative icon, hidden from screen readers, which hear "bloqueado" instead.
+    expect(levelButton('Experto').querySelector('svg')).not.toBeNull();
+  });
+
+  it('LVL-04 tapping a locked Experto starts no round', async () => {
+    const { onStart } = renderSetup([played('europe', 1, 2), played('europe', 2, 2)]);
+    await chooseRegion('Europa');
+
+    await userEvent.click(levelButton('Experto'));
+
+    expect(onStart).not.toHaveBeenCalled();
+    expect(screen.getByRole('region', { name: '¿Qué nivel?' })).toBeVisible();
+  });
+
+  it('LVL-04 one star in Difícil leaves Experto locked', async () => {
+    renderSetup([played('europe', 1, 2), played('europe', 2, 2), played('europe', 3, 1)]);
+    await chooseRegion('Europa');
+
+    expect(levelButton('Experto')).toHaveAccessibleName('Experto, bloqueado');
+  });
+
+  it('LVL-04 ★★ in Difícil opens Experto, which starts a round of level 4', async () => {
+    const { onStart } = renderSetup([
+      played('europe', 1, 2),
+      played('europe', 2, 2),
+      played('europe', 3, 2),
+    ]);
+    await chooseRegion('Europa');
+
+    expect(levelButton('Experto')).toHaveAccessibleName('Experto');
+    expect(levelButton('Experto')).not.toHaveAttribute('aria-disabled');
+    expect(levelButton('Experto').querySelector('svg')).toBeNull();
+
+    await userEvent.click(levelButton('Experto'));
+    expect(onStart).toHaveBeenCalledExactlyOnceWith({ topic: 'flags', region: 'europe', level: 4 });
+  });
+
+  it('LVL-04 ★★ in Difícil of "Europa" opens nothing in "Oceanía"', async () => {
+    renderSetup([played('europe', 3, 3)]);
+
+    await chooseRegion('Oceanía');
+
+    expect(levelButton('Experto')).toHaveAccessibleName('Experto, bloqueado');
+  });
+
+  it('LVL-04 D26 a round played in Experto keeps it open without ★★ in Difícil', async () => {
+    renderSetup([played('europe', 4, 0)]);
+    await chooseRegion('Europa');
+
+    expect(levelButton('Experto')).toHaveAccessibleName('Experto');
+  });
+
+  it('LVL-05 NFR-06 in English Experto is called "Expert" and says "Get ★★ in Hard to unlock"', async () => {
+    localStorage.setItem('miatlas67.language', 'en');
+    renderSetup([played('europe', 1, 2), played('europe', 2, 2)]);
+    await chooseRegion('Europe');
+
+    const step = screen.getByRole('region', { name: 'Which level?' });
+    const expert = within(step).getByRole('button', { name: /^Expert/ });
+    expect(expert).toHaveAccessibleName('Expert, locked');
+    expect(expert).toHaveAccessibleDescription('Get ★★ in Hard to unlock');
   });
 
   it('LVL-05 NFR-06 in English a locked level says "Get ★★ in Easy to unlock"', async () => {

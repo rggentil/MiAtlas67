@@ -107,6 +107,7 @@ describe('levelLocks', () => {
       { level: 1, open: true },
       { level: 2, open: true },
       { level: 3, open: false },
+      { level: 4, open: false },
     ]);
   });
 });
@@ -115,7 +116,8 @@ describe('nextLevel', () => {
   it('LVL-04 is the level after, and none for the last one', () => {
     expect(nextLevel(1)).toBe(2);
     expect(nextLevel(2)).toBe(3);
-    expect(nextLevel(3)).toBeNull();
+    expect(nextLevel(3)).toBe(4);
+    expect(nextLevel(4)).toBeNull();
   });
 });
 
@@ -143,8 +145,26 @@ describe('unlockedLevel', () => {
     expect(unlockedLevel([played('FLAG-A', 'europe', 2, 2)], 'FLAG-A', 'europe', 2, 2)).toBeNull();
   });
 
-  it('RND-08 the last level opens nothing', () => {
-    expect(unlockedLevel([], 'FLAG-A', 'europe', 3, 3)).toBeNull();
+  it('RND-08 the last level, Experto, opens nothing', () => {
+    expect(unlockedLevel([], 'FLAG-A', 'europe', 4, 3)).toBeNull();
+  });
+
+  it('RND-08 LVL-04 a ★★ round in Difícil opens Experto when it was locked', () => {
+    expect(unlockedLevel([], 'SHAPE-A', 'oceania', 3, 2)).toBe(4);
+    expect(
+      unlockedLevel([played('SHAPE-A', 'oceania', 4, 1)], 'SHAPE-A', 'oceania', 3, 2),
+    ).toBeNull();
+  });
+
+  it('LVL-04 LVL-05 Experto is locked until Difícil has ★★', () => {
+    expect(levelLocks([played('FLAG-A', 'oceania', 3, 1)], 'FLAG-A', 'oceania')[3]).toEqual({
+      level: 4,
+      open: false,
+    });
+    expect(levelLocks([played('FLAG-A', 'oceania', 3, 2)], 'FLAG-A', 'oceania')[3]).toEqual({
+      level: 4,
+      open: true,
+    });
   });
 
   it('RND-08 LVL-04 rounds of another region or game do not count as already open', () => {

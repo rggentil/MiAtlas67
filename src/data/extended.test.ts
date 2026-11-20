@@ -6,12 +6,13 @@ import {
   shapeFileName,
   type Entity,
 } from '../domain/entity.ts';
-import { capitalKey, generateRound, LEVELS, REGION_CHOICES, TOPICS } from '../domain/questions.ts';
+import { capitalKey, REGION_CHOICES, TOPICS } from '../domain/questions.ts';
 import { createRng } from '../domain/random.ts';
 import { countries } from './countries.ts';
 import { extendedEntities } from './extended.ts';
 import { extendedLandBorders } from './neighbours.ts';
 import { expertRelations, relations } from './relations.ts';
+import { newRound } from './rounds.ts';
 import { extendedFlagGroups, similarFlagGroups } from './similarFlags.ts';
 
 const bundledFlags = new Set(
@@ -442,15 +443,13 @@ describe('levels 1–3 do not change', () => {
   it('LVL-06 a round of level 1, 2 or 3, as the app builds it, never asks or offers an extended entity', () => {
     for (const topic of TOPICS) {
       for (const region of REGION_CHOICES) {
-        for (const level of LEVELS) {
+        for (const level of [1, 2, 3] as const) {
           for (const seed of [1, 2, 3]) {
-            const round = generateRound(
-              countries,
-              { topic, region, level },
-              createRng(seed),
-              relations,
-            );
-            const used = round.flatMap((question) => codes(question.options));
+            const round = newRound({ topic, region, level }, createRng(seed));
+            const used = round.flatMap((question) => [
+              question.entity.code,
+              ...codes(question.options),
+            ]);
             expect(used.filter((code) => extendedCodes.has(code))).toEqual([]);
           }
         }

@@ -1,12 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { countries } from '../data/countries.ts';
-import { relations } from '../data/relations.ts';
-import {
-  generateRound,
-  type Level,
-  type Question,
-  type RoundSettings,
-} from '../domain/questions.ts';
+import { newRound } from '../data/rounds.ts';
+import { type Level, type Question, type RoundSettings } from '../domain/questions.ts';
 import { isNewRecord } from '../domain/playerProgress.ts';
 import { createRng } from '../domain/random.ts';
 import { unlockedLevel } from '../domain/unlocking.ts';
@@ -125,7 +119,7 @@ function useRoster(store: GameStore | null) {
 
 /**
  * Moves between the screens. The URL does not change, so `?seed=` stays for the whole visit: the first
- * round with `?seed=42` is `generateRound(…, createRng(42), …)`, and later rounds go on with the same
+ * round with `?seed=42` is `newRound(…, createRng(42))`, and later rounds go on with the same
  * generator (NFR-07). The game opens on "¿Quién juega?" (PRF-01); away from it, the back button goes back
  * inside the game (NAV-01, D22).
  */
@@ -203,7 +197,7 @@ function Screens({ givenStore }: { givenStore: GameStore | undefined }) {
 
   // Generated in event handlers, never during render, so StrictMode cannot draw twice.
   function startRound(game: PlayableGame, settings: RoundSettings, number: number) {
-    const questions = generateRound(countries, settings, rng, relations);
+    const questions = newRound(settings, rng);
     setScreen({ name: 'round', game, settings, questions, number });
   }
 

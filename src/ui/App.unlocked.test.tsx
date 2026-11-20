@@ -1,21 +1,20 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { countries } from '../data/countries.ts';
-import { relations } from '../data/relations.ts';
-import { generateRound, type Level, type Question } from '../domain/questions.ts';
+import { newRound } from '../data/rounds.ts';
+import type { Level, Question } from '../domain/questions.ts';
 import { createRng } from '../domain/random.ts';
 import type { Stars } from '../domain/round.ts';
 import type { GameStore } from '../storage/store.ts';
 import { deviceWith, renderApp } from '../test/app.tsx';
 
-const LEVEL_NAMES = { 1: 'Fácil', 2: 'Medio', 3: 'Difícil' } as const;
+const LEVEL_NAMES = { 1: 'Fácil', 2: 'Medio', 3: 'Difícil', 4: 'Experto' } as const;
 
 /** The first `count` rounds of a visit with ?seed=42 in "Europa" at `level`. */
 function rounds(level: Level, count: number): Question[][] {
   const rng = createRng(42);
   return Array.from({ length: count }, () =>
-    generateRound(countries, { topic: 'flags', region: 'europe', level }, rng, relations),
+    newRound({ topic: 'flags', region: 'europe', level }, rng),
   );
 }
 
@@ -133,12 +132,48 @@ describe('App · «¡Nivel desbloqueado!» in the round summary (RND-08, LVL-04)
     expect(screen.queryByText(/Nivel desbloqueado/)).not.toBeInTheDocument();
   }, 30_000);
 
-  it('RND-08 Difícil is the last level: ★★★ there opens nothing', async () => {
+  it('RND-08 LVL-04 8/10 in Difícil, with Experto locked, shows "¡Nivel desbloqueado! Experto"; "Menú" then finds Experto open', async () => {
+    const store = await deviceWith();
+    // Difícil is open because it was played (D26), but without ★★ there Experto is locked.
+    await saved(store, 3, 2);
+    await renderApp(store);
+    const [round = []] = rounds(3, 1);
+    await startRound(3);
+
+    await finishWith(round, 8);
+
+    expect(await screen.findByText('¡Nivel desbloqueado! Experto')).toBeVisible();
+    await savedCount(store, 2);
+    await userEvent.click(screen.getByRole('button', { name: 'Menú' }));
+    const step = await openEurope();
+    expect(within(step).getByRole('button', { name: /^Experto/ })).toHaveAccessibleName('Experto');
+  }, 30_000);
+
+  it('RND-08 7/10 in Difícil opens nothing: Experto stays locked and no "¡Nivel desbloqueado!"', async () => {
     const store = await deviceWith();
     await saved(store, 3, 2);
     await renderApp(store);
     const [round = []] = rounds(3, 1);
     await startRound(3);
+
+    await finishWith(round, 7);
+    await savedCount(store, 2);
+
+    expect(screen.getByText('7/10')).toBeVisible();
+    expect(screen.queryByText(/Nivel desbloqueado/)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Menú' }));
+    const step = await openEurope();
+    expect(within(step).getByRole('button', { name: /^Experto/ })).toHaveAccessibleName(
+      'Experto, bloqueado',
+    );
+  }, 30_000);
+
+  it('RND-08 LVL-07 Experto is the last level: ★★★ there opens nothing', async () => {
+    const store = await deviceWith();
+    await saved(store, 4, 2);
+    await renderApp(store);
+    const [round = []] = rounds(4, 1);
+    await startRound(4);
 
     await finishWith(round, 10);
     await savedCount(store, 2);

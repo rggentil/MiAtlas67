@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { countries } from '../data/countries.ts';
+import { extendedEntities } from '../data/extended.ts';
+import { allEntities } from '../data/rounds.ts';
 import type { Entity } from './entity.ts';
 import type { GameId } from './games.ts';
 import { masteredCodes, masteryOf, type AnsweredRound } from './mastery.ts';
@@ -116,5 +119,70 @@ describe('masteryOf', () => {
     const rounds = [round(1, ['GI']), round(2, ['GI']), round(3, ['GI'])];
 
     expect(masteryOf(rounds, 'FLAG-A', countries)).toEqual({ mastered: 0, total: 1 });
+  });
+
+  it('HIS-04 the extended entities mastered are counted apart, out of those the game can ask', () => {
+    const entities = [
+      entity('PT'),
+      entity('GI', { category: 'territory', capital: null }),
+      entity('XK', { category: 'limited-recognition' }),
+      entity('XP', { category: 'subnational', shapeEligible: false }),
+    ];
+    const rounds = [round(1, ['GI', 'PT']), round(2, ['GI', 'PT']), round(3, ['GI', 'PT'])];
+
+    expect(masteryOf(rounds, 'FLAG-A', entities, 'extended')).toEqual({ mastered: 1, total: 3 });
+    expect(masteryOf(rounds, 'FLAG-A', entities, 'countries')).toEqual({ mastered: 1, total: 1 });
+    // CAP-02 and SHAPE-04: Gibraltar has no quiz capital, Puntland no silhouette.
+    expect(masteryOf([], 'CAP-A', entities, 'extended')).toEqual({ mastered: 0, total: 2 });
+    expect(masteryOf([], 'SHAPE-A', entities, 'extended')).toEqual({ mastered: 0, total: 2 });
+  });
+});
+
+describe('masteryOf with the bundled data', () => {
+  it('HIS-04 DATA-07 the extended entities are counted out of 52 in the Flags games', () => {
+    expect(extendedEntities).toHaveLength(52);
+    for (const game of ['FLAG-A', 'FLAG-B'] as const) {
+      expect(masteryOf([], game, allEntities, 'extended'), game).toEqual({
+        mastered: 0,
+        total: 52,
+      });
+    }
+  });
+
+  it('HIS-04 CAP-02 the Capitals games count 47 extended entities: 52 minus Gibraltar, Hong Kong, Macao, Chipre del Norte and Tokelau', () => {
+    const withoutCapital = extendedEntities
+      .filter((extended) => extended.capital === null)
+      .map((extended) => extended.name.es)
+      .sort();
+    expect(withoutCapital).toEqual(
+      ['Chipre del Norte', 'Gibraltar', 'Hong Kong', 'Macao', 'Tokelau'].sort(),
+    );
+    for (const game of ['CAP-A', 'CAP-B'] as const) {
+      expect(masteryOf([], game, allEntities, 'extended'), game).toEqual({
+        mastered: 0,
+        total: 47,
+      });
+    }
+  });
+
+  it('HIS-04 the countries are still counted out of 195 when the extended set is among the entities', () => {
+    expect(countries).toHaveLength(195);
+    expect(masteryOf([], 'FLAG-A', allEntities, 'countries').total).toBe(195);
+    expect(masteryOf([], 'FLAG-A', allEntities).total).toBe(195);
+  });
+
+  it('HIS-04 3 extended entities answered right 3 times in a row are 3 mastered, out of 52', () => {
+    const asked = ['XK', 'GL', 'FO'];
+    const rounds = [round(1, asked), round(2, asked), round(3, asked)];
+
+    expect(masteryOf(rounds, 'FLAG-A', allEntities, 'extended')).toEqual({
+      mastered: 3,
+      total: 52,
+    });
+    // Counted apart: none of them is among the countries mastered.
+    expect(masteryOf(rounds, 'FLAG-A', allEntities, 'countries')).toEqual({
+      mastered: 0,
+      total: 195,
+    });
   });
 });

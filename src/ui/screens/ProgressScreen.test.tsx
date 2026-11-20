@@ -1,10 +1,11 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { extendedEntities } from '../../data/extended.ts';
 import type { GameId } from '../../domain/games.ts';
 import type { AnsweredRound } from '../../domain/mastery.ts';
 import type { PlayedResult } from '../../domain/playerProgress.ts';
-import type { Level, RegionChoice } from '../../domain/questions.ts';
+import { isEligible, type Level, type RegionChoice, type Topic } from '../../domain/questions.ts';
 import type { Stars } from '../../domain/round.ts';
 import { renderWithI18n } from '../../test/render.tsx';
 
@@ -32,6 +33,21 @@ function renderProgress(rounds: readonly ProgressRound[], onBack: () => void = v
 /** The table of a game, by its caption. */
 async function table(game: string): Promise<HTMLElement> {
   return screen.findByRole('table', { name: game });
+}
+
+/** The six games by their Spanish name and English name, with the topic that says what they can ask. */
+const GAME_NAMES: readonly { es: string; en: string; topic: Topic }[] = [
+  { es: 'Bandera → País', en: 'Flag → Country', topic: 'flags' },
+  { es: 'País → Bandera', en: 'Country → Flag', topic: 'flags' },
+  { es: 'País → Capital', en: 'Country → Capital', topic: 'capitals' },
+  { es: 'Capital → País', en: 'Capital → Country', topic: 'capitals' },
+  { es: 'Silueta → País', en: 'Shape → Country', topic: 'shapes' },
+  { es: 'País → Silueta', en: 'Country → Shape', topic: 'shapes' },
+];
+
+/** How many extended entities a topic can ask: Capitals leave out those without a quiz capital (CAP-02). */
+function extendedFor(topic: Topic): number {
+  return extendedEntities.filter((entity) => isEligible(entity, topic)).length;
 }
 
 /** The cell of a region (row) and a level (column) in a game's table. */
@@ -129,6 +145,7 @@ describe('ProgressScreen', () => {
       'Fácil',
       'Medio',
       'Difícil',
+      'Experto',
     ]);
     expect(flagB.getAllByRole('rowheader').map((th) => th.textContent)).toEqual([
       'Mundo',
@@ -146,7 +163,7 @@ describe('ProgressScreen', () => {
     renderProgress([]);
 
     expect(await screen.findByText('0 estrellas en total')).toBeVisible();
-    expect(screen.getAllByText('Sin jugar')).toHaveLength(6 * 6 * 3);
+    expect(screen.getAllByText('Sin jugar')).toHaveLength(6 * 6 * 4);
   });
 
   it('HIS-03 when the rounds cannot be read, it shows "Sin jugar" instead of staying blank', async () => {
@@ -158,7 +175,7 @@ describe('ProgressScreen', () => {
     );
 
     expect(await screen.findByText('0 estrellas en total')).toBeVisible();
-    expect(screen.getAllByText('Sin jugar')).toHaveLength(6 * 6 * 3);
+    expect(screen.getAllByText('Sin jugar')).toHaveLength(6 * 6 * 4);
   });
 
   it('NAV-01 "Volver" goes back', async () => {
@@ -236,5 +253,104 @@ describe('ProgressScreen', () => {
     const flagA = await screen.findByRole('region', { name: 'Flag → Country' });
     expect(flagA).toHaveTextContent('Countries mastered: 1/195');
     expect(screen.getAllByText('Countries mastered: 0/195')).toHaveLength(5);
+  });
+
+  it('HIS-03 LVL-01 a ★★ round in "Oceanía · Experto" shows "2 de 3 estrellas" in the Experto column of that game only', async () => {
+    renderProgress([played('FLAG-A', 'oceania', 4, 8, 2)]);
+
+    expect(await cell('Bandera → País', 'Oceanía', 'Experto')).toHaveTextContent(
+      '2 de 3 estrellas',
+    );
+    expect(await cell('Bandera → País', 'Oceanía', 'Difícil')).toHaveTextContent('Sin jugar');
+    expect(await cell('País → Bandera', 'Oceanía', 'Experto')).toHaveTextContent('Sin jugar');
+    expect(await screen.findByText('2 estrellas en total')).toBeVisible();
+  });
+
+  it('HIS-04 every game shows "Países dominados: 0/195" and, apart, "Territorios y otros dominados: 0/N" with the extended entities its topic can ask', async () => {
+    renderProgress([]);
+
+    for (const { es, topic } of GAME_NAMES) {
+      const game = await screen.findByRole('region', { name: es });
+      const extended = extendedFor(topic);
+      expect(extended).toBeGreaterThan(0);
+      expect(within(game).getByText('Países dominados: 0/195')).toBeVisible();
+      expect(
+        within(game).getByText(`Territorios y otros dominados: 0/${String(extended)}`),
+      ).toBeVisible();
+    }
+  });
+
+  it('HIS-04 CAP-02 Capitals count fewer extended entities than Flags: those without a quiz capital are out', async () => {
+    renderProgress([]);
+
+    expect(extendedFor('capitals')).toBeLessThan(extendedFor('flags'));
+    const flagA = await screen.findByRole('region', { name: 'Bandera → País' });
+    const capA = await screen.findByRole('region', { name: 'País → Capital' });
+    expect(flagA).toHaveTextContent(`dominados: 0/${String(extendedFor('flags'))}`);
+    expect(capA).toHaveTextContent(`dominados: 0/${String(extendedFor('capitals'))}`);
+  });
+
+  it('HIS-04 Groenlandia right in 3 Experto rounds of "Bandera → País" in a row: "Territorios y otros dominados: 1/N" there only, and the countries stay apart', async () => {
+    renderProgress([
+      played('FLAG-A', 'americas', 4, 10, 3, { asked: ['GL', 'PT'] }),
+      played('FLAG-A', 'world', 4, 10, 3, { asked: ['GL', 'PT'] }),
+      played('FLAG-A', 'americas', 4, 10, 3, { asked: ['GL', 'ES'] }),
+    ]);
+
+    const flagA = await screen.findByRole('region', { name: 'Bandera → País' });
+    const flagB = await screen.findByRole('region', { name: 'País → Bandera' });
+    const extended = String(extendedFor('flags'));
+    expect(within(flagA).getByText(`Territorios y otros dominados: 1/${extended}`)).toBeVisible();
+    // Groenlandia is not a country: it does not count in "Países dominados", where Portugal is not mastered yet.
+    expect(within(flagA).getByText('Países dominados: 0/195')).toBeVisible();
+    expect(within(flagB).getByText(`Territorios y otros dominados: 0/${extended}`)).toBeVisible();
+  });
+
+  it('HIS-04 a country and an extended entity mastered together are counted apart', async () => {
+    renderProgress([
+      played('FLAG-A', 'americas', 4, 10, 3, { asked: ['GL', 'PT'] }),
+      played('FLAG-A', 'world', 4, 10, 3, { asked: ['GL', 'PT'] }),
+      played('FLAG-A', 'americas', 4, 10, 3, { asked: ['GL', 'PT'] }),
+    ]);
+
+    const flagA = await screen.findByRole('region', { name: 'Bandera → País' });
+    expect(within(flagA).getByText('Países dominados: 1/195')).toBeVisible();
+    expect(
+      within(flagA).getByText(`Territorios y otros dominados: 1/${String(extendedFor('flags'))}`),
+    ).toBeVisible();
+  });
+
+  it('HIS-04 D29 a miss after mastering takes the extended entity out', async () => {
+    renderProgress([
+      played('FLAG-A', 'americas', 4, 10, 3, { asked: ['GL'] }),
+      played('FLAG-A', 'americas', 4, 10, 3, { asked: ['GL'] }),
+      played('FLAG-A', 'americas', 4, 10, 3, { asked: ['GL'] }),
+      played('FLAG-A', 'americas', 4, 9, 2, { asked: ['GL'], missed: ['GL'] }),
+    ]);
+
+    const flagA = await screen.findByRole('region', { name: 'Bandera → País' });
+    expect(flagA).toHaveTextContent(
+      `Territorios y otros dominados: 0/${String(extendedFor('flags'))}`,
+    );
+  });
+
+  it('HIS-04 NFR-06 in English: "Countries mastered" and "Territories and others mastered"', async () => {
+    localStorage.setItem('miatlas67.language', 'en');
+    renderProgress([
+      played('FLAG-A', 'americas', 4, 10, 3, { asked: ['GL', 'PT'] }),
+      played('FLAG-A', 'americas', 4, 10, 3, { asked: ['GL', 'PT'] }),
+      played('FLAG-A', 'americas', 4, 10, 3, { asked: ['GL', 'PT'] }),
+    ]);
+
+    for (const { en, topic } of GAME_NAMES) {
+      const game = await screen.findByRole('region', { name: en });
+      const mastered = en === 'Flag → Country' ? 1 : 0;
+      expect(
+        within(game).getByText(
+          `Territories and others mastered: ${String(mastered)}/${String(extendedFor(topic))}`,
+        ),
+      ).toBeVisible();
+    }
+    expect(await cell('Flag → Country', 'Europe', 'Expert')).toHaveTextContent('Not played');
   });
 });

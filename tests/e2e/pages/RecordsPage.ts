@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 
-const LEVEL_COLUMNS = { Fácil: 0, Medio: 1, Difícil: 2 } as const;
+const LEVEL_COLUMNS = { Fácil: 0, Medio: 1, Difícil: 2, Experto: 3 } as const;
 
 /** Page object for "Récords de la familia": one table per game, regions × levels (HIS-05, D28). */
 export class RecordsPage {

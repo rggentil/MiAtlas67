@@ -58,6 +58,11 @@ export interface ExtendedEntity extends Entity {
   readonly status: Localized;
 }
 
+/** One of the 195 countries of levels 1–3: a UN member or observer (§13.2). The others are the extended set. */
+export function isCountry(entity: Entity): boolean {
+  return entity.category === 'un-member' || entity.category === 'un-observer';
+}
+
 export function isCapitalEligible(entity: Entity): boolean {
   return entity.capital !== null;
 }

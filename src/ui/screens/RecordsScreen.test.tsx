@@ -75,14 +75,14 @@ describe('RecordsScreen', () => {
       within(first)
         .getAllByRole('columnheader')
         .map((h) => h.textContent),
-    ).toEqual(['Región', 'Fácil', 'Medio', 'Difícil']);
+    ).toEqual(['Región', 'Fácil', 'Medio', 'Difícil', 'Experto']);
     expect(
       within(first)
         .getAllByRole('rowheader')
         .map((h) => h.textContent),
     ).toEqual(['Mundo', 'Europa', 'África', 'América', 'Asia', 'Oceanía']);
     // Nobody has played: every place of every game says so.
-    expect(screen.getAllByText('Sin récord')).toHaveLength(6 * 6 * 3);
+    expect(screen.getAllByText('Sin récord')).toHaveLength(6 * 6 * 4);
   });
 
   it('HIS-05 the best score of the family, with the nickname and avatar of who holds it', async () => {
@@ -93,6 +93,22 @@ describe('RecordsScreen', () => {
     expect(within(record).getByText('9/10')).toBeVisible();
     expect(within(record).getByText('Pablo')).toBeVisible();
     expect(record.querySelector('img')).toHaveAttribute('src', expect.stringContaining('owl'));
+  });
+
+  it('HIS-05 LVL-01 a record in "Oceanía · Experto" shows in the Experto column, with who holds it', async () => {
+    renderRecords([
+      played(1, 1_000, 7, { region: 'oceania', level: 4 }),
+      played(2, 2_000, 9, { region: 'oceania', level: 4 }),
+    ]);
+
+    const record = await cell('Bandera → País', 'Oceanía', 'Experto');
+    expect(record).toHaveTextContent('9 de 10,Pablo');
+    expect(within(record).getByText('9/10')).toBeVisible();
+    expect(record.querySelector('img')).toHaveAttribute('src', expect.stringContaining('owl'));
+    // Levels, games and regions do not mix.
+    expect(await cell('Bandera → País', 'Oceanía', 'Difícil')).toHaveTextContent('Sin récord');
+    expect(await cell('Bandera → País', 'Europa', 'Experto')).toHaveTextContent('Sin récord');
+    expect(await cell('País → Bandera', 'Oceanía', 'Experto')).toHaveTextContent('Sin récord');
   });
 
   it('HIS-05 D28 a tie keeps the player who reached it first, even when that round was saved later', async () => {
@@ -153,5 +169,12 @@ describe('RecordsScreen', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Family records' })).toBeVisible();
     expect(await cell('Flag → Country', 'Europe', 'Easy')).toHaveTextContent('7 of 10,Lucía');
     expect(await cell('Flag → Country', 'Africa', 'Easy')).toHaveTextContent('No record');
+  });
+
+  it('HIS-05 NFR-06 in English the fourth level column is called "Expert"', async () => {
+    localStorage.setItem('miatlas67.language', 'en');
+    renderRecords([played(1, 1_000, 8, { region: 'oceania', level: 4 })]);
+
+    expect(await cell('Flag → Country', 'Oceania', 'Expert')).toHaveTextContent('8 of 10,Lucía');
   });
 });
