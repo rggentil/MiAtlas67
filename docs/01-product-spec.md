@@ -1,8 +1,8 @@
 # MiAtlas67 — Product Specification
 
-> **Status: APPROVED v1.10** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
+> **Status: APPROVED v1.13** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
 > [§18 Change log](#18-change-log).
-> Last updated: 2026-11-18
+> Last updated: 2026-11-20
 
 ---
 
@@ -45,7 +45,7 @@ It is a personal and learning project: no business model, no ads, no tracking.
 | **Round** | A set of 10 questions of one game, region and level |
 | **Profile** | A local player on the device (nickname + avatar) |
 | **Stars** | 0–3 rating of a round |
-| **Mastered entity** | An entity answered correctly 3 times in a row in a given game |
+| **Mastered entity** | An entity whose last 3 answers in a given game were correct (HIS-04, D29) |
 
 ## 5. Scope (MoSCoW)
 
@@ -99,7 +99,7 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 | **1 Fácil** | Tier 1 | 3 | Random from the same pool (easy to rule out) |
 | **2 Medio** | Tier 1–2 | 4 | Random from the same region |
 | **3 Difícil** | All 195 countries | 6 | "Tricky": similar flags, neighbours, same region |
-| **4 Experto** *(Should)* | 195 + extended set (§13.2) | 6 | "Tricky", mixing countries and extended entities |
+| **4 Experto** *(Should)* | 195 + extended set (§13.2), half of the questions from the extended set (LVL-07) | 6 | "Tricky", mixing countries and extended entities |
 
 *The number of options per level is a starting point and will be tuned during playtesting.*
 
@@ -108,6 +108,8 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 - **LVL-03** If a region/level pool has fewer than 10 entities (e.g. Oceanía, tier 1), it is topped up
   with entities from the next tier.
 - **LVL-04** Level 1 is always open. Level N+1 of a game and region unlocks when level N reaches ≥ 2 stars.
+  Each player, game and region ("Mundo" included) unlocks on its own. A level where the player has already
+  completed a round stays open, so nobody loses a level played before unlocking arrived (D26).
 - **LVL-05** Locked levels are visible, with a padlock and a hint ("Consigue ★★ en Medio para desbloquear").
 - **LVL-06** At level 3 the wrong options are "tricky". They are taken in this order, at random within each group:
   flags similar to the answer's (Flags games only), countries that share a land border with it, countries of its
@@ -115,6 +117,9 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
   countries. The similar-flag groups and the land borders are curated data reviewed by the product owner (D15):
   a territory counts when it is part of the country inside the EU, de facto lines are used, and in levels 1–3 only
   the 195 countries count.
+- **LVL-07** *(Should)* In a level 4 Experto round, 5 of the 10 questions ask an extended entity (§13.2) and the
+  other 5 ask countries of any tier, in random order. When a topic and region have fewer than 5 eligible extended
+  entities, all of them are asked and countries complete the round (D27).
 
 ## 8. Round flow
 
@@ -157,11 +162,16 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 ## 11. History and progress
 
 - **HIS-01** Every completed round is saved: date/time, profile, game, region, level, score with its number of
-  questions (8/10), stars, missed entities.
+  questions (8/10), stars, missed entities, and the entities asked (for HIS-04).
 - **HIS-02** History screen per profile: newest first, filterable by game.
 - **HIS-03** Progress screen per profile: stars per game/region/level, total stars.
-- **HIS-04** *(Should)* Mastered entities per game: "Países dominados: 37/195". Extended entities are counted separately.
-- **HIS-05** *(Should)* Family records: best score per game/region/level across all profiles on the device.
+- **HIS-04** *(Should)* Mastered entities per game: "Países dominados: 37/195". An entity is mastered while its
+  last 3 answers in that game, in any region and level, were correct; a miss takes it out until it is answered
+  right 3 times in a row again (D29). Only the rounds that keep every entity asked count, so rounds played before
+  this counter arrived do not. Extended entities are counted separately.
+- **HIS-05** *(Should)* Family records: best score per game/region/level across all profiles on the device, with
+  the nickname and avatar of the player who holds it, on a "Récords" screen opened from the home screen. A tie
+  does not take a record away: the player who reached it first keeps it (D28).
 - **HIS-06** *(Could)* Chart of results over time.
 
 ## 12. Atlas — learning mode *(Should)*
@@ -294,11 +304,19 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 | D23 | "¡Nuevo récord!" | ✅ Only when a round beats the player's best score in the same game, region and level. A tie is not a record, and neither is the first round there: it would show very often at first, with 36 combinations in "Banderas" alone (RND-08, story #66) |
 | D24 | Devices | ✅ The family plays on Android and on iPhone. Safari on iPhone and iPad deletes the data of a website after 7 days of Safari use without opening it; a game added to the home screen keeps it. Not urgent for the product owner: a small story adds the home screen install in a later epic (#74), before the offline PWA of epic 7 (NFR-02) |
 | D25 | Silhouettes | ✅ Decided in the [shapes review page](https://claude.ai/artifact/XL55gaC5p8PzcQeadSiF39) (SHAPE-01…03, #79). Spain shows the Canary Islands in a small framed box in the bottom-left corner, as maps of Spain do; Ceuta and Melilla are drawn in their place. With their islands: Ecuador (Galápagos) and India (Andaman and Nicobar). Without them: United States (Alaska, Hawaii), Portugal (Azores, Madeira). Drawn whole: Somalia with Somalilandia, Cyprus with the north, Serbia with Kosovo; Morocco without the Western Sahara. Island countries keep every island group (Kiribati, Micronesia), each island at least a visible dot; Seychelles shows the islands around Mahé. Every country is shape-eligible, microstates included; Vatican City is drawn from OpenStreetMap, whose outline shows its walls and St Peter's Square (Natural Earth has a plain 7-point polygon) |
+| D26 | Unlocking the levels already played | ✅ Every level was open until unlocking arrived, and the children already play Medio and Difícil. A level where the player has completed a round stays open, so nobody loses one; from then on a level opens only with ★★ in the one before (LVL-04) |
+| D27 | Experto mix | ✅ Half of an Experto round (5 of 10) asks extended entities and the rest countries of any tier. Mixed at random, only about 2 of 10 would be extended entities in "Mundo" (54 of 249), and Experto would feel like Difícil (LVL-07) |
+| D28 | Family records | ✅ A "Récords" button on the home screen, next to "Progreso" and "Historial", opens one table per game with the nickname and avatar of each record holder, without switching player. A tie keeps the first holder: as in sport, a record must be beaten (HIS-05) |
+| D29 | Mastered entities | ✅ An entity is mastered while its last 3 answers in a game were correct; a miss takes it out until it is answered right 3 times in a row again, so the counter can go down. Rounds saved before the counter arrived have no list of the entities asked and do not count (HIS-04) |
 
 No open questions.
 
 ## 18. Change log
 
+- **v1.13** (2026-11-20): decisions for epic 6: levels already played stay open when unlocking arrives (LVL-04,
+  D26) · an Experto round asks half extended entities (new LVL-07, D27) · family records on a "Récords" screen
+  from the home screen, a tie keeps the first holder (HIS-05, D28) · an entity stays mastered only while its last
+  3 answers were correct, and a saved round keeps the entities asked (HIS-04, HIS-01, D29).
 - **v1.12** (2026-11-20): the installable part of NFR-02 is built early (D24, story #74): web manifest, icons and iOS meta tags; offline play stays in epic 7.
 - **v1.11** (2026-11-19): D25 decided in the shapes review: overseas exceptions, de facto lines, the Canary
   Islands box, islands always visible (SHAPE-01, SHAPE-02) and microstates kept in the Shapes games (SHAPE-03) · Vatican City outline from OpenStreetMap (DATA-05).
