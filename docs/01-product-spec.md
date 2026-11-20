@@ -1,6 +1,6 @@
 # MiAtlas67 — Product Specification
 
-> **Status: APPROVED v1.15** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
+> **Status: APPROVED v1.16** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
 > [§18 Change log](#18-change-log).
 > Last updated: 2026-11-20
 
@@ -73,7 +73,7 @@ Each topic is played in both directions, which makes **six games**:
 - **CAP-01** At level 1, Capitals games show the country's flag next to its name as a visual hint.
 - **SHAPE-01** Silhouettes have no labels and no neighbours. Every island stays visible, at least as a dot.
 - **SHAPE-02** A silhouette shows the main territory; distant overseas territories are left out
-  (e.g. France without French Guiana). Exceptions decided by the product owner are in D25.
+  (e.g. France without French Guiana). Exceptions decided by the product owner are in D25 and D31.
 - **SHAPE-03** Entities whose silhouette is not recognizable are excluded from Shapes games (`shapeEligible` in
   the data). None for now: microstates such as Vatican City, Monaco or Nauru stay in (D25).
 - **SHAPE-04** Entities without a reliable, undisputed open geometry (e.g. Puntland, whose boundary with
@@ -314,11 +314,14 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 | D28 | Family records | ✅ A "Récords" button on the home screen, next to "Progreso" and "Historial", opens one table per game with the nickname and avatar of each record holder, without switching player. A tie keeps the first holder: as in sport, a record must be beaten (HIS-05) |
 | D29 | Mastered entities | ✅ An entity is mastered while its last 3 answers in a game were correct; a miss takes it out until it is answered right 3 times in a row again, so the counter can go down. Rounds saved before the counter arrived have no list of the entities asked and do not count (HIS-04) |
 | D30 | Extended set review (#93) | ✅ Reviewed in a [review page](https://claude.ai/artifact/N7fZE1GUqZAL2WWiPQozWy): 52 entities with their names, articles, capitals, flags, statuses, land borders and similar flags. Azores and Madeira are left out: for the family they are Portugal, not a territory of their own (DATA-07). Capitals: Islas Malvinas → «Puerto Argentino/Stanley» (en: «Stanley»); Montserrat → Brades, the de facto one (Plymouth as extra info); Guam → «Agaña» (en: «Hagåtña»); Zanzíbar → «Ciudad de Zanzíbar» (en: «Zanzibar City»); Bougainville → Buka (Arawa as extra info); Inglaterra → Londres and San Eustaquio → Oranjestad, shared with Reino Unido and Aruba, Isla Norfolk → Kingston and Islas Caimán → George Town, towns with the same name as the capitals of Jamaica and Guyana (Georgetown), so a Capitals question never offers both of a pair (CAP-03); Chipre del Norte, Gibraltar, Hong Kong, Macao and Tokelau have none (CAP-02). Nueva Caledonia shows the Kanak flag (the French one is already France's). Articles (DATA-09): «la» Isla de Man, Isla Norfolk and Polinesia Francesa, «el» Sahara Occidental and Kurdistán iraquí; Bermudas goes without one («de Bermudas», like D18). Similar flags at level 4: the reviewed groups, with Jersey among the red crosses on white (with Inglaterra, Guernsey and Georgia), and every flag with a crescent and a star in one group (Turquía, Túnez, Chipre del Norte, Argelia, Azerbaiyán, Mauritania, Pakistán, Malasia, Singapur, Turkmenistán, Uzbekistán, Libia, Comoras and Sahara Occidental) |
+| D31 | Silhouettes of the extended set (#94) | ✅ Reviewed in a [review page](https://claude.ai/artifact/XDR9sXBFiqNJnMJUrsnUQV): the 50 silhouettes of the extended set, drawn with the rules of D25. Every entity of the set is shape-eligible except Puntland and Jubalandia (SHAPE-04). Sahara Occidental is drawn whole, as maps draw it, not only the strip east of the berm (Natural Earth's de facto line); Marruecos is cut at 27° 40′ N, so at every level its silhouette leaves out the whole Western Sahara, as D25 says. With all their islands, like Kiribati: Polinesia Francesa (with the Austral Islands) and Islas Cook (with the northern group). Transnistria with Bender, the line it controls de facto. Tokelau is drawn with the 2 atolls Natural Earth has (Nukunonu is missing). Serbia, Somalia and Cyprus are still drawn whole (D25); at level 4, Kosovo, Somalilandia and Chipre del Norte also have their own silhouettes |
 
 No open questions.
 
 ## 18. Change log
 
+- **v1.16** (2026-11-20): silhouettes of the extended set reviewed (D31, story #94): Western Sahara whole and
+  Morocco cut at 27° 40′ N, French Polynesia and the Cook Islands with all their islands (SHAPE-02).
 - **v1.15** (2026-11-20): extended set reviewed (D30, story #93): Azores and Madeira left out, so 52 entities
   (Appendix A, DATA-07) · two entities may share a quiz capital, never in the same question (CAP-03) · level 4
   land borders and similar flags (LVL-06).

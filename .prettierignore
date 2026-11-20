@@ -7,5 +7,6 @@ blob-report
 package-lock.json
 # Markdown is written by hand (tables, specs); Prettier only formats code
 *.md
-# Generated geometry (scripts/data/extended-ne.json): rebuilt by a script, not written by hand
+# Generated geometry (see src/assets/shapes/SOURCES.md): rebuilt by a script, not written by hand
 scripts/data/extended-ne.json
+scripts/data/western-sahara.json

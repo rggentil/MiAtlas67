@@ -51,13 +51,24 @@ export interface Override {
   readonly gapKm?: number;
   /** Natural Earth pieces named here are drawn together with the country (de facto vs official lines). */
   readonly mergeWith?: readonly string[];
-  /** The outline to draw instead of world-atlas, when its rounding flattens a tiny country. */
+  /**
+   * The outline to draw instead of world-atlas: when its rounding flattens a tiny country, or when the product
+   * owner chose another line than Natural Earth's (Morocco and the Western Sahara, D31).
+   */
   readonly outline?: readonly Position[];
   /** The overseas pieces are drawn in a small framed box in the bottom-left corner, as in the maps of Spain. */
   readonly inset?: boolean;
 }
 
-/** Changes to the default rule, each one decided by the product owner in the shapes review (#79, D25). */
+/**
+ * Morocco and the Western Sahara split at 27° 40′ N (D31), from world-atlas Morocco and "W. Sahara" with mapshaper:
+ * Natural Earth draws the de facto line, so its Morocco takes in the west of the territory. See SOURCES.md.
+ */
+const westernSahara = JSON.parse(
+  readFileSync(join(root, 'scripts', 'data', 'western-sahara.json'), 'utf8'),
+) as { MA: Position[]; EH: Position[] };
+
+/** Changes to the default rule, each one decided by the product owner in the shapes reviews (#79, D25; #94, D31). */
 export const OVERRIDES: Readonly<Record<string, Override>> = {
   // Malaysia: Borneo (Sabah and Sarawak) is ~600 km from the peninsula and part of the main territory.
   MY: { gapKm: 800 },
@@ -82,6 +93,13 @@ export const OVERRIDES: Readonly<Record<string, Override>> = {
   // Seychelles: the granitic islands around Mahé, as maps of the country show it; the far atolls are specks.
   SC: { gapKm: 100 },
   RS: { mergeWith: ['Kosovo'] },
+  // Morocco without the Western Sahara (D25), and the Western Sahara whole, as maps draw it (D31).
+  MA: { outline: westernSahara.MA },
+  EH: { outline: westernSahara.EH },
+  // Territories spread over the ocean, like Kiribati: French Polynesia with the Austral Islands, the Cook
+  // Islands with the northern group (D31).
+  PF: { gapKm: 2500 },
+  CK: { gapKm: 1500 },
 };
 
 const geometries = topology.objects.countries.geometries;
