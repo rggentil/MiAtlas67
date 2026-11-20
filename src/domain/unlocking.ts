@@ -1,6 +1,7 @@
 import type { GameId } from './games.ts';
 import { bestResult, type PlayedResult } from './playerProgress.ts';
 import { LEVELS, type Level, type RegionChoice } from './questions.ts';
+import type { Stars } from './round.ts';
 
 /** Stars a level needs to open the next one (LVL-04, D4). */
 export const STARS_TO_UNLOCK = 2;
@@ -45,4 +46,27 @@ export function levelLocks(
   region: RegionChoice,
 ): LevelLock[] {
   return LEVELS.map((level) => ({ level, open: isLevelOpen(rounds, game, region, level) }));
+}
+
+/** The level after `level`, or `null` for the last one. */
+export function nextLevel(level: Level): Level | null {
+  return LEVELS[LEVELS.indexOf(level) + 1] ?? null;
+}
+
+/**
+ * The level that a round with `stars` in `level` of `game` and `region` opens (RND-08): the next level, when the
+ * round has ★★ and that level was locked for the player of the `previous` rounds. `null` when the round has fewer
+ * stars, when the next level was already open (by an earlier ★★, or by a round played there, D26), or when the
+ * round was in the last level.
+ */
+export function unlockedLevel(
+  previous: readonly PlayedResult[],
+  game: GameId,
+  region: RegionChoice,
+  level: Level,
+  stars: Stars,
+): Level | null {
+  const next = nextLevel(level);
+  if (next === null || stars < STARS_TO_UNLOCK) return null;
+  return isLevelOpen(previous, game, region, next) ? null : next;
 }

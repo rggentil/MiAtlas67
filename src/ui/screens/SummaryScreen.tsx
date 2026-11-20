@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import type { Entity } from '../../domain/entity.ts';
 import { formatProgress } from '../../domain/progress.ts';
-import type { RoundSettings } from '../../domain/questions.ts';
+import type { Level, RoundSettings } from '../../domain/questions.ts';
 import type { RoundResult, Stars } from '../../domain/round.ts';
 import { useI18n } from '../../i18n/context.ts';
 import { useOnBack } from '../navigation/useOnBack.ts';
@@ -9,7 +9,7 @@ import type { MessageKey } from '../../i18n/dictionaries.ts';
 import { Button } from '../components/Button.tsx';
 import { Chip } from '../components/Chip.tsx';
 import { FlagImage } from '../components/FlagImage.tsx';
-import { NextIcon, StarIcon } from '../components/icons.tsx';
+import { NextIcon, StarIcon, UnlockIcon } from '../components/icons.tsx';
 import { ScreenTitle } from '../components/ScreenTitle.tsx';
 import { ShapeImage } from '../components/ShapeImage.tsx';
 import type { PlayableGame } from '../games.ts';
@@ -21,6 +21,8 @@ interface SummaryScreenProps {
   result: RoundResult;
   /** The score beats the player's best in this game, region and level (RND-08, D23). It may arrive a moment later. */
   newRecord: boolean;
+  /** The level this round opened (RND-08, LVL-04), or `null`. Like the record, it may arrive a moment later. */
+  unlocked?: Level | null;
   onPlayAgain: () => void;
   onMenu: () => void;
 }
@@ -36,13 +38,14 @@ const TITLES: Record<Stars, MessageKey> = {
 /**
  * End of a round (RND-08): the score (SCR-01), the stars (SCR-02), "¡Nuevo récord!" when the player beat their
  * best (D23), what to review — each missed entity with its correct answer — and the way on: "Jugar otra vez"
- * or "Menú". "Level unlocked" arrives with epic 6.
+ * or "Menú". "¡Nivel desbloqueado!" names the level the round opened (LVL-04).
  */
 export function SummaryScreen({
   game,
   settings,
   result,
   newRecord,
+  unlocked = null,
   onPlayAgain,
   onMenu,
 }: SummaryScreenProps) {
@@ -61,13 +64,19 @@ export function SummaryScreen({
           <StarRating stars={result.stars} label={t('summary.stars', { n: result.stars })} />
           {/*
             A live region from the start, in the accessibility tree even while empty (only visually hidden), so
-            screen readers announce the record found a moment after the summary opens.
+            screen readers announce the record and the level unlocked found a moment after the summary opens.
           */}
-          <p role="status" className="empty:sr-only">
+          <p role="status" className="flex flex-wrap justify-center gap-2 empty:sr-only">
             {newRecord && (
               <span className="inline-flex items-center gap-2 rounded-full border-3 border-ink bg-paper px-4 py-1 font-display text-xl shadow-block-sm">
                 <StarIcon size={22} filled />
                 {t('summary.record')}
+              </span>
+            )}
+            {unlocked !== null && (
+              <span className="inline-flex items-center gap-2 rounded-full border-3 border-ink bg-paper px-4 py-1 font-display text-xl shadow-block-sm">
+                <UnlockIcon />
+                {t('summary.unlocked', { level: t(LEVEL_NAMES[unlocked]) })}
               </span>
             )}
           </p>

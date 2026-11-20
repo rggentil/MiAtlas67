@@ -3,7 +3,7 @@ import type { GameId } from './games.ts';
 import type { PlayedResult } from './playerProgress.ts';
 import type { Level, RegionChoice } from './questions.ts';
 import type { Stars } from './round.ts';
-import { isLevelOpen, levelLocks, previousLevel } from './unlocking.ts';
+import { isLevelOpen, levelLocks, nextLevel, previousLevel, unlockedLevel } from './unlocking.ts';
 
 function played(game: GameId, region: RegionChoice, level: Level, stars: Stars): PlayedResult {
   const score = [3, 5, 8, 10][stars] ?? 0;
@@ -108,5 +108,48 @@ describe('levelLocks', () => {
       { level: 2, open: true },
       { level: 3, open: false },
     ]);
+  });
+});
+
+describe('nextLevel', () => {
+  it('LVL-04 is the level after, and none for the last one', () => {
+    expect(nextLevel(1)).toBe(2);
+    expect(nextLevel(2)).toBe(3);
+    expect(nextLevel(3)).toBeNull();
+  });
+});
+
+describe('unlockedLevel', () => {
+  it('RND-08 LVL-04 a ★★ round in Fácil opens Medio when Medio was locked', () => {
+    expect(unlockedLevel([], 'FLAG-A', 'europe', 1, 2)).toBe(2);
+    expect(unlockedLevel([played('FLAG-A', 'europe', 1, 1)], 'FLAG-A', 'europe', 1, 3)).toBe(2);
+  });
+
+  it('RND-08 a round with fewer than ★★ opens nothing', () => {
+    expect(unlockedLevel([], 'FLAG-A', 'europe', 1, 1)).toBeNull();
+    expect(unlockedLevel([], 'FLAG-A', 'europe', 1, 0)).toBeNull();
+  });
+
+  it('RND-08 nothing when the next level was already open by an earlier ★★', () => {
+    expect(unlockedLevel([played('FLAG-A', 'europe', 1, 2)], 'FLAG-A', 'europe', 1, 2)).toBeNull();
+  });
+
+  it('RND-08 D26 nothing when the next level was open because a round was played there', () => {
+    expect(unlockedLevel([played('FLAG-A', 'europe', 2, 0)], 'FLAG-A', 'europe', 1, 2)).toBeNull();
+  });
+
+  it('RND-08 LVL-04 a ★★ round in Medio opens Difícil, unless ★★ in Medio opened it already', () => {
+    expect(unlockedLevel([], 'FLAG-A', 'europe', 2, 2)).toBe(3);
+    expect(unlockedLevel([played('FLAG-A', 'europe', 2, 2)], 'FLAG-A', 'europe', 2, 2)).toBeNull();
+  });
+
+  it('RND-08 the last level opens nothing', () => {
+    expect(unlockedLevel([], 'FLAG-A', 'europe', 3, 3)).toBeNull();
+  });
+
+  it('RND-08 LVL-04 rounds of another region or game do not count as already open', () => {
+    const rounds = [played('FLAG-A', 'africa', 1, 3), played('FLAG-B', 'europe', 1, 3)];
+
+    expect(unlockedLevel(rounds, 'FLAG-A', 'europe', 1, 2)).toBe(2);
   });
 });

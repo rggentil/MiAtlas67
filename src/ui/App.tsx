@@ -1,9 +1,15 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { countries } from '../data/countries.ts';
 import { relations } from '../data/relations.ts';
-import { generateRound, type Question, type RoundSettings } from '../domain/questions.ts';
+import {
+  generateRound,
+  type Level,
+  type Question,
+  type RoundSettings,
+} from '../domain/questions.ts';
 import { isNewRecord } from '../domain/playerProgress.ts';
 import { createRng } from '../domain/random.ts';
+import { unlockedLevel } from '../domain/unlocking.ts';
 import type { RoundResult } from '../domain/round.ts';
 import { I18nProvider } from '../i18n/I18nProvider.tsx';
 import { openStore } from '../storage/indexedDbStore.ts';
@@ -53,6 +59,8 @@ type Screen =
       readonly number: number;
       /** The round beat the player's best there (RND-08, D23); known a moment after the summary opens. */
       readonly newRecord: boolean;
+      /** The level the round opened (RND-08, LVL-04), or `null`; known at the same moment as the record. */
+      readonly unlocked: Level | null;
     };
 
 /** The screens that need a player: all but "¿Quién juega?" and the player form. */
@@ -130,7 +138,7 @@ function Screens({ givenStore }: { givenStore: GameStore | undefined }) {
   /**
    * Saves a completed round of the player who plays (HIS-01); a quit round never gets here (RND-07). First it
    * compares it with the player's earlier rounds: a new best shows "¡Nuevo récord!" on the summary of round
-   * `number` (RND-08, D23).
+   * `number` (RND-08, D23), and a level it opens shows "¡Nivel desbloqueado!" (LVL-04).
    */
   function saveRound(
     game: PlayableGame,
@@ -147,14 +155,30 @@ function Screens({ givenStore }: { givenStore: GameStore | undefined }) {
       level: settings.level,
     };
     saving.current = saving.current
-      // Without the earlier rounds there is no record to show, but the round is still saved.
-      .then(() => store.rounds.listByPlayer(played.playerId).catch(() => []))
+      // Without the earlier rounds there is no record nor level unlocked to show (an empty history would make
+      // every ★★ "unlock" a level that may be open already), but the round is still saved.
+      .then(() => store.rounds.listByPlayer(played.playerId).catch(() => null))
       .then((previous) => {
-        // The record is decided before the round is saved: a test that waits for the save knows it.
-        if (isNewRecord(previous, game.id, settings.region, settings.level, result.score)) {
+        if (previous === null) return store.rounds.add(roundToSave(played, result));
+        // Both are decided before the round is saved: a test that waits for the save knows them.
+        const newRecord = isNewRecord(
+          previous,
+          game.id,
+          settings.region,
+          settings.level,
+          result.score,
+        );
+        const unlocked = unlockedLevel(
+          previous,
+          game.id,
+          settings.region,
+          settings.level,
+          result.stars,
+        );
+        if (newRecord || unlocked !== null) {
           setScreen((current) =>
             current.name === 'summary' && current.number === number
-              ? { ...current, newRecord: true }
+              ? { ...current, newRecord, unlocked }
               : current,
           );
         }
@@ -346,7 +370,7 @@ function CurrentScreen({
             setScreen(HOME);
           }}
           onFinish={(result) => {
-            setScreen({ ...screen, name: 'summary', result, newRecord: false });
+            setScreen({ ...screen, name: 'summary', result, newRecord: false, unlocked: null });
             saveRound(screen.game, screen.settings, result, screen.number);
           }}
         />
@@ -358,6 +382,7 @@ function CurrentScreen({
           settings={screen.settings}
           result={screen.result}
           newRecord={screen.newRecord}
+          unlocked={screen.unlocked}
           onPlayAgain={() => {
             startRound(screen.game, screen.settings, screen.number + 1);
           }}

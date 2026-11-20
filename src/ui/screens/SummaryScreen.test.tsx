@@ -3,7 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { countries } from '../../data/countries.ts';
 import { relations } from '../../data/relations.ts';
-import { generateRound, type Question, type RoundSettings } from '../../domain/questions.ts';
+import {
+  generateRound,
+  type Question,
+  type RoundSettings,
+  type Level,
+} from '../../domain/questions.ts';
 import { createRng } from '../../domain/random.ts';
 import { answer, next, roundResult, startRound, type RoundResult } from '../../domain/round.ts';
 import { flagFile } from '../../test/flags.ts';
@@ -37,7 +42,7 @@ function filledStars(): boolean[] {
   return [...stars.querySelectorAll('svg')].map((star) => star.dataset.filled === 'true');
 }
 
-function renderSummary(result: RoundResult, newRecord = false) {
+function renderSummary(result: RoundResult, newRecord = false, unlocked: Level | null = null) {
   const onPlayAgain = vi.fn();
   const onMenu = vi.fn();
   renderWithI18n(
@@ -46,6 +51,7 @@ function renderSummary(result: RoundResult, newRecord = false) {
       settings={SETTINGS}
       result={result}
       newRecord={newRecord}
+      unlocked={unlocked}
       onPlayAgain={onPlayAgain}
       onMenu={onMenu}
     />,
@@ -73,6 +79,40 @@ describe('SummaryScreen', () => {
 
     expect(screen.queryByText('¡Nuevo récord!')).not.toBeInTheDocument();
     expect(screen.getByRole('status', { hidden: true })).toBeEmptyDOMElement();
+  });
+
+  it('RND-08 LVL-04 a round that opened Medio shows "¡Nivel desbloqueado! Medio" with an open padlock', () => {
+    renderSummary(resultWith([0, 1]), false, 2);
+
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('¡Nivel desbloqueado! Medio');
+    const badge = within(status).getByText('¡Nivel desbloqueado! Medio');
+    expect(badge).toBeVisible();
+    // One icon, the open padlock; the record's star is not there.
+    expect(badge.querySelectorAll('svg')).toHaveLength(1);
+    expect(badge.querySelector('svg rect')).not.toBeNull();
+    expect(screen.queryByText('¡Nuevo récord!')).not.toBeInTheDocument();
+  });
+
+  it('RND-08 a new record and a level unlocked show together', () => {
+    renderSummary(resultWith([1]), true, 3);
+
+    const status = screen.getByRole('status');
+    expect(within(status).getByText('¡Nuevo récord!')).toBeVisible();
+    expect(within(status).getByText('¡Nivel desbloqueado! Difícil')).toBeVisible();
+  });
+
+  it('RND-08 without a level unlocked there is no "¡Nivel desbloqueado!"', () => {
+    renderSummary(resultWith([0, 1]), true, null);
+
+    expect(screen.queryByText(/Nivel desbloqueado/)).not.toBeInTheDocument();
+  });
+
+  it('RND-08 NFR-06 "Level unlocked! Medium" in English', () => {
+    localStorage.setItem('miatlas67.language', 'en');
+    renderSummary(resultWith([]), false, 2);
+
+    expect(screen.getByRole('status')).toHaveTextContent('Level unlocked! Medium');
   });
 
   it('RND-08 NFR-06 "New record!" in English', () => {

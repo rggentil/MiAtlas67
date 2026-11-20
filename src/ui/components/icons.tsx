@@ -47,6 +47,16 @@ export function LockIcon(props: IconProps) {
   );
 }
 
+/** An open padlock: a level that a round has just opened (RND-08). */
+export function UnlockIcon(props: IconProps) {
+  return (
+    <StrokeIcon {...props}>
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 7.5-2" />
+    </StrokeIcon>
+  );
+}
+
 export function CapitalIcon(props: IconProps) {
   return (
     <StrokeIcon {...props}>

@@ -1,6 +1,6 @@
 # MiAtlas67 — Product Specification
 
-> **Status: APPROVED v1.13** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
+> **Status: APPROVED v1.14** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
 > [§18 Change log](#18-change-log).
 > Last updated: 2026-11-20
 
@@ -136,7 +136,8 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 - **RND-08** End-of-round summary: score, stars, "new personal best" and "level unlocked" indicators, the list of
   missed entities with their correct answers (the learning moment), and the buttons "Jugar otra vez" and "Menú".
   "¡Nuevo récord!" shows when the score beats the player's best one in that game, region and level. A tie does
-  not, and neither does the first round there, which has nothing to beat (D23).
+  not, and neither does the first round there, which has nothing to beat (D23). "¡Nivel desbloqueado!" names the
+  next level when the round reaches ★★ and that level was locked before it (LVL-04); the last level opens nothing.
 
 ## 9. Scoring and stars
 
@@ -313,6 +314,7 @@ No open questions.
 
 ## 18. Change log
 
+- **v1.14** (2026-11-20): RND-08 says when "¡Nivel desbloqueado!" shows (story #90).
 - **v1.13** (2026-11-20): decisions for epic 6: levels already played stay open when unlocking arrives (LVL-04,
   D26) · an Experto round asks half extended entities (new LVL-07, D27) · family records on a "Récords" screen
   from the home screen, a tie keeps the first holder (HIS-05, D28) · an entity stays mastered only while its last
