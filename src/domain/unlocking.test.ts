@@ -73,6 +73,25 @@ describe('isLevelOpen', () => {
     expect(isLevelOpen(rounds, 'FLAG-A', 'europe', 2)).toBe(false);
   });
 
+  it('LVL-04 D26 the scenario: ★ in Fácil and Medio, and a round in Difícil, keep Difícil open', () => {
+    const rounds = [
+      played('FLAG-A', 'europe', 1, 1),
+      played('FLAG-A', 'europe', 2, 1),
+      played('FLAG-A', 'europe', 3, 0),
+    ];
+
+    expect(isLevelOpen(rounds, 'FLAG-A', 'europe', 2)).toBe(true);
+    expect(isLevelOpen(rounds, 'FLAG-A', 'europe', 3)).toBe(true);
+  });
+
+  it('LVL-04 D26 a round played in a level keeps it open only in its own game and region', () => {
+    const rounds = [played('FLAG-A', 'europe', 3, 0)];
+
+    expect(isLevelOpen(rounds, 'FLAG-A', 'africa', 3)).toBe(false);
+    expect(isLevelOpen(rounds, 'FLAG-A', 'world', 3)).toBe(false);
+    expect(isLevelOpen(rounds, 'FLAG-B', 'europe', 3)).toBe(false);
+  });
+
   it('LVL-04 D26 ★★ in a level kept open by D26 opens the next one', () => {
     const rounds = [played('FLAG-A', 'europe', 2, 2)];
 

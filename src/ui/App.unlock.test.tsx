@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Level } from '../domain/questions.ts';
 import type { Stars } from '../domain/round.ts';
 import type { GameStore, PlayerData } from '../storage/store.ts';
@@ -34,6 +34,13 @@ async function levelsOf(nickname: string) {
 }
 
 describe('App · level locks (LVL-04)', () => {
+  beforeEach(() => {
+    window.history.replaceState(null, '', '/?seed=42');
+  });
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+  });
+
   it('LVL-04 the player who plays unlocks for herself: Lucía has Medio open, Pablo does not', async () => {
     const store = await deviceWith({ players: [LUCIA, PABLO] });
     await saved(store, 1, 1, 3);
@@ -51,7 +58,7 @@ describe('App · level locks (LVL-04)', () => {
     );
   });
 
-  it('LVL-04 a round that reaches ★★ opens the next level as soon as the player is back on the level step', async () => {
+  it('LVL-04 a ★★ round saved while the player is away opens the next level the next time she chooses the region', async () => {
     const store = await deviceWith();
     await renderApp(store);
     const before = await levelsOf('Lucía');

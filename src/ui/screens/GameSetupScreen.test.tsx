@@ -150,6 +150,23 @@ describe('GameSetupScreen level locks', () => {
       'Consigue ★★ en Medio para desbloquear',
     );
     expect(screen.getByText('Consigue ★★ en Fácil para desbloquear')).toBeVisible();
+    // The padlock: a decorative icon, hidden from screen readers, which hear "bloqueado" instead.
+    expect(levelButton('Medio').querySelector('svg')).not.toBeNull();
+    expect(levelButton('Difícil').querySelector('svg')).not.toBeNull();
+    expect(levelButton('Fácil').querySelector('svg')).toBeNull();
+  });
+
+  it('LVL-05 NFR-05 a locked level can be reached with the keyboard, and Enter starts nothing', async () => {
+    const { onStart } = renderSetup([]);
+    await chooseRegion('Europa');
+
+    levelButton('Medio').focus();
+    expect(levelButton('Medio')).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    await userEvent.keyboard(' ');
+
+    expect(onStart).not.toHaveBeenCalled();
+    expect(levelButton('Medio')).toHaveAccessibleName('Medio, bloqueado');
   });
 
   it('LVL-04 tapping a locked level starts no round and stays on the level step', async () => {
@@ -198,6 +215,13 @@ describe('GameSetupScreen level locks', () => {
     await chooseRegion('Europa');
 
     expect(levelButton('Medio')).toHaveAccessibleName('Medio, bloqueado');
+  });
+
+  it('LVL-04 D26 ★ in Fácil and Medio, and a round in Difícil: Difícil stays open', async () => {
+    renderSetup([played('europe', 1, 1), played('europe', 2, 1), played('europe', 3, 0)]);
+    await chooseRegion('Europa');
+
+    expect(levelButton('Difícil')).toHaveAccessibleName('Difícil');
   });
 
   it('LVL-04 D26 a level with a completed round stays open without ★★ in the one before', async () => {

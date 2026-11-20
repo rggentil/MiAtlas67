@@ -125,7 +125,9 @@ test.describe('Choose region and level', () => {
 
       // force: Playwright waits for an enabled element, and a locked level is reported as disabled.
       await setup.level('Medio').click({ force: true });
+      await setup.level('Difícil').click({ force: true });
       await expect(setup.levelStep).toBeVisible();
+      await expect(setup.level('Medio')).toHaveAccessibleName('Medio, bloqueado');
       await expect(new RoundPage(page).progressText).toHaveCount(0);
     },
   );
