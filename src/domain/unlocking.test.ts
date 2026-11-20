@@ -131,11 +131,16 @@ describe('unlockedLevel', () => {
   });
 
   it('RND-08 nothing when the next level was already open by an earlier ★★', () => {
-    expect(unlockedLevel([played('FLAG-A', 'europe', 1, 2)], 'FLAG-A', 'europe', 1, 3)).toBeNull();
+    expect(unlockedLevel([played('FLAG-A', 'europe', 1, 2)], 'FLAG-A', 'europe', 1, 2)).toBeNull();
   });
 
   it('RND-08 D26 nothing when the next level was open because a round was played there', () => {
     expect(unlockedLevel([played('FLAG-A', 'europe', 2, 0)], 'FLAG-A', 'europe', 1, 2)).toBeNull();
+  });
+
+  it('RND-08 LVL-04 a ★★ round in Medio opens Difícil, unless ★★ in Medio opened it already', () => {
+    expect(unlockedLevel([], 'FLAG-A', 'europe', 2, 2)).toBe(3);
+    expect(unlockedLevel([played('FLAG-A', 'europe', 2, 2)], 'FLAG-A', 'europe', 2, 2)).toBeNull();
   });
 
   it('RND-08 the last level opens nothing', () => {

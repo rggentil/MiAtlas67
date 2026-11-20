@@ -88,7 +88,9 @@ describe('SummaryScreen', () => {
     expect(status).toHaveTextContent('¡Nivel desbloqueado! Medio');
     const badge = within(status).getByText('¡Nivel desbloqueado! Medio');
     expect(badge).toBeVisible();
-    expect(badge.querySelector('svg')).not.toBeNull();
+    // One icon, the open padlock; the record's star is not there.
+    expect(badge.querySelectorAll('svg')).toHaveLength(1);
+    expect(badge.querySelector('svg rect')).not.toBeNull();
     expect(screen.queryByText('¡Nuevo récord!')).not.toBeInTheDocument();
   });
 

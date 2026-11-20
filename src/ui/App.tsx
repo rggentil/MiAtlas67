@@ -155,10 +155,12 @@ function Screens({ givenStore }: { givenStore: GameStore | undefined }) {
       level: settings.level,
     };
     saving.current = saving.current
-      // Without the earlier rounds there is no record to show, but the round is still saved.
-      .then(() => store.rounds.listByPlayer(played.playerId).catch(() => []))
+      // Without the earlier rounds there is no record nor level unlocked to show (an empty history would make
+      // every ★★ "unlock" a level that may be open already), but the round is still saved.
+      .then(() => store.rounds.listByPlayer(played.playerId).catch(() => null))
       .then((previous) => {
-        // The record is decided before the round is saved: a test that waits for the save knows it.
+        if (previous === null) return store.rounds.add(roundToSave(played, result));
+        // Both are decided before the round is saved: a test that waits for the save knows them.
         const newRecord = isNewRecord(
           previous,
           game.id,

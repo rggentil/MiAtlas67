@@ -107,15 +107,15 @@ describe('App · «¡Nivel desbloqueado!» in the round summary (RND-08, LVL-04)
 
   it('RND-08 with Medio already open by an earlier ★★, another ★★ round shows no "¡Nivel desbloqueado!"', async () => {
     const store = await deviceWith();
-    await saved(store, 1, 9);
+    await saved(store, 1, 8);
     await renderApp(store);
     const [round = []] = rounds(1, 1);
     await startRound(1);
 
-    await finishWith(round, 10);
+    await finishWith(round, 8);
     await savedCount(store, 2);
 
-    expect(await screen.findByText('¡Nuevo récord!')).toBeVisible();
+    expect(screen.getByText('8/10')).toBeVisible();
     expect(screen.queryByText(/Nivel desbloqueado/)).not.toBeInTheDocument();
   }, 30_000);
 
@@ -158,5 +158,24 @@ describe('App · «¡Nivel desbloqueado!» in the round summary (RND-08, LVL-04)
 
     expect(await screen.findByText('¡Nivel desbloqueado! Medio')).toBeVisible();
     expect(screen.getByText('¡Nuevo récord!')).toBeVisible();
+    await savedCount(store, 2);
+  }, 30_000);
+
+  it('HIS-01 RND-08 when the earlier rounds cannot be read, the round is saved without "¡Nivel desbloqueado!"', async () => {
+    const store = await deviceWith();
+    await saved(store, 1, 9);
+    await renderApp(store);
+    const [round = []] = rounds(1, 1);
+    await startRound(1);
+    const read = store.rounds.listByPlayer.bind(store.rounds);
+    store.rounds.listByPlayer = () => Promise.reject(new Error('Storage is blocked'));
+
+    await finishWith(round, 8);
+
+    await waitFor(async () => {
+      expect(await read(1)).toHaveLength(2);
+    });
+    expect(screen.getByText('8/10')).toBeVisible();
+    expect(screen.queryByText(/Nivel desbloqueado/)).not.toBeInTheDocument();
   }, 30_000);
 });
