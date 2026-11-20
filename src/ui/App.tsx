@@ -29,6 +29,7 @@ import { HomeScreen } from './screens/HomeScreen.tsx';
 import { PlayerFormScreen } from './screens/PlayerFormScreen.tsx';
 import { PlayersScreen } from './screens/PlayersScreen.tsx';
 import { ProgressScreen } from './screens/ProgressScreen.tsx';
+import { RecordsScreen } from './screens/RecordsScreen.tsx';
 import { RoundScreen } from './screens/RoundScreen.tsx';
 import { SummaryScreen } from './screens/SummaryScreen.tsx';
 
@@ -42,6 +43,7 @@ type Screen =
   | { readonly name: 'home' }
   | { readonly name: 'history' }
   | { readonly name: 'progress' }
+  | { readonly name: 'records' }
   | { readonly name: 'setup'; readonly game: PlayableGame }
   | {
       readonly name: 'round';
@@ -68,6 +70,7 @@ type GameScreen = Exclude<Screen, { readonly name: 'players' | 'newPlayer' | 'ed
 
 const PLAYERS: Screen = { name: 'players' };
 const HOME: Screen = { name: 'home' };
+const NO_PLAYERS: readonly Player[] = [];
 
 /** The players of the device and who played last, as read from the store (PRF-01). */
 interface Roster {
@@ -192,6 +195,12 @@ function Screens({ givenStore }: { givenStore: GameStore | undefined }) {
     return store && player ? store.rounds.listByPlayer(player.id) : [];
   }, [store, player]);
 
+  /** The rounds of every player, for the family records (HIS-05); a round just played is among them. */
+  const loadAllRounds = useCallback(async (): Promise<readonly SavedRound[]> => {
+    await saving.current;
+    return store ? store.rounds.listAll() : [];
+  }, [store]);
+
   // Generated in event handlers, never during render, so StrictMode cannot draw twice.
   function startRound(game: PlayableGame, settings: RoundSettings, number: number) {
     const questions = generateRound(countries, settings, rng, relations);
@@ -277,6 +286,8 @@ function Screens({ givenStore }: { givenStore: GameStore | undefined }) {
             startRound={startRound}
             saveRound={saveRound}
             loadRounds={loadRounds}
+            loadAllRounds={loadAllRounds}
+            players={roster?.players ?? NO_PLAYERS}
           />
         )
       )}
@@ -296,6 +307,9 @@ interface CurrentScreenProps {
     number: number,
   ) => void;
   loadRounds: () => Promise<readonly SavedRound[]>;
+  loadAllRounds: () => Promise<readonly SavedRound[]>;
+  /** The players on the device. */
+  players: readonly Player[];
 }
 
 function CurrentScreen({
@@ -305,6 +319,8 @@ function CurrentScreen({
   startRound,
   saveRound,
   loadRounds,
+  loadAllRounds,
+  players,
 }: CurrentScreenProps) {
   switch (screen.name) {
     case 'home':
@@ -323,6 +339,9 @@ function CurrentScreen({
           onOpenProgress={() => {
             setScreen({ name: 'progress' });
           }}
+          onOpenRecords={() => {
+            setScreen({ name: 'records' });
+          }}
           onBack={() => {
             setScreen(PLAYERS);
           }}
@@ -332,6 +351,16 @@ function CurrentScreen({
       return (
         <HistoryScreen
           loadRounds={loadRounds}
+          onBack={() => {
+            setScreen(HOME);
+          }}
+        />
+      );
+    case 'records':
+      return (
+        <RecordsScreen
+          loadRounds={loadAllRounds}
+          players={players}
           onBack={() => {
             setScreen(HOME);
           }}

@@ -22,6 +22,8 @@ interface HomeScreenProps {
   onOpenHistory: () => void;
   /** "Progreso": the best stars of the player who plays (HIS-03). */
   onOpenProgress: () => void;
+  /** "Récords": the best score of the family in every game, region and level (HIS-05, D28). */
+  onOpenRecords: () => void;
   /** The phone's back button: back to "¿Quién juega?" (NAV-01, D22). */
   onBack: () => void;
 }
@@ -42,6 +44,7 @@ export function HomeScreen({
   onSwitchPlayer,
   onOpenHistory,
   onOpenProgress,
+  onOpenRecords,
   onBack,
 }: HomeScreenProps) {
   const { t } = useI18n();
@@ -65,6 +68,9 @@ export function HomeScreen({
           </Button>
           <Button variant="secondary" onClick={onOpenHistory}>
             {t('home.history')}
+          </Button>
+          <Button variant="secondary" className="col-span-2" onClick={onOpenRecords}>
+            {t('home.records')}
           </Button>
         </div>
       </main>

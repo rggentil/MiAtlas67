@@ -16,6 +16,8 @@ export class HomePage {
   readonly historyButton: Locator;
   /** "Progreso": the best stars of the player who plays (HIS-03). */
   readonly progressButton: Locator;
+  /** "Récords": the best score of the family in every game, region and level (HIS-05). */
+  readonly recordsButton: Locator;
   private readonly page: Page;
 
   constructor(page: Page) {
@@ -26,6 +28,7 @@ export class HomePage {
     this.switchPlayerButton = this.currentPlayer.getByRole('button');
     this.historyButton = page.getByRole('button', { name: 'Historial' });
     this.progressButton = page.getByRole('button', { name: 'Progreso' });
+    this.recordsButton = page.getByRole('button', { name: 'Récords' });
   }
 
   /**

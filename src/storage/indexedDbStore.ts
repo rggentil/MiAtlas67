@@ -83,6 +83,7 @@ function indexedDbStore(db: Database): GameStore {
       },
       listByPlayer: async (playerId) =>
         (await db.rounds.where('playerId').equals(playerId).toArray()).sort(newestFirst),
+      listAll: async () => (await db.rounds.toArray()).sort(newestFirst),
     },
     close: () => {
       db.close();
