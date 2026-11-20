@@ -88,11 +88,11 @@ function RecordsTable({ records, players }: { records: GameRecords; players: rea
         <table aria-labelledby={headingId} className="w-full table-fixed border-collapse">
           <thead>
             <tr className="bg-sun">
-              <th scope="col" className="w-[25%] px-2 py-2 text-left text-sm font-black">
+              <th scope="col" className="w-[24%] px-2 py-2 text-left text-sm font-black">
                 {t('progress.region')}
               </th>
               {LEVELS.map((level) => (
-                <th key={level} scope="col" className="px-1 py-2 text-center text-sm font-black">
+                <th key={level} scope="col" className="px-0.5 py-2 text-center text-xs font-black">
                   {t(LEVEL_NAMES[level])}
                 </th>
               ))}
@@ -126,7 +126,7 @@ function RecordsTable({ records, players }: { records: GameRecords; players: rea
   );
 }
 
-/** The score and who holds it, the avatar next to the nickname; or "Sin récord". */
+/** The score and who holds it, the avatar above the nickname; or "Sin récord". */
 function RecordCell({
   record,
   players,
@@ -149,9 +149,10 @@ function RecordCell({
       <span className="sr-only">
         {t('records.score', { n: record.score, total: record.total })}
       </span>
-      <span className="flex max-w-full items-center gap-1">
+      {/* Stacked, so a nickname fits in the narrow columns of four levels; a long one ends in "…". */}
+      <span className="flex max-w-full flex-col items-center gap-0.5">
         <AvatarImage avatar={holder.avatar} size={20} decorative />
-        <span className="min-w-0 text-xs font-extrabold break-all">{holder.nickname}</span>
+        <span className="block max-w-full truncate text-xs font-extrabold">{holder.nickname}</span>
       </span>
     </span>
   );

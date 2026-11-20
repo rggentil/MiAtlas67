@@ -126,11 +126,11 @@ function ProgressTable({ progress, mastery }: { progress: GameProgress; mastery?
         <table aria-labelledby={headingId} className="w-full table-fixed border-collapse">
           <thead>
             <tr className="bg-sun">
-              <th scope="col" className="w-[30%] px-2 py-2 text-left text-sm font-black">
+              <th scope="col" className="w-[24%] px-2 py-2 text-left text-sm font-black">
                 {t('progress.region')}
               </th>
               {LEVELS.map((level) => (
-                <th key={level} scope="col" className="px-1 py-2 text-center text-sm font-black">
+                <th key={level} scope="col" className="px-0.5 py-2 text-center text-xs font-black">
                   {t(LEVEL_NAMES[level])}
                 </th>
               ))}
@@ -172,9 +172,9 @@ function CellStars({ stars }: { stars: Stars | null }) {
     return <span className="text-xs font-bold text-ink-muted">{t('progress.notPlayed')}</span>;
   }
   return (
-    <span className="inline-flex gap-px rounded-full bg-ink px-1.5 py-1">
+    <span className="inline-flex gap-px rounded-full bg-ink px-1 py-1">
       {[1, 2, 3].map((star) => (
-        <StarIcon key={star} size={14} filled={star <= stars} />
+        <StarIcon key={star} size={12} filled={star <= stars} />
       ))}
       <span className="sr-only">{t('summary.stars', { n: stars })}</span>
     </span>
