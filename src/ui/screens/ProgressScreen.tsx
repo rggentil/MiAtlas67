@@ -1,5 +1,7 @@
 import { useEffect, useId, useState } from 'react';
-import { GAMES } from '../../domain/games.ts';
+import { countries } from '../../data/countries.ts';
+import { GAMES, type GameId } from '../../domain/games.ts';
+import { masteryOf, type AnsweredRound, type Mastery } from '../../domain/mastery.ts';
 import {
   progressOf,
   totalStars,
@@ -18,7 +20,7 @@ import { useOnBack } from '../navigation/useOnBack.ts';
 
 interface ProgressScreenProps {
   /** Reads the rounds of the player who plays. */
-  loadRounds: () => Promise<readonly PlayedResult[]>;
+  loadRounds: () => Promise<readonly (PlayedResult & AnsweredRound)[]>;
   onBack: () => void;
 }
 
@@ -28,11 +30,12 @@ const PROGRESS_GAMES = GAMES.filter(isPlayable).map((game) => game.id);
 /**
  * "Progreso" (HIS-03): the total stars of the player who plays, and one table per game with the best stars of
  * every region and level (SCR-03, GAME-02), or "Sin jugar". A screen reader reads "Europa, Fácil, 3 de 3
- * estrellas"; the stars are drawn and also written.
+ * estrellas"; the stars are drawn and also written. Each game says how many countries are mastered (HIS-04).
  */
 export function ProgressScreen({ loadRounds, onBack }: ProgressScreenProps) {
   const { t } = useI18n();
   const [progress, setProgress] = useState<readonly GameProgress[] | null>(null);
+  const [mastery, setMastery] = useState<ReadonlyMap<GameId, Mastery>>(new Map());
 
   useOnBack(onBack);
 
@@ -42,7 +45,11 @@ export function ProgressScreen({ loadRounds, onBack }: ProgressScreenProps) {
     void loadRounds()
       .catch(() => [])
       .then((rounds) => {
-        if (live) setProgress(progressOf(rounds, PROGRESS_GAMES));
+        if (!live) return;
+        setProgress(progressOf(rounds, PROGRESS_GAMES));
+        setMastery(
+          new Map(PROGRESS_GAMES.map((game) => [game, masteryOf(rounds, game, countries)])),
+        );
       });
     return () => {
       live = false;
@@ -65,7 +72,7 @@ export function ProgressScreen({ loadRounds, onBack }: ProgressScreenProps) {
               {total === 1 ? t('progress.totalOne') : t('progress.total', { n: total })}
             </p>
             {progress.map((game) => (
-              <ProgressTable key={game.game} progress={game} />
+              <ProgressTable key={game.game} progress={game} mastery={mastery.get(game.game)} />
             ))}
           </>
         )}
@@ -75,15 +82,20 @@ export function ProgressScreen({ loadRounds, onBack }: ProgressScreenProps) {
 }
 
 /** One game: a heading that names its table, a row per region and a column per level. */
-function ProgressTable({ progress }: { progress: GameProgress }) {
+function ProgressTable({ progress, mastery }: { progress: GameProgress; mastery?: Mastery }) {
   const { t } = useI18n();
   const headingId = useId();
 
   return (
-    <section className="flex flex-col gap-2">
+    <section aria-labelledby={headingId} className="flex flex-col gap-2">
       <h2 id={headingId} className="font-display text-2xl">
         {t(`game.${progress.game}.name`)}
       </h2>
+      {mastery && (
+        <p className="text-base font-extrabold text-ink-muted tabular-nums">
+          {t('progress.mastered', { n: mastery.mastered, total: mastery.total })}
+        </p>
+      )}
       <div className="overflow-hidden rounded-block border-3 border-ink bg-paper shadow-block-sm">
         <table aria-labelledby={headingId} className="w-full table-fixed border-collapse">
           <thead>

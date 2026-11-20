@@ -248,6 +248,18 @@ describe.each([
     expect(await store.rounds.listByPlayer(newcomer.id)).toEqual([]);
   });
 
+  it('HIS-01 HIS-04 keeps the entities asked, and a round saved without them still reads back', async () => {
+    const lucia = await store.players.create({ nickname: 'Lucía', avatar: 'fox' });
+    await store.rounds.add(round(lucia.id, 1_000));
+    await store.rounds.add(round(lucia.id, 2_000, { asked: ['ES', 'PT', 'BE'] }));
+
+    const [newest, oldest] = await store.rounds.listByPlayer(lucia.id);
+
+    expect(newest?.asked).toEqual(['ES', 'PT', 'BE']);
+    expect(oldest).not.toHaveProperty('asked');
+    expect(oldest?.missed).toEqual(['PT', 'BE']);
+  });
+
   it('NFR-04 never keeps fields that are not a nickname, an avatar or a result', async () => {
     const extraPlayer = { nickname: 'Lucía', avatar: 'fox', realName: 'Lucía García', age: 8 };
     const lucia = await store.players.create(extraPlayer);

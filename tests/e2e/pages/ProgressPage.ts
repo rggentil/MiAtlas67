@@ -30,6 +30,11 @@ export class ProgressPage {
       .nth(LEVEL_COLUMNS[level]);
   }
 
+  /** "Países dominados: 1/195" of a game (HIS-04). */
+  mastered(game: string): Locator {
+    return this.page.getByRole('region', { name: game }).getByText(/^Países dominados:/);
+  }
+
   /** "6 estrellas en total" */
   total(text: string): Locator {
     return this.page.getByText(text, { exact: true });

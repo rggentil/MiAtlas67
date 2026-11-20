@@ -29,6 +29,11 @@ export interface SavedRound {
    * changes the history.
    */
   readonly missed: readonly string[];
+  /**
+   * Codes of every entity asked, in question order (HIS-04). Rounds saved before the countries mastered arrived
+   * have none, and do not count for them (D29).
+   */
+  readonly asked?: readonly string[];
 }
 
 export type RoundData = Omit<SavedRound, 'id'>;
@@ -68,8 +73,19 @@ export function playerFields({ id, nickname, avatar }: Player): Player {
 
 /** A copy that holds only the fields of HIS-01: nothing else is ever stored (NFR-04). */
 export function roundFields(data: RoundData): RoundData {
-  const { playerId, playedAt, game, region, level, score, total, stars, missed } = data;
-  return { playerId, playedAt, game, region, level, score, total, stars, missed: [...missed] };
+  const { playerId, playedAt, game, region, level, score, total, stars, missed, asked } = data;
+  return {
+    playerId,
+    playedAt,
+    game,
+    region,
+    level,
+    score,
+    total,
+    stars,
+    missed: [...missed],
+    ...(asked ? { asked: [...asked] } : {}),
+  };
 }
 
 /** Newest first; rounds of the same millisecond keep the order they were saved in, newest first too. */
@@ -101,5 +117,6 @@ export function roundToSave(played: PlayedRound, result: RoundResult): RoundData
     total: result.total,
     stars: result.stars,
     missed: result.missed.map((entity) => entity.code),
+    asked: result.asked.map((entity) => entity.code),
   };
 }

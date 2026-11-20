@@ -22,6 +22,8 @@ export interface RoundResult {
   readonly stars: Stars;
   /** Entities answered wrongly, in question order; each one is its own correct answer (RND-08). */
   readonly missed: readonly Entity[];
+  /** Every entity asked, in question order: the countries mastered need them (HIS-04). */
+  readonly asked: readonly Entity[];
 }
 
 export function startRound(questions: readonly Question[]): RoundState {
@@ -92,5 +94,6 @@ export function roundResult(state: RoundState): RoundResult {
     missed: state.questions
       .filter((question, index) => state.answers[index] !== question.entity.code)
       .map((question) => question.entity),
+    asked: state.questions.map((question) => question.entity),
   };
 }

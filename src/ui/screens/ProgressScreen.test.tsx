@@ -2,6 +2,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { GameId } from '../../domain/games.ts';
+import type { AnsweredRound } from '../../domain/mastery.ts';
 import type { PlayedResult } from '../../domain/playerProgress.ts';
 import type { Level, RegionChoice } from '../../domain/questions.ts';
 import type { Stars } from '../../domain/round.ts';
@@ -9,17 +10,22 @@ import { renderWithI18n } from '../../test/render.tsx';
 
 import { ProgressScreen } from './ProgressScreen.tsx';
 
+type ProgressRound = PlayedResult & AnsweredRound;
+
+let nextId = 1;
 function played(
   game: GameId,
   region: RegionChoice,
   level: Level,
   score: number,
   stars: Stars,
-): PlayedResult {
-  return { game, region, level, score, total: 10, stars };
+  answers: { asked?: readonly string[]; missed?: readonly string[] } = {},
+): ProgressRound {
+  const id = nextId++;
+  return { id, playedAt: id, game, region, level, score, total: 10, stars, missed: [], ...answers };
 }
 
-function renderProgress(rounds: readonly PlayedResult[], onBack: () => void = vi.fn()) {
+function renderProgress(rounds: readonly ProgressRound[], onBack: () => void = vi.fn()) {
   renderWithI18n(<ProgressScreen loadRounds={() => Promise.resolve(rounds)} onBack={onBack} />);
 }
 
@@ -175,5 +181,54 @@ describe('ProgressScreen', () => {
     expect(within(await table('Flag → Country')).getAllByRole('columnheader')[0]).toHaveTextContent(
       'Region',
     );
+  });
+
+  it('HIS-04 every game shows "Países dominados: 0/195" before any country is mastered', async () => {
+    renderProgress([]);
+
+    expect(await screen.findAllByText('Países dominados: 0/195')).toHaveLength(6);
+  });
+
+  it('HIS-04 Portugal right in 3 rounds of "Bandera → País" in a row: "Países dominados: 1/195" there only', async () => {
+    renderProgress([
+      played('FLAG-A', 'europe', 1, 10, 3, { asked: ['PT', 'ES'] }),
+      played('FLAG-A', 'world', 2, 10, 3, { asked: ['PT'] }),
+      played('FLAG-A', 'europe', 3, 9, 2, { asked: ['PT', 'FR'], missed: ['FR'] }),
+    ]);
+
+    const flagA = (await table('Bandera → País')).closest('section');
+    const flagB = (await table('País → Bandera')).closest('section');
+    expect(flagA).toHaveTextContent('Países dominados: 1/195');
+    expect(flagB).toHaveTextContent('Países dominados: 0/195');
+  });
+
+  it('HIS-04 D29 a miss after mastering takes the country out', async () => {
+    renderProgress([
+      played('FLAG-A', 'europe', 1, 10, 3, { asked: ['PT'] }),
+      played('FLAG-A', 'europe', 1, 10, 3, { asked: ['PT'] }),
+      played('FLAG-A', 'europe', 1, 10, 3, { asked: ['PT'] }),
+      played('FLAG-A', 'europe', 1, 9, 2, { asked: ['PT'], missed: ['PT'] }),
+    ]);
+
+    const flagA = (await table('Bandera → País')).closest('section');
+    expect(flagA).toHaveTextContent('Países dominados: 0/195');
+  });
+
+  it('HIS-04 D29 rounds saved without the countries asked do not count', async () => {
+    renderProgress([
+      played('FLAG-A', 'europe', 1, 10, 3),
+      played('FLAG-A', 'europe', 1, 10, 3),
+      played('FLAG-A', 'europe', 1, 10, 3),
+    ]);
+
+    const flagA = (await table('Bandera → País')).closest('section');
+    expect(flagA).toHaveTextContent('Países dominados: 0/195');
+  });
+
+  it('HIS-04 NFR-06 in English: "Countries mastered: 0/195"', async () => {
+    localStorage.setItem('miatlas67.language', 'en');
+    renderProgress([]);
+
+    expect(await screen.findAllByText('Countries mastered: 0/195')).toHaveLength(6);
   });
 });
