@@ -149,18 +149,16 @@ describe('masteryOf with the bundled data', () => {
     }
   });
 
-  it('HIS-04 CAP-02 the Capitals games count 47 extended entities: 52 minus Gibraltar, Hong Kong, Macao, Chipre del Norte and Tokelau', () => {
+  it('HIS-04 CAP-02 D32 the Capitals games count 48 extended entities: 52 minus Gibraltar, Hong Kong, Macao and Tokelau', () => {
     const withoutCapital = extendedEntities
       .filter((extended) => extended.capital === null)
       .map((extended) => extended.name.es)
       .sort();
-    expect(withoutCapital).toEqual(
-      ['Chipre del Norte', 'Gibraltar', 'Hong Kong', 'Macao', 'Tokelau'].sort(),
-    );
+    expect(withoutCapital).toEqual(['Gibraltar', 'Hong Kong', 'Macao', 'Tokelau'].sort());
     for (const game of ['CAP-A', 'CAP-B'] as const) {
       expect(masteryOf([], game, allEntities, 'extended'), game).toEqual({
         mastered: 0,
-        total: 47,
+        total: 48,
       });
     }
   });

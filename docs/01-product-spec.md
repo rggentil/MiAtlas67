@@ -1,6 +1,6 @@
 # MiAtlas67 — Product Specification
 
-> **Status: APPROVED v1.17** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
+> **Status: APPROVED v1.18** — agreed baseline (2026-11-17). Any later change is agreed first and recorded in
 > [§18 Change log](#18-change-log).
 > Last updated: 2026-11-20
 
@@ -85,7 +85,8 @@ Each topic is played in both directions, which makes **six games**:
   answer and never shows a capital twice. Names are compared without case, accents, spaces or hyphens. Only these
   entities share a quiz capital (D30): Reino Unido and Inglaterra → Londres; Aruba and San Eustaquio → Oranjestad;
   Jamaica and Isla Norfolk → Kingston, and Guyana and Islas Caimán → Georgetown / George Town (different towns with
-  the same name). Chipre del Norte is not in Capitals games (D30).
+  the same name). Chipre (Nicosia) and Chipre del Norte (Nicosia del Norte) have different quiz capitals, so one
+  can be a wrong option for the other (D32).
 
 ## 7. Levels and difficulty
 
@@ -317,11 +318,13 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 | D29 | Mastered entities | ✅ An entity is mastered while its last 3 answers in a game were correct; a miss takes it out until it is answered right 3 times in a row again, so the counter can go down. Rounds saved before the counter arrived have no list of the entities asked and do not count (HIS-04) |
 | D30 | Extended set review (#93) | ✅ Reviewed in a [review page](https://claude.ai/artifact/N7fZE1GUqZAL2WWiPQozWy): 52 entities with their names, articles, capitals, flags, statuses, land borders and similar flags. Azores and Madeira are left out: for the family they are Portugal, not a territory of their own (DATA-07). Capitals: Islas Malvinas → «Puerto Argentino/Stanley» (en: «Stanley»); Montserrat → Brades, the de facto one (Plymouth as extra info); Guam → «Agaña» (en: «Hagåtña»); Zanzíbar → «Ciudad de Zanzíbar» (en: «Zanzibar City»); Bougainville → Buka (Arawa as extra info); Inglaterra → Londres and San Eustaquio → Oranjestad, shared with Reino Unido and Aruba, Isla Norfolk → Kingston and Islas Caimán → George Town, towns with the same name as the capitals of Jamaica and Guyana (Georgetown), so a Capitals question never offers both of a pair (CAP-03); Chipre del Norte, Gibraltar, Hong Kong, Macao and Tokelau have none (CAP-02). Nueva Caledonia shows the Kanak flag (the French one is already France's). Articles (DATA-09): «la» Isla de Man, Isla Norfolk and Polinesia Francesa, «el» Sahara Occidental and Kurdistán iraquí; Bermudas goes without one («de Bermudas», like D18). Similar flags at level 4: the reviewed groups, with Jersey among the red crosses on white (with Inglaterra, Guernsey and Georgia), and every flag with a crescent and a star in one group (Turquía, Túnez, Chipre del Norte, Argelia, Azerbaiyán, Mauritania, Pakistán, Malasia, Singapur, Turkmenistán, Uzbekistán, Libia, Comoras and Sahara Occidental) |
 | D31 | Silhouettes of the extended set (#94) | ✅ Reviewed in a [review page](https://claude.ai/artifact/XDR9sXBFiqNJnMJUrsnUQV): the 50 silhouettes of the extended set, drawn with the rules of D25. Every entity of the set is shape-eligible except Puntland and Jubalandia (SHAPE-04). Sahara Occidental is drawn whole, as maps draw it, not only the strip east of the berm (Natural Earth's de facto line); Marruecos is cut at 27° 40′ N, so at every level its silhouette leaves out the whole Western Sahara, as D25 says. With all their islands, like Kiribati: Polinesia Francesa (with the Austral Islands) and Islas Cook (with the northern group). Santa Elena is the island alone, without Ascension and Tristan da Cunha (SHAPE-02). Transnistria with Bender, the line it controls de facto. Tokelau is drawn with the 2 atolls Natural Earth has (Nukunonu is missing). Serbia, Somalia and Cyprus are still drawn whole (D25); at level 4, Kosovo, Somalilandia and Chipre del Norte also have their own silhouettes |
+| D32 | Chipre del Norte and the crescent flags (#104) | ✅ Left to the team by the product owner (2026-11-20). Chipre del Norte joins the Capitals games with «Nicosia del Norte» (en: «North Nicosia»; Lefkoşa in Turkish), the northern half of the divided city, which it declares its capital; the name differs from Chipre's «Nicosia», so each question keeps one right answer (CAP-03). This replaces "none" for it in D30. The crescent-and-star group of similar flags (D30) stays at level 4: at Difícil the groups are flags that look alike, and of those flags only Turquía and Túnez do (D15) |
 
 No open questions.
 
 ## 18. Change log
 
+- **v1.18** (2026-11-20): Chipre del Norte's quiz capital is Nicosia del Norte (CAP-03, D32, story #104).
 - **v1.17** (2026-11-20): HIS-04 names the counter of the extended entities and says that each game counts only
   the entities it can ask (story #95).
 - **v1.16** (2026-11-20): silhouettes of the extended set reviewed (D31, story #94): Western Sahara whole and
@@ -384,7 +387,7 @@ fills in codes, capitals and sources, and may drop an entity that fails DATA-07.
 | Abjasia *(Abkhazia)* | Flag from Wikimedia Commons |
 | Osetia del Sur *(South Ossetia)* | Flag from Wikimedia Commons |
 | Transnistria | Flag from Wikimedia Commons |
-| Chipre del Norte *(Northern Cyprus)* | Not in Capitals games (CAP-03, D30) |
+| Chipre del Norte *(Northern Cyprus)* | Capital: Nicosia del Norte *(North Nicosia)*, not Chipre's Nicosia (CAP-03, D32) |
 | Somalilandia *(Somaliland)* | Flag from Wikimedia Commons |
 
 ### A.2 `territory` — dependent and overseas territories (31)
