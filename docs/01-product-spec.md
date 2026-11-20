@@ -252,6 +252,7 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 
 - **NFR-01** Mobile-first responsive; supported browsers: latest Chrome (Android, desktop), Safari (iOS) and Edge.
 - **NFR-02** *(Should)* Fully playable offline after the first load; installable on the home screen (PWA).
+  Installable part, done early (D24, story #74): a web manifest named "MiAtlas67" with its icons and the iOS meta tags, so it opens full screen from the home screen on «¿Quién juega?». Playing offline (service worker) stays in epic 7.
 - **NFR-03** Usable within 2 s on a mid-range phone over Wi-Fi; answer feedback feels instant (< 100 ms).
 - **NFR-04** Privacy by design (GDPR/AVG): all data stays on the device. Only nickname, avatar and game results
   are stored. No analytics, ads, cookies or third-party calls at runtime. Deleting a profile deletes its data.
@@ -298,6 +299,7 @@ No open questions.
 
 ## 18. Change log
 
+- **v1.12** (2026-11-20): the installable part of NFR-02 is built early (D24, story #74): web manifest, icons and iOS meta tags; offline play stays in epic 7.
 - **v1.11** (2026-11-19): D25 decided in the shapes review: overseas exceptions, de facto lines, the Canary
   Islands box, islands always visible (SHAPE-01, SHAPE-02) and microstates kept in the Shapes games (SHAPE-03) · Vatican City outline from OpenStreetMap (DATA-05).
 - **v1.10** (2026-11-18): D24 decided: the home screen install comes as a small story in a later epic (#74), so iPhone keeps the players and history.

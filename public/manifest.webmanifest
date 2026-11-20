@@ -1,0 +1,16 @@
+{
+  "name": "MiAtlas67",
+  "short_name": "MiAtlas67",
+  "description": "Juego de geografía: banderas, capitales y siluetas de países.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#cfe6ff",
+  "theme_color": "#cfe6ff",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
