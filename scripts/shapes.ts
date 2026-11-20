@@ -9,7 +9,7 @@ import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { geoArea, geoAzimuthalEqualArea, geoCentroid, geoDistance, geoPath } from 'd3-geo';
 import type { GeoProjection } from 'd3-geo';
-import type { Feature, MultiPolygon, Polygon, Position } from 'geojson';
+import type { Feature, FeatureCollection, MultiPolygon, Polygon, Position } from 'geojson';
 import { merge } from 'topojson-client';
 import type { GeometryCollection, Topology } from 'topojson-specification';
 
@@ -51,13 +51,24 @@ export interface Override {
   readonly gapKm?: number;
   /** Natural Earth pieces named here are drawn together with the country (de facto vs official lines). */
   readonly mergeWith?: readonly string[];
-  /** The outline to draw instead of world-atlas, when its rounding flattens a tiny country. */
+  /**
+   * The outline to draw instead of world-atlas: when its rounding flattens a tiny country, or when the product
+   * owner chose another line than Natural Earth's (Morocco and the Western Sahara, D31).
+   */
   readonly outline?: readonly Position[];
   /** The overseas pieces are drawn in a small framed box in the bottom-left corner, as in the maps of Spain. */
   readonly inset?: boolean;
 }
 
-/** Changes to the default rule, each one decided by the product owner in the shapes review (#79, D25). */
+/**
+ * Morocco and the Western Sahara split at 27° 40′ N (D31), from world-atlas Morocco and "W. Sahara" with mapshaper:
+ * Natural Earth draws the de facto line, so its Morocco takes in the west of the territory. See SOURCES.md.
+ */
+const westernSahara = JSON.parse(
+  readFileSync(join(root, 'scripts', 'data', 'western-sahara.json'), 'utf8'),
+) as { MA: Position[]; EH: Position[] };
+
+/** Changes to the default rule, each one decided by the product owner in the shapes reviews (#79, D25; #94, D31). */
 export const OVERRIDES: Readonly<Record<string, Override>> = {
   // Malaysia: Borneo (Sabah and Sarawak) is ~600 km from the peninsula and part of the main territory.
   MY: { gapKm: 800 },
@@ -82,9 +93,32 @@ export const OVERRIDES: Readonly<Record<string, Override>> = {
   // Seychelles: the granitic islands around Mahé, as maps of the country show it; the far atolls are specks.
   SC: { gapKm: 100 },
   RS: { mergeWith: ['Kosovo'] },
+  // Morocco without the Western Sahara (D25), and the Western Sahara whole, as maps draw it (D31).
+  MA: { outline: westernSahara.MA },
+  EH: { outline: westernSahara.EH },
+  // Territories spread over the ocean, like Kiribati: French Polynesia with the Austral Islands, the Cook
+  // Islands with the northern group (D31).
+  PF: { gapKm: 2500 },
+  CK: { gapKm: 1500 },
 };
 
 const geometries = topology.objects.countries.geometries;
+
+/** Extended entities that world-atlas has under a name instead of an ISO numeric code (#94). */
+const WORLD_ATLAS_NAMES: Readonly<Record<string, string>> = {
+  XK: 'Kosovo',
+  XC: 'N. Cyprus',
+  XS: 'Somaliland',
+  'SH-HL': 'Saint Helena',
+};
+
+/**
+ * Extended entities that world-atlas does not have (the UK nations, Abjasia, Zanzíbar…): Natural Earth 1:10m
+ * admin-1 units and disputed areas, dissolved per entity. Provenance in src/assets/shapes/SOURCES.md.
+ */
+const naturalEarth = JSON.parse(
+  readFileSync(join(root, 'scripts', 'data', 'extended-ne.json'), 'utf8'),
+) as FeatureCollection<Polygon | MultiPolygon, { code: string }>;
 
 function countryGeometry(
   code: string,
@@ -97,8 +131,17 @@ function countryGeometry(
       geometry: { type: 'Polygon', coordinates: [[...override.outline]] },
     };
   }
+  const extract = naturalEarth.features.find((feature) => feature.properties.code === code);
+  if (extract) return { type: 'Feature', properties: {}, geometry: extract.geometry };
+  const name = WORLD_ATLAS_NAMES[code];
   const numeric = iso.alpha2ToNumeric(code);
-  const own = geometries.filter((geometry) => geometry.id === numeric);
+  const own = geometries.filter((geometry) =>
+    name === undefined
+      ? geometry.id === numeric
+      : geometry.properties !== undefined &&
+        'name' in geometry.properties &&
+        geometry.properties.name === name,
+  );
   if (own.length === 0)
     throw new Error(`Natural Earth has no shape for ${code} (${String(numeric)})`);
   const extra = (override?.mergeWith ?? []).map((name) => {

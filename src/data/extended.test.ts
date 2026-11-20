@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { flagFileName, isCapitalEligible, REGIONS, type Entity } from '../domain/entity.ts';
+import {
+  flagFileName,
+  isCapitalEligible,
+  REGIONS,
+  shapeFileName,
+  type Entity,
+} from '../domain/entity.ts';
 import { capitalKey, generateRound, LEVELS, REGION_CHOICES, TOPICS } from '../domain/questions.ts';
 import { createRng } from '../domain/random.ts';
 import { countries } from './countries.ts';
@@ -11,6 +17,20 @@ import { extendedFlagGroups, similarFlagGroups } from './similarFlags.ts';
 const bundledFlags = new Set(
   Object.keys(import.meta.glob('../assets/flags/*.svg')).map((path) => path.split('/').pop()),
 );
+
+/** The bundled silhouettes (SHAPE-02), by file name, with their SVG text. */
+const bundledShapes = new Map(
+  Object.entries(
+    import.meta.glob<string>('../assets/shapes/*.svg', {
+      eager: true,
+      query: '?raw',
+      import: 'default',
+    }),
+  ).map(([path, svg]) => [path.split('/').pop(), svg]),
+);
+
+/** A silhouette bigger than this would weigh too much on a phone, as for the 195 countries. */
+const MAX_SHAPE_BYTES = 20_000;
 
 const flagSources = Object.values(
   import.meta.glob<string>('../assets/flags/SOURCES.md', {
@@ -291,10 +311,30 @@ describe('extended set dataset', () => {
     });
   });
 
-  it('SHAPE-04 Puntland and Jubalandia are not in the Shapes games', () => {
+  it('SHAPE-04 Puntland and Jubalandia are not in the Shapes games, and have no silhouette', () => {
     const notEligible = extendedEntities.filter((entity) => !entity.shapeEligible);
     expect(sorted(codes(notEligible))).toEqual(['XJ', 'XP']);
+    expect(notEligible.map(shapeFileName).filter((file) => bundledShapes.has(file))).toEqual([]);
   });
+
+  it('DATA-05 DATA-06 SHAPE-02 every shape-eligible extended entity has a bundled silhouette, small enough for a phone', () => {
+    const eligible = extendedEntities.filter((entity) => entity.shapeEligible);
+    expect(eligible).toHaveLength(50);
+    expect(eligible.map(shapeFileName).filter((file) => !bundledShapes.has(file))).toEqual([]);
+    const tooBig = eligible.filter(
+      (entity) => (bundledShapes.get(shapeFileName(entity))?.length ?? 0) > MAX_SHAPE_BYTES,
+    );
+    expect(codes(tooBig)).toEqual([]);
+  });
+
+  it.each(['PF', 'CK', 'TK', 'AS', 'MP'])(
+    'SHAPE-01 the islands of %s are drawn with an outline, so each one shows at least as a dot',
+    (code) => {
+      expect(bundledShapes.get(`${code.toLowerCase()}.svg`)).toMatch(
+        /<path [^>]*stroke-width="[3-9]"[^>]*d="M/,
+      );
+    },
+  );
 
   it('DATA-05 DATA-06 every flag file exists in the bundle', () => {
     const missing = extendedEntities.map(flagFileName).filter((file) => !bundledFlags.has(file));
