@@ -9,7 +9,7 @@ import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { geoArea, geoAzimuthalEqualArea, geoCentroid, geoDistance, geoPath } from 'd3-geo';
 import type { GeoProjection } from 'd3-geo';
-import type { Feature, MultiPolygon, Polygon, Position } from 'geojson';
+import type { Feature, FeatureCollection, MultiPolygon, Polygon, Position } from 'geojson';
 import { merge } from 'topojson-client';
 import type { GeometryCollection, Topology } from 'topojson-specification';
 
@@ -86,6 +86,22 @@ export const OVERRIDES: Readonly<Record<string, Override>> = {
 
 const geometries = topology.objects.countries.geometries;
 
+/** Extended entities that world-atlas has under a name instead of an ISO numeric code (#94). */
+const WORLD_ATLAS_NAMES: Readonly<Record<string, string>> = {
+  XK: 'Kosovo',
+  XC: 'N. Cyprus',
+  XS: 'Somaliland',
+  'SH-HL': 'Saint Helena',
+};
+
+/**
+ * Extended entities that world-atlas does not have (the UK nations, Abjasia, Zanzíbar…): Natural Earth 1:10m
+ * admin-1 units and disputed areas, dissolved per entity. Provenance in src/assets/shapes/SOURCES.md.
+ */
+const naturalEarth = JSON.parse(
+  readFileSync(join(root, 'scripts', 'data', 'extended-ne.json'), 'utf8'),
+) as FeatureCollection<Polygon | MultiPolygon, { code: string }>;
+
 function countryGeometry(
   code: string,
   override: Override | undefined,
@@ -97,8 +113,17 @@ function countryGeometry(
       geometry: { type: 'Polygon', coordinates: [[...override.outline]] },
     };
   }
+  const extract = naturalEarth.features.find((feature) => feature.properties.code === code);
+  if (extract) return { type: 'Feature', properties: {}, geometry: extract.geometry };
+  const name = WORLD_ATLAS_NAMES[code];
   const numeric = iso.alpha2ToNumeric(code);
-  const own = geometries.filter((geometry) => geometry.id === numeric);
+  const own = geometries.filter((geometry) =>
+    name === undefined
+      ? geometry.id === numeric
+      : geometry.properties !== undefined &&
+        'name' in geometry.properties &&
+        geometry.properties.name === name,
+  );
   if (own.length === 0)
     throw new Error(`Natural Earth has no shape for ${code} (${String(numeric)})`);
   const extra = (override?.mergeWith ?? []).map((name) => {
