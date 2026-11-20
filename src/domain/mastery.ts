@@ -1,4 +1,4 @@
-import type { Entity } from './entity.ts';
+import { isCountry, type Entity } from './entity.ts';
 import { GAMES, type GameId } from './games.ts';
 import { isEligible } from './questions.ts';
 
@@ -22,8 +22,8 @@ export interface Mastery {
   readonly total: number;
 }
 
-/** The categories counted as countries: the 195 of levels 1–3 (spec §13.2). */
-const COUNTRY_CATEGORIES = new Set(['un-member', 'un-observer']);
+/** Which entities a counter counts: the 195 countries, or the extended set of level 4 apart (HIS-04). */
+export type MasterySet = 'countries' | 'extended';
 
 /**
  * The codes mastered in `game` (HIS-04, D29): entities whose last 3 answers there, in any region and level, were
@@ -47,21 +47,25 @@ export function masteredCodes(rounds: readonly AnsweredRound[], game: GameId): S
 
 /**
  * "Países dominados: 37/195" for `game` (HIS-04): the countries mastered out of the countries of `entities` the
- * game can ask. Extended entities are counted apart, with level 4 Experto.
+ * game can ask. With `'extended'`, the extended entities instead, counted apart (level 4 Experto):
+ * "Territorios y otros dominados: 3/52".
  */
 export function masteryOf(
   rounds: readonly AnsweredRound[],
   game: GameId,
   entities: readonly Entity[],
+  set: MasterySet = 'countries',
 ): Mastery {
   const topic = GAMES.find((candidate) => candidate.id === game)?.topic;
-  const countries = entities.filter(
+  const counted = entities.filter(
     (entity) =>
-      COUNTRY_CATEGORIES.has(entity.category) && topic !== undefined && isEligible(entity, topic),
+      isCountry(entity) === (set === 'countries') &&
+      topic !== undefined &&
+      isEligible(entity, topic),
   );
   const mastered = masteredCodes(rounds, game);
   return {
-    mastered: countries.filter((country) => mastered.has(country.code)).length,
-    total: countries.length,
+    mastered: counted.filter((entity) => mastered.has(entity.code)).length,
+    total: counted.length,
   };
 }

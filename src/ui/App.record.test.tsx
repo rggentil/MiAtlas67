@@ -10,7 +10,7 @@ import type { GameStore, PlayerData } from '../storage/store.ts';
 import { deviceWith, LUCIA, renderApp } from '../test/app.tsx';
 
 const PABLO: PlayerData = { nickname: 'Pablo', avatar: 'owl' };
-const LEVEL_NAMES = { 1: 'Fácil', 2: 'Medio', 3: 'Difícil' } as const;
+const LEVEL_NAMES = { 1: 'Fácil', 2: 'Medio', 3: 'Difícil', 4: 'Experto' } as const;
 
 /** The first `count` rounds of a visit with ?seed=42 in "Europa" at `level`. */
 function rounds(level: Level, count: number): Question[][] {

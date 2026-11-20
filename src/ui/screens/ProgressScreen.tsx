@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from 'react';
-import { countries } from '../../data/countries.ts';
+import { allEntities } from '../../data/rounds.ts';
 import { GAMES, type GameId } from '../../domain/games.ts';
 import { masteryOf, type AnsweredRound, type Mastery } from '../../domain/mastery.ts';
 import {
@@ -30,12 +30,13 @@ const PROGRESS_GAMES = GAMES.filter(isPlayable).map((game) => game.id);
 /**
  * "Progreso" (HIS-03): the total stars of the player who plays, and one table per game with the best stars of
  * every region and level (SCR-03, GAME-02), or "Sin jugar". A screen reader reads "Europa, Fácil, 3 de 3
- * estrellas"; the stars are drawn and also written. Each game says how many countries are mastered (HIS-04).
+ * estrellas"; the stars are drawn and also written. Each game says how many countries are mastered and, apart,
+ * how many extended entities (HIS-04).
  */
 export function ProgressScreen({ loadRounds, onBack }: ProgressScreenProps) {
   const { t } = useI18n();
   const [progress, setProgress] = useState<readonly GameProgress[] | null>(null);
-  const [mastery, setMastery] = useState<ReadonlyMap<GameId, Mastery>>(new Map());
+  const [mastery, setMastery] = useState<ReadonlyMap<GameId, GameMastery>>(new Map());
 
   useOnBack(onBack);
 
@@ -48,7 +49,15 @@ export function ProgressScreen({ loadRounds, onBack }: ProgressScreenProps) {
         if (!live) return;
         setProgress(progressOf(rounds, PROGRESS_GAMES));
         setMastery(
-          new Map(PROGRESS_GAMES.map((game) => [game, masteryOf(rounds, game, countries)])),
+          new Map(
+            PROGRESS_GAMES.map((game) => [
+              game,
+              {
+                countries: masteryOf(rounds, game, allEntities, 'countries'),
+                extended: masteryOf(rounds, game, allEntities, 'extended'),
+              },
+            ]),
+          ),
         );
       });
     return () => {
@@ -81,8 +90,14 @@ export function ProgressScreen({ loadRounds, onBack }: ProgressScreenProps) {
   );
 }
 
+/** A game's countries mastered and, apart, its extended entities mastered (HIS-04). */
+interface GameMastery {
+  readonly countries: Mastery;
+  readonly extended: Mastery;
+}
+
 /** One game: a heading that names its table, a row per region and a column per level. */
-function ProgressTable({ progress, mastery }: { progress: GameProgress; mastery?: Mastery }) {
+function ProgressTable({ progress, mastery }: { progress: GameProgress; mastery?: GameMastery }) {
   const { t } = useI18n();
   const headingId = useId();
 
@@ -92,9 +107,20 @@ function ProgressTable({ progress, mastery }: { progress: GameProgress; mastery?
         {t(`game.${progress.game}.name`)}
       </h2>
       {mastery && (
-        <p className="text-base font-extrabold text-ink-muted tabular-nums">
-          {t('progress.mastered', { n: mastery.mastered, total: mastery.total })}
-        </p>
+        <div className="text-base font-extrabold text-ink-muted tabular-nums">
+          <p>
+            {t('progress.mastered', {
+              n: mastery.countries.mastered,
+              total: mastery.countries.total,
+            })}
+          </p>
+          <p>
+            {t('progress.masteredExtended', {
+              n: mastery.extended.mastered,
+              total: mastery.extended.total,
+            })}
+          </p>
+        </div>
       )}
       <div className="overflow-hidden rounded-block border-3 border-ink bg-paper shadow-block-sm">
         <table aria-labelledby={headingId} className="w-full table-fixed border-collapse">

@@ -117,4 +117,20 @@ describe('masteryOf', () => {
 
     expect(masteryOf(rounds, 'FLAG-A', countries)).toEqual({ mastered: 0, total: 1 });
   });
+
+  it('HIS-04 the extended entities mastered are counted apart, out of those the game can ask', () => {
+    const entities = [
+      entity('PT'),
+      entity('GI', { category: 'territory', capital: null }),
+      entity('XK', { category: 'limited-recognition' }),
+      entity('XP', { category: 'subnational', shapeEligible: false }),
+    ];
+    const rounds = [round(1, ['GI', 'PT']), round(2, ['GI', 'PT']), round(3, ['GI', 'PT'])];
+
+    expect(masteryOf(rounds, 'FLAG-A', entities, 'extended')).toEqual({ mastered: 1, total: 3 });
+    expect(masteryOf(rounds, 'FLAG-A', entities, 'countries')).toEqual({ mastered: 1, total: 1 });
+    // CAP-02 and SHAPE-04: Gibraltar has no quiz capital, Puntland no silhouette.
+    expect(masteryOf([], 'CAP-A', entities, 'extended')).toEqual({ mastered: 0, total: 2 });
+    expect(masteryOf([], 'SHAPE-A', entities, 'extended')).toEqual({ mastered: 0, total: 2 });
+  });
 });
