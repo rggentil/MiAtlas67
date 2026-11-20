@@ -14,6 +14,8 @@ export class SummaryPage {
   readonly menuButton: Locator;
   /** "¡Nuevo récord!": the player beat their best in this game, region and level (RND-08, D23). */
   readonly newRecord: Locator;
+  /** "¡Nivel desbloqueado! Medio": the round opened the next level (RND-08, LVL-04). */
+  readonly unlocked: Locator;
   private readonly page: Page;
 
   constructor(page: Page) {
@@ -25,6 +27,7 @@ export class SummaryPage {
     this.playAgainButton = page.getByRole('button', { name: 'Jugar otra vez' });
     this.menuButton = page.getByRole('button', { name: 'Menú' });
     this.newRecord = page.getByRole('status').getByText('¡Nuevo récord!', { exact: true });
+    this.unlocked = page.getByRole('status').getByText(/^¡Nivel desbloqueado!/);
   }
 
   /** The picture (flag, or silhouette in the Shapes games) of the n-th missed entity (from 0). Its alt text is empty, next to the name, so it has no role. */
