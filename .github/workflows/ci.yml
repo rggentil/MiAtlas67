@@ -43,10 +43,39 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: npm run trace
 
+  # The one place that holds the Playwright version is package-lock.json. This job reads it
+  # (no npm ci needed) so the E2E container image below always matches @playwright/test.
+  playwright-version:
+    name: Playwright version for the E2E image
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.lock.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: lock
+        run: |
+          version=$(jq -r '.packages["node_modules/@playwright/test"].version' package-lock.json)
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Could not read a release version of @playwright/test from package-lock.json (got '$version'). The E2E image tag needs one."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
   e2e:
     name: E2E (mobile-chrome, mobile-safari, desktop-chrome)
+    needs: playwright-version
+    # Runs even when the version job fails: then the image tag has no version, the pull fails and this required
+    # check fails too. A job skipped for a failed dependency would count as passed for branch protection.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Official Playwright image: browsers and their system libraries are already inside,
+    # so this job installs no apt packages and no browsers. The tag follows @playwright/test.
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.playwright-version.outputs.version }}-noble
+      # Recommended by Playwright for GitHub Actions: the runner's own user (uid 1001).
+      options: --user 1001
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -54,18 +83,6 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - name: Cache Playwright browsers
-        id: pw-cache
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-      - name: Install Playwright browsers and system dependencies
-        if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium webkit
-      - name: Install system dependencies only (browsers cached)
-        if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium webkit
       - run: npm run test:e2e
       - name: Upload Playwright report and traces
         if: failure()
