@@ -239,7 +239,8 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 
 - **SET-01** Language: Español (default) / English. It applies to the whole UI, entity names and capitals.
   The choice is stored on the device and applies to all profiles.
-- **SET-02** *(Should)* Sound on/off.
+- **SET-02** *(Should)* Sound on/off: on the first time, stored on the device for all profiles, like the language
+  (D35).
 
 ## 15. UX and visual principles
 
@@ -321,11 +322,13 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 | D32 | Chipre del Norte and the crescent flags (#104) | ✅ Left to the team by the product owner (2026-11-20). Chipre del Norte joins the Capitals games with «Nicosia del Norte» (en: «North Nicosia»; Lefkoşa in Turkish), the northern half of the divided city, which it declares its capital; the name differs from Chipre's «Nicosia», so each question keeps one right answer (CAP-03). This replaces "none" for it in D30. The crescent-and-star group of similar flags (D30) stays at level 4: at Difícil the groups are flags that look alike, and of those flags only Turquía and Túnez do (D15) |
 | D33 | "Acerca de" (#107) | ✅ Approved by the product owner (2026-11-23, questions P1–P3 of epic 7). One credit per source with its original name, its licence and, where the licence asks for it, its author, with every address written out as text: nothing is fetched (NFR-04). Sections «Banderas», «Siluetas», «Animales» and «Territorios y nombres» (en: Flags, Silhouettes, Animals, Territories and names); the 15 Wikimedia Commons flags are a list that opens and closes. Neutrality (DATA-08): «Incluir un territorio, un estado con reconocimiento limitado o una región autónoma refleja su geografía y su bandera, no una posición política.» and «Los nombres son las formas neutras más usadas.» The licensors' credit lines keep their original wording in both languages. It opens without a player, from the footer of the home screen and of «¿Quién juega?», and «Volver» or Back returns to the screen it was opened from (NAV-01). Fonts, libraries and the app version are not listed |
 | D34 | Atlas (#109) | ✅ Approved by the product owner (2026-11-23, questions P7–P9 of epic 7). "Atlas" opens without a player, from the footer of the home screen and of «¿Quién juega?», next to "Acerca de"; it asks «¿Qué región quieres ver?» with "Mundo" and the five regions. A region lists its countries, then a section «Territorios y otros» with its extended entities, each list in alphabetical order of the language shown. Each entry shows the flag, the name, the quiz capital, «Otras capitales» when there are more (DATA-03), the status of an extended entity (DATA-08) and the silhouette; an entity without a capital (CAP-02) or a silhouette (SHAPE-04) shows none, with no empty box. «Volver» or Back goes from a region to the regions, and from the regions to the screen the Atlas was opened from (NAV-01). Nothing is scored or saved (ATL-02). No search, no detail screen, no quiz from the Atlas |
+| D35 | Sound (#108) | ✅ Approved by the product owner (2026-11-23, questions P4–P6 of epic 7). Three short sounds: a correct answer, a soft wrong answer (D16) and the end of a round, when the summary opens. They are synthesized in the browser (Web Audio), so there is no sound file to license or download. The sound is on the first time; the switch «Sonido» sits in the footer of the home screen and of «¿Quién juega?», next to «Idioma», shows whether it is on with an icon besides its colour, and is stored on the device for every player, like the language (SET-01). Blocked storage or a browser that cannot play sound never breaks the game, and a sound never delays the ✓ or ✗ of an answer (NFR-03) |
 
 No open questions.
 
 ## 18. Change log
 
+- **v1.21** (2026-11-23): sound effects and the «Sonido» switch (SET-02, RND-04, RND-08, D35, story #108).
 - **v1.20** (2026-11-23): the Atlas: entry points, "Mundo", order and entry contents (ATL-01, ATL-02, DATA-03, DATA-08, D34, story #109).
 - **v1.19** (2026-11-23): the "Acerca de" screen: credits, sections and neutrality sentences; it opens without a
   player (DATA-05, DATA-08, NAV-01, D33, story #107).

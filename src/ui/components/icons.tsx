@@ -159,3 +159,25 @@ export function StarIcon({ filled, size = 22 }: { filled: boolean; size?: number
     </svg>
   );
 }
+
+/** A speaker with sound waves: the sound is on (SET-02). */
+export function SoundOnIcon(props: IconProps) {
+  return (
+    <StrokeIcon {...props}>
+      <path d="M4 9.5h3.5L12 5v14l-4.5-4.5H4z" />
+      <path d="M15.5 9a4 4 0 0 1 0 6" />
+      <path d="M18.5 6.5a7.5 7.5 0 0 1 0 11" />
+    </StrokeIcon>
+  );
+}
+
+/** A speaker crossed out: the sound is off (SET-02). */
+export function SoundOffIcon(props: IconProps) {
+  return (
+    <StrokeIcon {...props}>
+      <path d="M4 9.5h3.5L12 5v14l-4.5-4.5H4z" />
+      <path d="M16 9.5l5 5" />
+      <path d="M21 9.5l-5 5" />
+    </StrokeIcon>
+  );
+}

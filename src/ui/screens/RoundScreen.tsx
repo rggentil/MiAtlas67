@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type Ref } from 'react';
+import { flushSync } from 'react-dom';
 import type { Entity } from '../../domain/entity.ts';
 import { formatProgress } from '../../domain/progress.ts';
 import type { Question, RoundSettings } from '../../domain/questions.ts';
@@ -13,6 +14,7 @@ import {
   type RoundResult,
 } from '../../domain/round.ts';
 import { useI18n } from '../../i18n/context.ts';
+import { useSound } from '../../sound/context.ts';
 import type { Language } from '../../i18n/languages.ts';
 import { nameInSentence, ofName, ofWords, wasWords } from '../../i18n/names.ts';
 import { useOnBack } from '../navigation/useOnBack.ts';
@@ -65,6 +67,7 @@ function optionState(option: Entity, question: Question, chosen: string | null):
  */
 export function RoundScreen({ game, settings, questions, onQuit, onFinish }: RoundScreenProps) {
   const { t, language } = useI18n();
+  const { play } = useSound();
   const [state, setState] = useState(() => startRound(questions));
   const [quitting, setQuitting] = useState(false);
   const quitRef = useRef<HTMLButtonElement>(null);
@@ -105,9 +108,27 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
     setQuitting(false);
   }
 
+  /**
+   * An option tapped: the feedback is on screen first, then its sound plays (RND-04, D35), so the ✓ or ✗ never
+   * waits for it (NFR-03). The sound still starts inside the tap, as browsers require. Once answered, the
+   * disabled options play nothing.
+   */
+  function choose(code: string) {
+    if (chosen !== null) return;
+    flushSync(() => {
+      setState(answer(state, code));
+    });
+    play(code === question.entity.code ? 'correct' : 'wrong');
+  }
+
   function goOn() {
-    if (number === total) onFinish(roundResult(state));
-    else setState(next(state));
+    if (number === total) {
+      flushSync(() => {
+        onFinish(roundResult(state));
+      });
+      // The summary opens with the end-of-round sound (RND-08, D35).
+      play('roundEnd');
+    } else setState(next(state));
   }
 
   return (
@@ -174,7 +195,7 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
                     label={t('round.option', { n: index + 1 })}
                     state={optionState(option, question, chosen)}
                     onChoose={() => {
-                      setState(answer(state, option.code));
+                      choose(option.code);
                     }}
                   />
                 ))}
@@ -233,7 +254,7 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
                     flag={game.id === 'CAP-B' && settings.level === 1 ? option : null}
                     state={optionState(option, question, chosen)}
                     onChoose={() => {
-                      setState(answer(state, option.code));
+                      choose(option.code);
                     }}
                   />
                 ))}
