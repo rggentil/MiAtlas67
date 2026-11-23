@@ -17,6 +17,7 @@ import {
 import { BackButtonProvider } from './navigation/BackButtonProvider.tsx';
 import { getGameSeed } from './gameSeed.ts';
 import type { PlayableGame } from './games.ts';
+import { AboutScreen } from './screens/AboutScreen.tsx';
 import { GameSetupScreen } from './screens/GameSetupScreen.tsx';
 import { HistoryScreen } from './screens/HistoryScreen.tsx';
 import { HomeScreen } from './screens/HomeScreen.tsx';
@@ -35,6 +36,8 @@ type Screen =
   | { readonly name: 'newPlayer' }
   | { readonly name: 'editPlayer'; readonly player: Player }
   | { readonly name: 'home' }
+  /** "Acerca de" opens with or without a player, and goes back to where it was opened (D33). */
+  | { readonly name: 'about'; readonly from: 'players' | 'home' }
   | { readonly name: 'history' }
   | { readonly name: 'progress' }
   | { readonly name: 'records' }
@@ -59,8 +62,11 @@ type Screen =
       readonly unlocked: Level | null;
     };
 
-/** The screens that need a player: all but "¿Quién juega?" and the player form. */
-type GameScreen = Exclude<Screen, { readonly name: 'players' | 'newPlayer' | 'editPlayer' }>;
+/** The screens that need a player: all but "¿Quién juega?", the player form and "Acerca de". */
+type GameScreen = Exclude<
+  Screen,
+  { readonly name: 'players' | 'newPlayer' | 'editPlayer' | 'about' }
+>;
 
 const PLAYERS: Screen = { name: 'players' };
 const HOME: Screen = { name: 'home' };
@@ -256,6 +262,15 @@ function Screens({ givenStore }: { givenStore: GameStore | undefined }) {
           onEdit={(edited) => {
             setScreen({ name: 'editPlayer', player: edited });
           }}
+          onOpenAbout={() => {
+            setScreen({ name: 'about', from: 'players' });
+          }}
+        />
+      ) : screen.name === 'about' ? (
+        <AboutScreen
+          onBack={() => {
+            setScreen(screen.from === 'home' && player ? HOME : PLAYERS);
+          }}
         />
       ) : screen.name === 'newPlayer' ? (
         <PlayerFormScreen
@@ -335,6 +350,9 @@ function CurrentScreen({
           }}
           onOpenRecords={() => {
             setScreen({ name: 'records' });
+          }}
+          onOpenAbout={() => {
+            setScreen({ name: 'about', from: 'home' });
           }}
           onBack={() => {
             setScreen(PLAYERS);

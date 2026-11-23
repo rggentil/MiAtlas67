@@ -20,6 +20,7 @@ function renderHome(
   onOpenHistory: () => void = vi.fn(),
   onOpenProgress: () => void = vi.fn(),
   onOpenRecords: () => void = vi.fn(),
+  onOpenAbout: () => void = vi.fn(),
 ) {
   renderWithI18n(
     <HomeScreen
@@ -29,12 +30,24 @@ function renderHome(
       onOpenHistory={onOpenHistory}
       onOpenProgress={onOpenProgress}
       onOpenRecords={onOpenRecords}
+      onOpenAbout={onOpenAbout}
       onBack={vi.fn()}
     />,
   );
 }
 
 describe('HomeScreen', () => {
+  it('DATA-05 D33 "Acerca de" in the footer, next to "Idioma", opens the credits', async () => {
+    const onOpenAbout = vi.fn();
+    renderHome(vi.fn(), LUCIA, vi.fn(), vi.fn(), vi.fn(), vi.fn(), onOpenAbout);
+
+    const footer = screen.getByRole('contentinfo');
+    expect(within(footer).getByRole('group', { name: 'Idioma' })).toBeVisible();
+    await userEvent.click(within(footer).getByRole('button', { name: 'Acerca de' }));
+
+    expect(onOpenAbout).toHaveBeenCalledOnce();
+  });
+
   it('HIS-02 "Historial" opens the history of the player', async () => {
     const onOpenHistory = vi.fn();
     renderHome(vi.fn(), LUCIA, vi.fn(), onOpenHistory);

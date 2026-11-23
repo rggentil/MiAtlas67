@@ -7,9 +7,9 @@ import { Button } from '../components/Button.tsx';
 import { ExitDialog } from '../components/ExitDialog.tsx';
 import { IconButton } from '../components/IconButton.tsx';
 import { EditIcon } from '../components/icons.tsx';
-import { LanguageSwitch } from '../components/LanguageSwitch.tsx';
 import { Logo } from '../components/Logo.tsx';
 import { ScreenTitle } from '../components/ScreenTitle.tsx';
+import { SettingsFooter } from '../components/SettingsFooter.tsx';
 import { useHoldEntries } from '../navigation/useHoldEntries.ts';
 import { useOnBack } from '../navigation/useOnBack.ts';
 
@@ -22,6 +22,8 @@ interface PlayersScreenProps {
   onNewPlayer: () => void;
   /** "Editar a Lucía": change the nickname or avatar, or delete the player (PRF-04). */
   onEdit: (player: Player) => void;
+  /** "Acerca de", which opens without choosing a player (D33). */
+  onOpenAbout: () => void;
 }
 
 /**
@@ -35,6 +37,7 @@ export function PlayersScreen({
   onChoose,
   onNewPlayer,
   onEdit,
+  onOpenAbout,
 }: PlayersScreenProps) {
   const { t } = useI18n();
   const titleId = useId();
@@ -112,9 +115,7 @@ export function PlayersScreen({
             </>
           )}
         </main>
-        <footer className="mt-auto pt-4 text-center">
-          <LanguageSwitch />
-        </footer>
+        <SettingsFooter onOpenAbout={onOpenAbout} />
       </div>
       {exiting && <ExitDialog onStay={stay} />}
     </>
