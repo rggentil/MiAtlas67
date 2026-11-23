@@ -53,7 +53,7 @@ export function ModalDialog({ title, text, onEscape, children }: ModalDialogProp
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={textId}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-block border-3 border-ink bg-paper p-5 shadow-block"
+        className="flex max-h-full w-full max-w-sm flex-col gap-4 overflow-y-auto rounded-block border-3 border-ink bg-paper p-5 shadow-block"
       >
         <h2 id={titleId} className="font-display text-3xl leading-tight">
           {title}

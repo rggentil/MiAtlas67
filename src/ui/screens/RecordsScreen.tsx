@@ -84,12 +84,12 @@ function RecordsTable({ records, players }: { records: GameRecords; players: rea
       <h2 id={headingId} className="font-display text-2xl">
         {t(`game.${records.game}.name`)}
       </h2>
-      {/* The table fills a 360 px phone (20.5rem); with larger text it grows with it and scrolls inside its box,
+      {/* The table fills a 360 px phone (20rem inside the box); with larger text it grows with it and scrolls inside its box,
           as a data table may (WCAG 1.4.10), instead of cutting its text off. */}
       <div className="overflow-x-auto rounded-block border-3 border-ink bg-paper shadow-block-sm">
         <table
           aria-labelledby={headingId}
-          className="w-full min-w-[20.5rem] table-fixed border-collapse"
+          className="w-full min-w-[20rem] table-fixed border-collapse"
         >
           <thead>
             <tr className="bg-sun">
@@ -154,10 +154,13 @@ function RecordCell({
       <span className="sr-only">
         {t('records.score', { n: record.score, total: record.total })}
       </span>
-      {/* Stacked, so a nickname fits in the narrow columns of four levels; a long one ends in "…". */}
+      {/* Stacked, so a nickname fits in the narrow columns of four levels; a long one ends in "…", with the
+          whole nickname in its title (a screen reader reads it whole anyway). */}
       <span className="flex max-w-full flex-col items-center gap-0.5">
         <AvatarImage avatar={holder.avatar} size={20} decorative />
-        <span className="block max-w-full truncate text-xs font-extrabold">{holder.nickname}</span>
+        <span title={holder.nickname} className="block max-w-full truncate text-xs font-extrabold">
+          {holder.nickname}
+        </span>
       </span>
     </span>
   );

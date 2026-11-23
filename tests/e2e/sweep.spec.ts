@@ -99,7 +99,7 @@ for (const [language, mode] of [
 
     test(
       `NFR-05 NFR-06 players: «¿Quién juega?» empty, with players and with 8, the player form with an error, "Editar jugador", "¿Borrar a Pablo?" and "¿Salir del juego?" · ${language} · ${mode}`,
-      { tag: ['@NFR-05', '@NFR-06'] },
+      { tag: mode === 'standard' ? ['@NFR-05', '@NFR-06'] : ['@NFR-05', '@NFR-06', '@NFR-01'] },
       async ({ page, makeAxeBuilder }) => {
         test.slow();
         await page.goto('/');
@@ -157,7 +157,7 @@ for (const [language, mode] of [
     for (const [index, game] of GAMES.entries()) {
       test(
         `NFR-05 NFR-06 a round of ${game.id} before and after a right and a wrong answer${index === 0 ? ', with the home screen, the setup steps (locked levels) and "Salir de la partida"' : ''} · ${language} · ${mode}`,
-        { tag: ['@NFR-05', '@NFR-06'] },
+        { tag: mode === 'standard' ? ['@NFR-05', '@NFR-06'] : ['@NFR-05', '@NFR-06', '@NFR-01'] },
         async ({ page, makeAxeBuilder }) => {
           test.slow();
           await page.goto('/?seed=42');
@@ -211,7 +211,7 @@ for (const [language, mode] of [
 
     test(
       `NFR-05 NFR-06 a perfect round's summary with "¡Nuevo récord!" and "¡Nivel desbloqueado!", then Historial, Progreso, Récords, Atlas and "Acerca de" · ${language} · ${mode}`,
-      { tag: ['@NFR-05', '@NFR-06'] },
+      { tag: mode === 'standard' ? ['@NFR-05', '@NFR-06'] : ['@NFR-05', '@NFR-06', '@NFR-01'] },
       async ({ page, makeAxeBuilder }) => {
         test.slow();
         await page.goto('/?seed=42');
@@ -224,6 +224,25 @@ for (const [language, mode] of [
           { game: 'FLAG-A', region: 'europe', level: 1, score: 6, stars: 1 },
           { game: 'FLAG-B', region: 'asia', level: 2, score: 9, stars: 2 },
         ]);
+        // Pablo, with a 12-letter nickname, holds records in every game, so every table has rows and holders.
+        await page
+          .getByRole('group', { name: t('player.current') })
+          .getByRole('button')
+          .click();
+        await button(page, 'players.new').click();
+        await page.getByRole('textbox', { name: t('newPlayer.nickname') }).fill('Pablo Martín');
+        await button(page, 'newPlayer.create').click();
+        const pablo = (await savedPlayerId(page, 'Pablo Martín')) ?? -1;
+        await saveResults(
+          page,
+          pablo,
+          GAMES.map((game) => ({ game: game.id, region: 'world', level: 3, score: 8, stars: 2 })),
+        );
+        await page
+          .getByRole('group', { name: t('player.current') })
+          .getByRole('button')
+          .click();
+        await page.getByRole('button', { name: 'Lucía', exact: true }).click();
         await openLevel(page, 'SHAPE-A', 'europe', 3);
 
         await openGame(page, language, 'FLAG-A');

@@ -8,6 +8,14 @@ export function text(language: Language, key: MessageKey, params?: MessageParams
   return formatMessage(dictionaries[language][key], params);
 }
 
+/** Waits until the fonts are loaded and a frame is drawn, so sizes are final. */
+async function settle(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+  });
+}
+
 /** What the accessibility sweep found on one screen; every list is empty on a good screen. */
 export interface ScreenReport {
   /** Buttons, radios, switches and links smaller than 48 × 48 px (NFR-05, §15). */
@@ -21,6 +29,7 @@ export interface ScreenReport {
  * label, which is what the finger taps.
  */
 export async function inspectScreen(page: Page, language: Language): Promise<ScreenReport> {
+  await settle(page);
   return page.evaluate((lang) => {
     const visible = (element: Element) => {
       const box = element.getBoundingClientRect();
@@ -29,7 +38,7 @@ export async function inspectScreen(page: Page, language: Language): Promise<Scr
     };
     const nameOf = (element: Element) =>
       (element.getAttribute('aria-label') ?? element.textContent).trim().slice(0, 40);
-    const inDialog = document.querySelector('dialog[open]');
+    const inDialog = document.querySelector('[role="dialog"]');
     const scope: ParentNode = inDialog ?? document;
 
     const smallTargets: string[] = [];
@@ -95,6 +104,7 @@ export async function useBigText(page: Page): Promise<void> {
  * text at 200 % ({@link useBigText}).
  */
 export async function findOverflow(page: Page): Promise<string[]> {
+  await settle(page);
   return page.evaluate(() => {
     const problems: string[] = [];
     const root = document.documentElement;
@@ -106,16 +116,33 @@ export async function findOverflow(page: Page): Promise<string[]> {
       const clips =
         ['hidden', 'clip'].includes(style.overflowX) || style.textOverflow === 'ellipsis';
       // Text hidden for screen readers only (sr-only) is 1 px wide on purpose.
-      if (clips && element.scrollWidth > element.clientWidth + 1 && element.clientWidth > 2) {
+      // A nickname that ends in "…" by design carries its whole text in its title.
+      const whole = element.getAttribute('title') === element.textContent.trim();
+      if (
+        clips &&
+        !whole &&
+        element.scrollWidth > element.clientWidth + 1 &&
+        element.clientWidth > 2
+      ) {
         problems.push(`cut off: ${element.textContent.trim().slice(0, 40)}`);
       }
       const box = element.getBoundingClientRect();
-      // Inside a box that scrolls sideways, as a data table may (WCAG 1.4.10), it is not past the edge.
-      let scrolled = false;
-      for (let parent = element.parentElement; parent; parent = parent.parentElement) {
-        if (['auto', 'scroll'].includes(getComputedStyle(parent).overflowX)) scrolled = true;
+      // Only a data table may scroll sideways inside its box (WCAG 1.4.10); any other box must fit.
+      const inTableBox = element.closest('table') !== null;
+      const scroller = ['auto', 'scroll'].includes(style.overflowX);
+      if (
+        scroller &&
+        !element.querySelector('table') &&
+        element.scrollWidth > element.clientWidth + 1
+      ) {
+        problems.push(`scrolls sideways: ${element.textContent.trim().slice(0, 40)}`);
       }
-      if (box.width > 0 && box.right > window.innerWidth + 1 && !scrolled) {
+      // A box pinned to the screen (the answer panel, a dialog) must fit its height, or scroll.
+      const pinned = style.position === 'fixed';
+      if (pinned && box.top < -1 && !['auto', 'scroll'].includes(style.overflowY)) {
+        problems.push(`taller than the screen: ${element.textContent.trim().slice(0, 40)}`);
+      }
+      if (box.width > 0 && box.right > window.innerWidth + 1 && !inTableBox) {
         problems.push(
           `past the edge: <${element.tagName.toLowerCase()}> ${element.textContent.trim().slice(0, 30)}`,
         );

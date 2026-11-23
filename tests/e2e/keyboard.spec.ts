@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { nameInSentence, wasWords } from '../../src/i18n/names.ts';
 import { expectedRound, questionAt, wrongOption } from './expected.ts';
 import { expect, test } from './fixtures.ts';
 import { GameSetupPage } from './pages/GameSetupPage.ts';
@@ -35,6 +36,7 @@ async function tabTo(page: Page, name: string | RegExp, limit = 40): Promise<voi
   for (let press = 0; press < limit; press += 1) {
     await page.keyboard.press('Tab');
     const now = await focused(page);
+    if (now.name === '') continue;
     expect(now.outline, `the focused "${now.name}" shows its outline`).toBe(true);
     if (typeof name === 'string' ? now.name === name : name.test(now.name)) return;
   }
@@ -97,6 +99,44 @@ test.describe('Keyboard, dialogs, colour and motion (NFR-05)', () => {
       await tabTo(page, 'Menú');
       await page.keyboard.press('Enter');
       await expect(home.heading).toBeFocused();
+    },
+  );
+
+  test(
+    'NFR-05 every screen opened with the keyboard puts the focus on its title',
+    { tag: ['@NFR-05'] },
+    async ({ page }) => {
+      await luciaOnTheDevice(page);
+      const title = page.getByRole('heading', { level: 1 });
+      const open = async (name: string, within?: 'footer') => {
+        const scope = within === 'footer' ? page.getByRole('contentinfo') : page;
+        await scope.getByRole('button', { name, exact: true }).focus();
+        await page.keyboard.press('Enter');
+        await expect(title).toBeFocused();
+      };
+      const back = async () => {
+        await page.getByRole('button', { name: 'Volver', exact: true }).focus();
+        await page.keyboard.press('Enter');
+        await expect(title).toBeFocused();
+      };
+
+      await open('Nuevo jugador');
+      await back();
+      await open('Atlas', 'footer');
+      await back();
+      await open('Acerca de', 'footer');
+      await back();
+      await page.getByRole('button', { name: 'Editar a Lucía' }).focus();
+      await page.keyboard.press('Enter');
+      await expect(title).toBeFocused();
+      await back();
+      await page.getByRole('button', { name: 'Lucía', exact: true }).focus();
+      await page.keyboard.press('Enter');
+      await expect(title).toBeFocused();
+      for (const screen of ['Historial', 'Progreso', 'Récords']) {
+        await open(screen);
+        await back();
+      }
     },
   );
 
@@ -174,6 +214,7 @@ test.describe('Keyboard, dialogs, colour and motion (NFR-05)', () => {
       await page.keyboard.press('Enter');
       await expectFocusKeptIn('¿Borrar a Pablo?');
       await page.keyboard.press('Escape');
+      await expect(page.getByRole('dialog', { name: '¿Borrar a Pablo?' })).toBeHidden();
       await expect(form.deleteButton).toBeFocused();
       await form.backButton.click();
 
@@ -202,6 +243,12 @@ test.describe('Keyboard, dialogs, colour and motion (NFR-05)', () => {
       await expect(round.feedback).toBeEmpty();
       await round.answer(questionAt(ROUND, 0).entity.name.es);
       await expect(round.feedback).toContainText('¡Correcto!');
+      await round.nextButton.click();
+      await expect(round.feedback).toBeEmpty();
+      const second = questionAt(ROUND, 1);
+      await round.answer(wrongOption(second).name.es);
+      await expect(round.feedback).toContainText(`¡Uy! ${wasWords(second.entity, 'es')}`);
+      await expect(round.feedback).toContainText(nameInSentence(second.entity, 'es'));
     },
   );
 
@@ -219,9 +266,15 @@ test.describe('Keyboard, dialogs, colour and motion (NFR-05)', () => {
       await expect(chips.filter({ hasText: 'Español' }).locator('svg')).toHaveCount(1);
       await expect(chips.filter({ hasText: 'English' }).locator('svg')).toHaveCount(0);
       const sound = page.getByRole('switch', { name: 'Sonido' });
+      await expect(sound).toHaveAttribute('aria-checked', 'true');
       const iconOn = await sound.locator('svg').innerHTML();
       await sound.click();
-      expect(await sound.locator('svg').innerHTML()).not.toBe(iconOn);
+      await expect(sound).toHaveAttribute('aria-checked', 'false');
+      const iconOff = await sound.locator('svg').innerHTML();
+      expect(iconOff).not.toBe(iconOn);
+      // Waves when on, a cross when off: more strokes on the speaker, not another colour.
+      expect(iconOn).not.toContain('M16 9.5l5 5');
+      expect(iconOff).toContain('M16 9.5l5 5');
       await sound.click();
 
       // A locked level: a padlock and its text.
@@ -231,7 +284,8 @@ test.describe('Keyboard, dialogs, colour and motion (NFR-05)', () => {
       await setup.chooseRegion('Europa');
       await expect(setup.level('Medio')).toHaveAccessibleName('Medio, bloqueado');
       await expect(page.getByText('Consigue ★★ en Fácil para desbloquear')).toBeVisible();
-      await expect(setup.level('Medio').locator('svg')).not.toHaveCount(0);
+      await expect(setup.level('Medio').locator('svg')).toHaveCount(1);
+      await expect(setup.level('Fácil').locator('svg')).toHaveCount(0);
 
       // A right and a wrong answer: ✓ and ✗, named.
       await setup.chooseLevel('Fácil');
@@ -241,6 +295,10 @@ test.describe('Keyboard, dialogs, colour and motion (NFR-05)', () => {
       await expect(round.mark(wrongOption(first).name.es, 'Incorrecta')).toBeVisible();
       await expect(round.mark(first.entity.name.es, 'Correcta')).toBeVisible();
       await expect(round.feedbackMark('Incorrecta')).toBeVisible();
+      // ✓ and ✗ are different drawings, not one shape in two colours.
+      const check = await round.mark(first.entity.name.es, 'Correcta').innerHTML();
+      const cross = await round.mark(wrongOption(first).name.es, 'Incorrecta').innerHTML();
+      expect(check).not.toBe(cross);
     },
   );
 
@@ -256,11 +314,6 @@ test.describe('Keyboard, dialogs, colour and motion (NFR-05)', () => {
         await new GameSetupPage(page).chooseRegion('Europa');
         await new GameSetupPage(page).chooseLevel('Fácil');
         const round = new RoundPage(page);
-        const animation = (selector: string) =>
-          page
-            .locator(selector)
-            .first()
-            .evaluate((element) => getComputedStyle(element).animationName);
 
         await round.answer(questionAt(ROUND, 0).entity.name.es);
         const pop = round.feedbackMark('Correcta');
@@ -274,13 +327,15 @@ test.describe('Keyboard, dialogs, colour and motion (NFR-05)', () => {
         const summary = new SummaryPage(page);
         await expect(summary.celebration).toBeVisible();
         await expect(summary.celebration).toHaveAccessibleName('¡Ronda perfecta!');
-        const confetti = await animation('[role="img"][aria-label="¡Ronda perfecta!"] span');
+        const confetti = await summary.celebration.evaluate((box) => [
+          ...new Set([...box.children].map((piece) => getComputedStyle(piece).animationName)),
+        ]);
         if (motion === 'reduce') {
           expect(popAnimation).toBe('none');
-          expect(confetti).toBe('none');
+          expect(confetti).toEqual(['none']);
         } else {
           expect(popAnimation).toBe('pop');
-          expect(confetti).toBe('confetti');
+          expect(confetti).toEqual(['confetti']);
         }
       },
     );
