@@ -64,38 +64,27 @@ test.describe('"Acerca de"', () => {
   );
 
   test(
-    'DATA-05 D13 D21 D25 the credits of flags, silhouettes and animals, with the 15 Commons flags one by one',
+    'DATA-05 D21 D25 D39 the credits of flags, silhouettes and animals, with the three flags whose licence asks for it',
     { tag: ['@DATA-05'] },
     async ({ page }) => {
       await new PlayersPage(page).goto();
       await about.openButton.click();
 
       const flags = about.section('Banderas');
-      const flagIcons = about.credit(flags, 'flag-icons');
-      await expect(flagIcons).toContainText('MIT');
-      await expect(flagIcons).toContainText('© 2013 Panayiotis Lipiridis');
-
-      await about.commonsToggle.click();
-      const commons = about.commonsList.getByRole('listitem');
-      await expect(commons).toHaveCount(15);
-      for (const flag of await commons.all()) {
-        await expect(flag).toContainText(/https:\/\/commons\.wikimedia\.org\/wiki\/File:\S+\.svg/);
-        await expect(flag).toContainText(/Dominio público|CC BY-SA 4\.0|CC BY-SA 3\.0/);
-      }
-      for (const name of ['Afganistán', 'Abjasia', 'Puntland', 'Zanzíbar']) {
-        await expect(about.credit(about.commonsList, name)).toContainText(
-          'https://commons.wikimedia.org/wiki/File:',
-        );
-      }
-      const sintEustatius = about.credit(about.commonsList, 'San Eustaquio');
+      await expect(flags.getByRole('listitem')).toHaveCount(4);
+      const commons = about.credit(flags, 'Wikimedia Commons');
+      await expect(commons).toContainText('Dominio público o CC0');
+      await expect(commons).toContainText('https://commons.wikimedia.org/');
+      await expect(flags).not.toContainText('flag-icons');
+      const oman = about.credit(flags, 'Omán');
+      await expect(oman).toContainText('Open Government Licence – Oman 1.0');
+      await expect(oman).toContainText('https://commons.wikimedia.org/wiki/File:Flag_of_Oman.svg');
+      const sintEustatius = about.credit(flags, 'San Eustaquio');
       await expect(sintEustatius).toContainText('CC BY-SA 4.0');
       await expect(sintEustatius).toContainText('Andrwsc');
-      const saba = about.credit(about.commonsList, 'Saba');
+      const saba = about.credit(flags, 'Saba');
       await expect(saba).toContainText('CC BY-SA 3.0');
       await expect(saba).toContainText('Mysid');
-      await expect(
-        about.commonsList.getByRole('listitem').filter({ hasText: 'Dominio público' }),
-      ).toHaveCount(13);
 
       const shapes = about.section('Siluetas');
       await expect(about.credit(shapes, 'Natural Earth')).toContainText('Dominio público');
@@ -140,12 +129,11 @@ test.describe('"Acerca de"', () => {
       );
       await new PlayersPage(page).goto();
       await about.openButton.click();
-      await about.commonsToggle.click();
 
-      await expect(about.credit(about.section('Banderas'), 'flag-icons')).toContainText(
-        'https://github.com/lipis/flag-icons',
+      await expect(about.credit(about.section('Banderas'), 'Wikimedia Commons')).toContainText(
+        'https://commons.wikimedia.org/',
       );
-      await expect(about.credit(about.commonsList, 'Saba')).toContainText(
+      await expect(about.credit(about.section('Banderas'), 'Saba')).toContainText(
         'https://commons.wikimedia.org/wiki/File:Flag_of_Saba.svg',
       );
       await expect(about.credit(about.section('Siluetas'), 'Natural Earth')).toContainText(
@@ -154,7 +142,6 @@ test.describe('"Acerca de"', () => {
       await expect(about.credit(about.section('Animales'), 'OpenMoji')).toContainText(
         'https://openmoji.org/',
       );
-      await expect(about.commonsList.getByRole('listitem')).toHaveCount(15);
       await expect(about.section('Territorios y nombres')).toContainText(NEUTRALITY);
       await expect(page.getByRole('link')).toHaveCount(0);
       expect(elsewhere).toEqual([]);
@@ -192,7 +179,7 @@ test.describe('"Acerca de"', () => {
   );
 
   test(
-    'NFR-05 one h1 and a heading per section, a list that opens with the keyboard and says so, no axe violations, 48 px buttons and no sideways scroll at 360 px',
+    'NFR-05 one h1 and a heading per section, no axe violations, 48 px buttons and no sideways scroll at 360 px',
     { tag: ['@NFR-05'] },
     async ({ page, makeAxeBuilder }) => {
       await page.setViewportSize({ width: 360, height: 640 });
@@ -208,26 +195,14 @@ test.describe('"Acerca de"', () => {
       ]);
       await expect(about.heading).toBeFocused();
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
-
-      await expect(about.commonsList).toBeHidden();
-      await about.commonsToggle.focus();
-      await expect(about.commonsToggle).toHaveAttribute('aria-expanded', 'false');
-      await page.keyboard.press('Enter');
-      await expect(about.commonsToggle).toHaveAttribute('aria-expanded', 'true');
-      await expect(about.commonsList).toBeVisible();
-      expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
       await expectNoSidewaysScroll(page);
       const buttons = await page.getByRole('button').all();
-      expect(buttons.length).toBeGreaterThanOrEqual(2);
+      expect(buttons.length).toBeGreaterThanOrEqual(1);
       for (const button of buttons) {
         const box = await button.boundingBox();
         expect(box?.width ?? 0).toBeGreaterThanOrEqual(48);
         expect(box?.height ?? 0).toBeGreaterThanOrEqual(48);
       }
-
-      await page.keyboard.press('Space');
-      await expect(about.commonsToggle).toHaveAttribute('aria-expanded', 'false');
-      await expect(about.commonsList).toBeHidden();
     },
   );
 });
