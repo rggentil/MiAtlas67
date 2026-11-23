@@ -28,9 +28,9 @@ export default defineConfig({
   // "Update screenshots" writes them, with --update-snapshots.
   updateSnapshots: 'none',
   expect: {
-    // Up to 0.1 % of the pixels may differ, each by a little (anti-aliasing). A changed colour token, even a shade
-    // (sun #FFC93C → #FFB92C), or a padding is far above it.
-    toHaveScreenshot: { maxDiffPixelRatio: 0.001, threshold: 0.05 },
+    // Up to 100 pixels may differ, each by a little (anti-aliasing). A changed colour token, even a shade
+    // (sun #FFC93C → #FFB92C), a padding or a changed word is far above it.
+    toHaveScreenshot: { maxDiffPixels: 100, threshold: 0.05 },
   },
   use: {
     baseURL: `http://localhost:${String(PORT)}`,

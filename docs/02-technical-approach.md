@@ -97,13 +97,15 @@ the key screens with approved images in `tests/e2e/__screenshots__/`, on `mobile
 - The images are made and compared only in the CI container (`CI` set): fonts and anti-aliasing differ between
   operating systems, so on a laptop the test is skipped. A missing image fails (`updateSnapshots: 'none'`).
 - Stable pictures: `?seed=42`, `page.clock.setFixedTime`, rounds saved with fixed dates, reduced motion, and the
-  test waits for the web fonts and every image on show. Allowed difference: 0.1 % of the pixels, each with a
+  test waits for the web fonts and every image on show, decoded. Allowed difference: 100 pixels, each with a
   per-pixel threshold of 0.05, so a shade of a colour token already fails.
 - A failure shows the expected, the actual and the difference in the Playwright report (artifact
   `playwright-report` of the E2E job).
 - A change on purpose: run the workflow **Update screenshots** on the pull request's branch (Actions tab, or
   `gh workflow run update-screenshots.yml --ref <branch>`). It makes the images in the same container, commits
   the ones that changed to the branch, and starts CI again there; the pull request shows the new images for review.
+- A new `@playwright/test` version changes the container (browser and fonts), so its pull request runs
+  **Update screenshots** too, and the new images are checked to show the same screens.
 
 ## 4. Running and testing on a phone
 

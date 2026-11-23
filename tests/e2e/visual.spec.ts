@@ -35,16 +35,25 @@ async function settle(page: Page): Promise<void> {
   });
   await expect
     .poll(() =>
-      page.evaluate(() =>
-        Array.from(document.images)
-          .filter((image) => {
-            const box = image.getBoundingClientRect();
-            return box.bottom > 0 && box.top < window.innerHeight && box.width > 0;
-          })
-          .every((image) => image.complete && image.naturalWidth > 0),
-      ),
+      page.evaluate(async () => {
+        const onShow = Array.from(document.images).filter((image) => {
+          const box = image.getBoundingClientRect();
+          return box.bottom > 0 && box.top < window.innerHeight && box.width > 0;
+        });
+        if (!onShow.every((image) => image.complete && image.naturalWidth > 0)) return false;
+        // Loaded is not yet drawn: images with decoding="async" are decoded after they load.
+        await Promise.all(onShow.map((image) => image.decode()));
+        return true;
+      }),
     )
     .toBe(true);
+}
+
+/** The id of the saved player `nickname`; the test stops if there is none. */
+async function playerId(page: Page, nickname: string): Promise<number> {
+  const id = await savedPlayerId(page, nickname);
+  if (id === null) throw new Error(`There is no player called ${nickname}`);
+  return id;
 }
 
 /** Compares the whole screen (or only what is on show, for a long list of images) with its approved screenshot. */
@@ -66,8 +75,8 @@ async function luciaAndPablo(page: Page): Promise<HomePage> {
   await new NewPlayerPage(page).create('Pablo', 'Búho');
   await expect(home.heading).toHaveText('¿A qué jugamos?');
 
-  const lucia = (await savedPlayerId(page, 'Lucía')) ?? -1;
-  const pablo = (await savedPlayerId(page, 'Pablo')) ?? -1;
+  const lucia = await playerId(page, 'Lucía');
+  const pablo = await playerId(page, 'Pablo');
   await saveResults(page, lucia, [
     {
       game: 'FLAG-A',
