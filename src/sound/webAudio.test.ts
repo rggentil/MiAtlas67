@@ -129,3 +129,52 @@ describe('Web Audio player', () => {
     expect(log.resumes).toBe(1);
   });
 });
+
+describe('Web Audio player · getting ready', () => {
+  it('NFR-03 D38 prepare() starts the audio once, before the first sound, and plays nothing', () => {
+    let contexts = 0;
+    let gains = 0;
+    class Context {
+      currentTime = 0;
+      destination = {};
+      state = 'running';
+      constructor() {
+        contexts += 1;
+      }
+      createGain() {
+        gains += 1;
+        return {
+          gain: { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
+          connect: vi.fn(),
+        };
+      }
+      createOscillator() {
+        return {
+          type: 'sine',
+          frequency: { setValueAtTime: vi.fn() },
+          connect: vi.fn(),
+          start: vi.fn(),
+          stop: vi.fn(),
+        };
+      }
+    }
+    const player = createWebAudioPlayer(() => Context as unknown as new () => AudioContext);
+
+    player.prepare?.();
+    expect(contexts).toBe(1);
+    expect(gains).toBe(0);
+
+    player.play('correct');
+    expect(contexts).toBe(1);
+    expect(gains).toBe(1);
+  });
+
+  it('NFR-03 prepare() without Web Audio throws nothing', () => {
+    const player = createWebAudioPlayer(() => undefined);
+
+    expect(() => {
+      player.prepare?.();
+      player.play('wrong');
+    }).not.toThrow();
+  });
+});

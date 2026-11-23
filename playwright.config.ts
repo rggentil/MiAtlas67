@@ -6,6 +6,9 @@ const PREVIEW_PORT = 4173;
 const PREVIEW_URL = `http://localhost:${String(PREVIEW_PORT)}/MiAtlas67/`;
 /** The service worker only exists in a production build: its tests run in a project of their own. */
 const OFFLINE_SPEC = /offline\.spec\.ts$/;
+/** The performance budget is measured on the production build too, on an emulated mid-range phone (D38). */
+const PERFORMANCE_SPEC = /performance\.spec\.ts$/;
+const PRODUCTION_SPECS = [OFFLINE_SPEC, PERFORMANCE_SPEC];
 const isCI = Boolean(process.env.CI);
 
 export default defineConfig({
@@ -24,13 +27,24 @@ export default defineConfig({
     contextOptions: { reducedMotion: 'reduce' },
   },
   projects: [
-    { name: 'mobile-chrome', testIgnore: OFFLINE_SPEC, use: { ...devices['Pixel 7'] } },
-    { name: 'mobile-safari', testIgnore: OFFLINE_SPEC, use: { ...devices['iPhone 15'] } },
-    { name: 'desktop-chrome', testIgnore: OFFLINE_SPEC, use: { ...devices['Desktop Chrome'] } },
+    { name: 'mobile-chrome', testIgnore: PRODUCTION_SPECS, use: { ...devices['Pixel 7'] } },
+    { name: 'mobile-safari', testIgnore: PRODUCTION_SPECS, use: { ...devices['iPhone 15'] } },
+    {
+      name: 'desktop-chrome',
+      testIgnore: PRODUCTION_SPECS,
+      use: { ...devices['Desktop Chrome'] },
+    },
     {
       name: 'offline-chrome',
       testMatch: OFFLINE_SPEC,
       use: { ...devices['Pixel 7'], baseURL: PREVIEW_URL, serviceWorkers: 'allow' },
+    },
+    {
+      name: 'perf-chrome',
+      testMatch: PERFORMANCE_SPEC,
+      // A first visit: nothing stored by a service worker yet. One test at a time, so none slows another.
+      fullyParallel: false,
+      use: { ...devices['Pixel 7'], baseURL: PREVIEW_URL, serviceWorkers: 'block' },
     },
   ],
   webServer: [

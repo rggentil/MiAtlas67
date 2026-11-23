@@ -30,9 +30,18 @@ export function SoundProvider({ player, children }: SoundProviderProps) {
     [soundOn, player],
   );
 
+  const prepare = useCallback(() => {
+    if (!soundOn) return;
+    try {
+      player.prepare?.();
+    } catch {
+      // A sound must never break the round (D35).
+    }
+  }, [soundOn, player]);
+
   const value = useMemo<SoundValue>(
-    () => ({ soundOn, setSoundOn, play }),
-    [soundOn, setSoundOn, play],
+    () => ({ soundOn, setSoundOn, play, prepare }),
+    [soundOn, setSoundOn, play, prepare],
   );
 
   return <SoundContext value={value}>{children}</SoundContext>;

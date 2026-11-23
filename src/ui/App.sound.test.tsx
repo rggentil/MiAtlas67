@@ -132,6 +132,32 @@ describe('App · sound (SET-02, D35)', () => {
     expect(screen.getByRole('button', { name: 'Jugar otra vez' })).toBeVisible();
   });
 
+  it('NFR-03 D38 the audio gets ready when a round opens, so the first answer does not wait for it; not with the sound off', async () => {
+    let prepared = 0;
+    const player: SoundPlayer = {
+      play: () => undefined,
+      prepare: () => {
+        prepared += 1;
+      },
+    };
+    await renderApp(undefined, player);
+    await userEvent.click(screen.getByRole('button', { name: 'Lucía' }));
+    expect(prepared).toBe(0);
+    await userEvent.click(screen.getByRole('button', { name: /^Bandera → País/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Europa' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Fácil' }));
+
+    expect(prepared).toBeGreaterThanOrEqual(1);
+    const before = prepared;
+    await userEvent.click(screen.getByRole('button', { name: 'Salir de la partida' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Sí, salir' }));
+    await userEvent.click(soundSwitch());
+    await userEvent.click(screen.getByRole('button', { name: /^Bandera → País/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Europa' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Fácil' }));
+    expect(prepared).toBe(before);
+  });
+
   it('SET-02 the switch "Sonido" is on the first time, on «¿Quién juega?» and on the home screen', async () => {
     await renderApp(undefined, spyPlayer().player);
 

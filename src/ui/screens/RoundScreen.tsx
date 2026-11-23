@@ -67,7 +67,7 @@ function optionState(option: Entity, question: Question, chosen: string | null):
  */
 export function RoundScreen({ game, settings, questions, onQuit, onFinish }: RoundScreenProps) {
   const { t, language } = useI18n();
-  const { play } = useSound();
+  const { play, prepare } = useSound();
   const [state, setState] = useState(() => startRound(questions));
   const [quitting, setQuitting] = useState(false);
   const quitRef = useRef<HTMLButtonElement>(null);
@@ -79,6 +79,12 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
   const chosen = currentAnswer(state);
   const number = state.current + 1;
   const total = state.questions.length;
+
+  // The audio starts when the round opens, right after the tap on its level, not on the first answer: starting
+  // it takes long, and the ✓ or ✗ would wait for it (NFR-03, D38).
+  useEffect(() => {
+    prepare();
+  }, [prepare]);
 
   // After answering, "Siguiente" is the only thing left to do: it takes the focus. The answers scroll up
   // above the feedback panel, so the ✓ and ✗ are never hidden behind it on a short screen.
