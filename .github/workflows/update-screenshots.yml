@@ -8,6 +8,9 @@ name: Update screenshots
 # there (a commit pushed by a workflow does not start other workflows by itself).
 on:
   workflow_dispatch:
+  # TEMPORARY (#114 bootstrap): workflow_dispatch needs the file on main, so the first images come from a push.
+  push:
+    branches: [114-visual-regression]
 
 # Least privilege: read-only by default; only the commit job below may write.
 permissions:
