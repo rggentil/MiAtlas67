@@ -2,11 +2,15 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import type { BrowserContext, Page } from '@playwright/test';
 import { expect, test } from './fixtures.ts';
+import { AboutPage } from './pages/AboutPage.ts';
+import { AtlasPage } from './pages/AtlasPage.ts';
 import { GameSetupPage } from './pages/GameSetupPage.ts';
 import { HistoryPage } from './pages/HistoryPage.ts';
 import { HomePage } from './pages/HomePage.ts';
 import { NewPlayerPage } from './pages/NewPlayerPage.ts';
 import { PlayersPage } from './pages/PlayersPage.ts';
+import { ProgressPage } from './pages/ProgressPage.ts';
+import { RecordsPage } from './pages/RecordsPage.ts';
 import { RoundPage } from './pages/RoundPage.ts';
 import { SummaryPage } from './pages/SummaryPage.ts';
 
@@ -51,6 +55,21 @@ async function openOnline(page: Page): Promise<void> {
     .toBe(true);
 }
 
+/**
+ * Takes the device offline, and proves it: a file the worker has not stored can no longer be fetched, not even
+ * by the worker. Without this canary, a file missing from the store could still come from the test server.
+ */
+async function goOffline(page: Page, context: BrowserContext): Promise<void> {
+  await context.setOffline(true);
+  const canary = await page.evaluate(() =>
+    fetch(`not-stored-${String(Date.now())}.txt`).then(
+      () => 'reached the server',
+      () => 'offline',
+    ),
+  );
+  expect(canary).toBe('offline');
+}
+
 /** The addresses the service worker stored, without the revision it adds to some of them. */
 async function storedAddresses(page: Page): Promise<string[]> {
   return page.evaluate(async () => {
@@ -89,8 +108,15 @@ async function createPlayer(page: Page, nickname: string, avatar: string): Promi
   await expect(new HomePage(page).heading).toHaveText('¿A qué jugamos?');
 }
 
-/** Plays a whole round of `game` in "Europa · Fácil", tapping the first option each time, to its summary. */
-async function playRound(page: Page, game: string, goOffline?: () => Promise<void>): Promise<void> {
+/**
+ * Plays a whole round of `game` in "Europa · Fácil", tapping the first option each time, to its summary. With
+ * `offlineAt`, the device goes offline just before that question.
+ */
+async function playRound(
+  page: Page,
+  game: string,
+  offlineAt?: { question: number; context: BrowserContext },
+): Promise<void> {
   const home = new HomePage(page);
   const setup = new GameSetupPage(page);
   const round = new RoundPage(page);
@@ -99,7 +125,7 @@ async function playRound(page: Page, game: string, goOffline?: () => Promise<voi
   await setup.chooseLevel('Fácil');
   for (let question = 1; question <= 10; question += 1) {
     await expect(round.progressText).toHaveText(`${String(question)}/10`);
-    if (question === 4 && goOffline) await goOffline();
+    if (offlineAt?.question === question) await goOffline(page, offlineAt.context);
     await expectPicturesLoaded(page);
     await round.options.first().click();
     await round.nextButton.click();
@@ -107,8 +133,14 @@ async function playRound(page: Page, game: string, goOffline?: () => Promise<voi
   await expect(new SummaryPage(page).playAgainButton).toBeVisible();
 }
 
-async function goOffline(context: BrowserContext): Promise<void> {
-  await context.setOffline(true);
+/** Online first visit with Lucía, then offline and reloaded, back to the home screen as Lucía. */
+async function luciaOffline(page: Page, context: BrowserContext): Promise<void> {
+  await openOnline(page);
+  await createPlayer(page, 'Lucía', 'Zorro');
+  await goOffline(page, context);
+  await page.reload();
+  await new PlayersPage(page).player('Lucía').click();
+  await expect(new HomePage(page).heading).toHaveText('¿A qué jugamos?');
 }
 
 test.describe('Play offline (NFR-02, D36)', () => {
@@ -145,7 +177,7 @@ test.describe('Play offline (NFR-02, D36)', () => {
       await new HomePage(page).switchPlayerButton.click();
       await createPlayer(page, 'Pablo', 'Búho');
 
-      await goOffline(context);
+      await goOffline(page, context);
       await page.reload();
 
       const players = new PlayersPage(page);
@@ -154,59 +186,87 @@ test.describe('Play offline (NFR-02, D36)', () => {
     },
   );
 
+  for (const game of GAMES) {
+    test(
+      `NFR-02 offline, a round of "${game}" shows every picture and ends in its summary, saved`,
+      { tag: ['@NFR-02'] },
+      async ({ page, context }) => {
+        await luciaOffline(page, context);
+
+        await playRound(page, game);
+
+        const home = new HomePage(page);
+        await new SummaryPage(page).menuButton.click();
+        await home.historyButton.click();
+        const history = new HistoryPage(page);
+        await expect(history.entries).toHaveCount(1);
+        await expect(history.entries.first()).toContainText(game);
+      },
+    );
+  }
+
   test(
-    'NFR-02 offline, a round of each of the six games shows every picture and ends in its saved summary; every screen opens, and all is there after a reload',
+    'NFR-02 offline, every screen opens and shows the rounds saved offline, also after a reload',
     { tag: ['@NFR-02'] },
     async ({ page, context }) => {
-      test.slow();
-      await openOnline(page);
-      await createPlayer(page, 'Lucía', 'Zorro');
-      await goOffline(context);
-      await page.reload();
-      await new PlayersPage(page).player('Lucía').click();
+      await luciaOffline(page, context);
+      await playRound(page, 'Bandera → País');
       const home = new HomePage(page);
-
-      for (const game of GAMES) {
-        await playRound(page, game);
-        await new SummaryPage(page).menuButton.click();
-        await expect(home.heading).toHaveText('¿A qué jugamos?');
-      }
+      await new SummaryPage(page).menuButton.click();
 
       const history = new HistoryPage(page);
       await home.historyButton.click();
-      await expect(history.entries).toHaveCount(6);
+      await expect(history.entries).toHaveCount(1);
+      await expect(history.entries.first()).toContainText('Bandera → País');
       await history.backButton.click();
+
+      const progress = new ProgressPage(page);
       await home.progressButton.click();
-      await expect(page.getByRole('table')).toHaveCount(6);
-      await page.getByRole('button', { name: 'Volver' }).click();
+      await expect(progress.cell('Bandera → País', 'Europa', 'Fácil')).not.toHaveText('Sin jugar');
+      await expect(progress.cell('País → Bandera', 'Europa', 'Fácil')).toHaveText('Sin jugar');
+      await page.goBack();
+
+      const records = new RecordsPage(page);
       await home.recordsButton.click();
-      await expect(page.getByRole('heading', { level: 1 })).toHaveText('Récords de la familia');
-      await page.getByRole('button', { name: 'Volver' }).click();
-      await page.getByRole('contentinfo').getByRole('button', { name: 'Atlas' }).click();
-      await page.getByRole('button', { name: 'Oceanía', exact: true }).click();
+      await expect(records.cell('Bandera → País', 'Europa', 'Fácil')).toContainText('Lucía');
+      await records.backButton.click();
+
+      const atlas = new AtlasPage(page);
+      await atlas.openButton.click();
+      await atlas.chooseRegion('Oceanía');
+      await expect(atlas.entry('Oceanía', 'Nueva Zelanda')).toContainText('Wellington');
       await expectPicturesLoaded(page);
-      await page.getByRole('button', { name: 'Volver' }).click();
-      await page.getByRole('button', { name: 'Volver' }).click();
-      await page.getByRole('contentinfo').getByRole('button', { name: 'Acerca de' }).click();
-      await expect(page.getByRole('heading', { level: 1 })).toHaveText('Acerca de');
+      await atlas.backButton.click();
+      await atlas.backButton.click();
+
+      const about = new AboutPage(page);
+      await about.openButton.click();
+      await expect(about.heading).toHaveText('Acerca de');
+      await expect(about.section('Territorios y nombres')).toBeVisible();
+      await about.backButton.click();
 
       await page.reload();
       await new PlayersPage(page).player('Lucía').click();
       await home.historyButton.click();
-      await expect(history.entries).toHaveCount(6);
+      await expect(history.entries).toHaveCount(1);
+      await history.backButton.click();
+      await home.progressButton.click();
+      await expect(progress.cell('Bandera → País', 'Europa', 'Fácil')).not.toHaveText('Sin jugar');
     },
   );
 
-  test(
-    'NFR-02 the connection drops in the middle of the first round: it goes on, with its pictures, to the summary',
-    { tag: ['@NFR-02'] },
-    async ({ page, context }) => {
-      await openOnline(page);
-      await createPlayer(page, 'Lucía', 'Zorro');
+  for (const game of ['País → Bandera', 'Silueta → País']) {
+    test(
+      `NFR-02 the connection drops in the middle of the first round of "${game}": it goes on, with its pictures, to the summary`,
+      { tag: ['@NFR-02'] },
+      async ({ page, context }) => {
+        await openOnline(page);
+        await createPlayer(page, 'Lucía', 'Zorro');
 
-      await playRound(page, 'País → Bandera', () => goOffline(context));
-    },
-  );
+        await playRound(page, game, { question: 4, context });
+      },
+    );
+  }
 
   test(
     "NFR-04 D10 every request goes to the game's own address, and the worker stores only the game's own files, under /MiAtlas67/",
@@ -251,9 +311,35 @@ test.describe('Play offline (NFR-02, D36)', () => {
   );
 
   test(
+    'NFR-02 D36 players and rounds do not live in the stored files: dropping every stored version keeps them',
+    { tag: ['@NFR-02'] },
+    async ({ page }) => {
+      await openOnline(page);
+      await createPlayer(page, 'Lucía', 'Zorro');
+      await playRound(page, 'Bandera → País');
+
+      // What a new version does to the old one: its caches go, and a new worker takes over.
+      await page.evaluate(async () => {
+        for (const name of await caches.keys()) await caches.delete(name);
+        for (const registration of await navigator.serviceWorker.getRegistrations()) {
+          await registration.unregister();
+        }
+      });
+      await page.reload();
+
+      await new PlayersPage(page).player('Lucía').click();
+      const home = new HomePage(page);
+      await home.historyButton.click();
+      await expect(new HistoryPage(page).entries).toHaveCount(1);
+    },
+  );
+
+  test(
     'NFR-02 D36 a new version never interrupts a round: the worker waits instead of taking over, and the game never asks it to',
     { tag: ['@NFR-02'] },
     () => {
+      // A canary on the built worker: if a plugin update changes how sw.js is written, check the behaviour again
+      // (a waiting worker, no skipWaiting on install) and update the pattern.
       const worker = readFileSync(join(BUILD, 'sw.js'), 'utf8');
       // skipWaiting() only answers a "SKIP_WAITING" message…
       const skips = worker.match(/skipWaiting\(\)/g) ?? [];
@@ -263,6 +349,7 @@ test.describe('Play offline (NFR-02, D36)', () => {
       const game = buildFiles().filter(
         (file) => file.endsWith('.js') && file !== 'sw.js' && !file.startsWith('workbox-'),
       );
+      expect(game.length).toBeGreaterThan(0);
       for (const file of game) {
         expect(readFileSync(join(BUILD, file), 'utf8'), file).not.toContain('SKIP_WAITING');
       }

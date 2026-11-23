@@ -5,7 +5,7 @@ const PORT = 5173;
 const PREVIEW_PORT = 4173;
 const PREVIEW_URL = `http://localhost:${String(PREVIEW_PORT)}/MiAtlas67/`;
 /** The service worker only exists in a production build: its tests run in a project of their own. */
-const OFFLINE_SPEC = /offline.spec.ts$/;
+const OFFLINE_SPEC = /offline\.spec\.ts$/;
 const isCI = Boolean(process.env.CI);
 
 export default defineConfig({
@@ -43,7 +43,8 @@ export default defineConfig({
       command: `npx vite build --outDir dist-e2e --emptyOutDir && npx vite preview --outDir dist-e2e --port ${String(PREVIEW_PORT)} --strictPort`,
       env: { VITE_BASE: '/MiAtlas67/' },
       url: PREVIEW_URL,
-      reuseExistingServer: !isCI,
+      // Always a fresh build: an old preview on this port would test an old game.
+      reuseExistingServer: false,
       timeout: 180_000,
     },
   ],
