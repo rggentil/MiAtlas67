@@ -156,7 +156,8 @@ export function PlayerFormScreen({
 
             <fieldset className="flex flex-col gap-3">
               <legend className="mb-2 font-display text-2xl">{t('newPlayer.avatar')}</legend>
-              <div className="grid grid-cols-4 gap-2.5">
+              {/* Four animals per row; with larger text, as many as fit (NFR-05). */}
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(max(3rem,22%),1fr))] gap-2.5">
                 {AVATARS.map((option) => (
                   <label key={option} className="relative block">
                     {/* Transparent over the whole tile: the tap lands on the radio button itself. */}

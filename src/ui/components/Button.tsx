@@ -30,7 +30,8 @@ export function Button({
     <button
       type={type}
       className={[
-        'inline-flex min-h-14 min-w-12 items-center justify-center gap-2 px-5',
+        // The side padding stays at 20 px with larger text, so a button still fits a 360 px phone (NFR-05).
+        'inline-flex min-h-14 min-w-12 items-center justify-center gap-2 px-[min(1.25rem,20px)]',
         'rounded-block border-3 border-ink',
         'font-display text-xl text-ink',
         'motion-safe:transition-[translate,box-shadow] motion-safe:duration-75',

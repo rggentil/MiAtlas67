@@ -1,4 +1,4 @@
-import { useEffect, useId, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 
 interface ModalDialogProps {
   title: string;
@@ -11,15 +11,33 @@ interface ModalDialogProps {
 
 /**
  * An in-page modal dialog, not the browser's confirm box: a title, a sentence and its buttons. The screen
- * behind it makes itself inert while it is open.
+ * behind it makes itself inert while it is open, and Tab and Shift+Tab go round its buttons, so the focus never
+ * leaves it (NFR-05).
  */
 export function ModalDialog({ title, text, onEscape, children }: ModalDialogProps) {
   const titleId = useId();
   const textId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') onEscape();
+      if (event.key === 'Escape') {
+        onEscape();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const buttons = [...(dialogRef.current?.querySelectorAll('button') ?? [])];
+      const first = buttons.at(0);
+      const last = buttons.at(-1);
+      if (!first || !last) return;
+      const inside = dialogRef.current?.contains(document.activeElement) ?? false;
+      if (event.shiftKey && (document.activeElement === first || !inside)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !inside)) {
+        event.preventDefault();
+        first.focus();
+      }
     }
     document.addEventListener('keydown', onKeyDown);
     return () => {
@@ -30,6 +48,7 @@ export function ModalDialog({ title, text, onEscape, children }: ModalDialogProp
   return (
     <div className="fixed inset-0 z-10 flex items-end justify-center bg-ink/60 p-4 sm:items-center">
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
