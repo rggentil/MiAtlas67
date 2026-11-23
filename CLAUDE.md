@@ -53,7 +53,10 @@ scripts/         Data build scripts and repo tooling (board.sh)
   - the title starts with the requirement ID: `it('RND-02 never repeats an option', ...)`;
   - E2E uses role-based locators (`getByRole`), page objects in `tests/e2e/pages`, an axe scan on every new screen,
     and requirement tags (`{ tag: '@FLAG-A' }`);
-  - tests come from the story's acceptance criteria, written before the code.
+  - tests come from the story's acceptance criteria, written before the code;
+  - visual regression (`tests/e2e/visual.spec.ts`, D40) runs only in CI. When a story changes the look of a key
+    screen on purpose, run `gh workflow run update-screenshots.yml --ref <branch>`: it commits the new images to the
+    branch for the product owner to review. Never make or commit screenshots on the laptop.
 - **Privacy (NFR-04):** no runtime network calls, no analytics, no cookies. Store only nickname, avatar and results.
   Never commit secrets or `.env` files.
 - **Accessibility (NFR-05):** touch targets ≥ 48 px; feedback never relies on colour alone (✓ / ✗ icons).

@@ -1,0 +1,109 @@
+name: Update screenshots
+
+# The approved screenshots of the visual regression test (tests/e2e/visual.spec.ts, D40) are made here, in the
+# same Playwright container as the E2E job, never on a laptop: a screenshot depends on the OS, the browser and
+# the fonts. Run it by hand on a pull request's branch after a change of the design on purpose:
+#   Actions → Update screenshots → Run workflow → branch, or `gh workflow run update-screenshots.yml --ref <branch>`.
+# It commits the new images to that branch, so the pull request shows them for review, then starts CI again
+# there (a commit pushed by a workflow does not start other workflows by itself).
+on:
+  workflow_dispatch:
+
+# Least privilege: read-only by default; only the commit job below may write.
+permissions:
+  contents: read
+
+concurrency:
+  group: update-screenshots-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The E2E image tag follows @playwright/test in package-lock.json, as in ci.yml.
+  playwright-version:
+    name: Playwright version for the E2E image
+    # main is protected: the images arrive there through a pull request.
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.lock.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: lock
+        run: |
+          version=$(jq -r '.packages["node_modules/@playwright/test"].version' package-lock.json)
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Could not read a release version of @playwright/test from package-lock.json (got '$version')."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  screenshots:
+    name: Make the screenshots in the E2E container
+    needs: playwright-version
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.playwright-version.outputs.version }}-noble
+      options: --user 1001
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # Only the screenshots that differ are written again, so an unchanged screen keeps its approved image.
+      - run: npx playwright test tests/e2e/visual.spec.ts --project=mobile-chrome --update-snapshots=changed
+      - uses: actions/upload-artifact@v7
+        with:
+          name: screenshots
+          path: tests/e2e/__screenshots__/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  commit:
+    name: Commit the screenshots to the branch
+    needs: screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Scoped write access: push to this branch, and start CI on it again.
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: screenshots
+          path: tests/e2e/__screenshots__/
+      - name: Commit and push the new images
+        id: push
+        run: |
+          git add tests/e2e/__screenshots__/
+          if git diff --cached --quiet; then
+            echo "::notice::The screenshots did not change: nothing to commit."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git diff --cached --stat
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "test: update the approved screenshots (D40)" -m "Made by the workflow \"Update screenshots\" (run ${GITHUB_RUN_ID})."
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+      - name: Start CI on the branch again
+        if: steps.push.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run ci.yml --ref "${GITHUB_REF_NAME}"
