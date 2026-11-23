@@ -154,6 +154,7 @@ describe('AtlasScreen', () => {
     for (const image of images) {
       expect(image).toHaveAttribute('alt', '');
       expect(image).toHaveAttribute('loading', 'lazy');
+      expect(image).toHaveAttribute('decoding', 'async');
     }
   });
 
@@ -173,5 +174,17 @@ describe('AtlasScreen', () => {
       expect(names).toEqual([...names].sort(new Intl.Collator('en').compare));
     }
     expect(screen.getByRole('button', { name: 'Back' })).toBeVisible();
+  });
+
+  it('NFR-06 DATA-03 ATL-01 in English, capitals and other capitals are in English: "Other capitals: La Paz", "Moscow"', async () => {
+    localStorage.setItem('miatlas67.language', 'en');
+    renderAtlas();
+
+    await chooseRegion('Americas');
+    expect(entry('Americas', 'Bolivia')).toHaveTextContent(/^BoliviaSucreOther capitals: La Paz$/);
+    expect(entry('Americas', 'Mexico')).toHaveTextContent(/^MexicoMexico City$/);
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+    await chooseRegion('Europe');
+    expect(entry('Europe', 'Russia')).toHaveTextContent(/^RussiaMoscow$/);
   });
 });

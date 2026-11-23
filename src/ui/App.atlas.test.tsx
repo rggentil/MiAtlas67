@@ -56,7 +56,8 @@ describe('App · the Atlas (ATL-01, ATL-02, D34)', () => {
     const store = await deviceWith();
     await renderApp(store);
     await userEvent.click(screen.getByRole('button', { name: 'Lucía' }));
-    const before = localStorage.length;
+    const storageBefore = Object.entries(localStorage);
+    const playersBefore = await store.players.list();
 
     await openAtlas();
     for (const region of ['Oceanía', 'Europa', 'Mundo']) {
@@ -66,7 +67,8 @@ describe('App · the Atlas (ATL-01, ATL-02, D34)', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Volver' }));
 
     expect(await store.rounds.listAll()).toEqual([]);
-    expect(localStorage.length).toBe(before);
+    expect(Object.entries(localStorage)).toEqual(storageBefore);
+    expect(await store.players.list()).toEqual(playersBefore);
     await userEvent.click(screen.getByRole('button', { name: 'Historial' }));
     expect(await screen.findByText('Todavía no hay partidas.')).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: 'Volver' }));

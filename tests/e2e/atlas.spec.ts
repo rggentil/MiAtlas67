@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { savedPlayerId, savedRoundsOf } from './device.ts';
 import { expect, test } from './fixtures.ts';
 import { AtlasPage } from './pages/AtlasPage.ts';
@@ -15,6 +15,16 @@ async function expectNoSidewaysScroll(page: Page): Promise<void> {
     window: window.innerWidth,
   }));
   expect(widths.content).toBeLessThanOrEqual(widths.window);
+}
+
+/** Every element of `targets` (exactly `count`) is at least 48 × 48 px (NFR-05). */
+async function expectTargetsOf48px(targets: Locator, count: number): Promise<void> {
+  await expect(targets).toHaveCount(count);
+  for (const target of await targets.all()) {
+    const box = await target.boundingBox();
+    expect(box?.width ?? 0).toBeGreaterThanOrEqual(48);
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(48);
+  }
 }
 
 test.describe('Atlas', () => {
@@ -40,6 +50,7 @@ test.describe('Atlas', () => {
 
       await expect(atlas.regions.getByRole('button')).toHaveText(REGIONS);
       await atlas.backButton.click();
+      await expectTargetsOf48px(atlas.openButton, 1);
       await expect(players.heading).toHaveText('¿Quién juega?');
 
       await atlas.openButton.click();
@@ -57,6 +68,7 @@ test.describe('Atlas', () => {
     async ({ page }) => {
       const home = new HomePage(page);
       await home.goto();
+      await expectTargetsOf48px(atlas.openButton, 1);
       await atlas.openButton.click();
       await expect(atlas.regions.getByRole('button')).toHaveText(REGIONS);
 
@@ -140,6 +152,12 @@ test.describe('Atlas', () => {
       const gibraltar = atlas.entry('Territorios y otros', 'Gibraltar');
       await expect(gibraltar).toHaveText('GibraltarTerritorio británico de ultramar');
       await expect(gibraltar.locator('img')).toHaveCount(2);
+      await gibraltar.scrollIntoViewIfNeeded();
+      for (const picture of await gibraltar.locator('img').all()) {
+        await expect
+          .poll(() => picture.evaluate((image: HTMLImageElement) => image.naturalWidth))
+          .toBeGreaterThan(0);
+      }
       await atlas.backButton.click();
 
       await atlas.chooseRegion('África');
@@ -155,6 +173,9 @@ test.describe('Atlas', () => {
     async ({ page }) => {
       const home = new HomePage(page);
       await home.goto();
+      const lucia = await savedPlayerId(page, 'Lucía');
+      expect(lucia).not.toBeNull();
+      const storageBefore = await page.evaluate(() => JSON.stringify(Object.entries(localStorage)));
       await atlas.openButton.click();
       for (const region of ['Oceanía', 'Europa', 'Mundo']) {
         await atlas.chooseRegion(region);
@@ -164,7 +185,11 @@ test.describe('Atlas', () => {
       await atlas.backButton.click();
       await expect(home.heading).toHaveText('¿A qué jugamos?');
 
-      expect(await savedRoundsOf(page, (await savedPlayerId(page, 'Lucía')) ?? -1)).toBe(0);
+      expect(await savedRoundsOf(page, lucia ?? Number.NaN)).toBe(0);
+      expect(await savedPlayerId(page, 'Lucía')).toBe(lucia);
+      expect(await page.evaluate(() => JSON.stringify(Object.entries(localStorage)))).toBe(
+        storageBefore,
+      );
       await home.historyButton.click();
       await expect(new HistoryPage(page).empty).toBeVisible();
       await page.goBack();
@@ -197,8 +222,8 @@ test.describe('Atlas', () => {
   );
 
   test(
-    'NFR-05 NFR-03 "Mundo": list items with empty alt pictures, far images not requested until scrolled to, no axe violations, 48 px buttons, no sideways scroll at 360 px',
-    { tag: ['@NFR-05', '@NFR-03'] },
+    'NFR-05 NFR-03 NFR-01 "Mundo": list items with empty alt pictures, far images not requested until scrolled to, no axe violations, 48 px buttons, no sideways scroll at 360 px',
+    { tag: ['@NFR-05', '@NFR-03', '@NFR-01'] },
     async ({ page, makeAxeBuilder }) => {
       await page.setViewportSize({ width: 360, height: 640 });
       const requested: string[] = [];
@@ -208,25 +233,26 @@ test.describe('Atlas', () => {
       });
       await openWithoutPlayer(page);
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
+      await expectTargetsOf48px(atlas.regions.getByRole('button'), 6);
+      await expectTargetsOf48px(atlas.backButton, 1);
 
       await atlas.chooseRegion('Mundo');
       await expect(atlas.entries('Mundo')).toHaveCount(195);
       const zimbabwe = atlas.entry('Mundo', 'Zimbabue');
       await expect(zimbabwe).toHaveText('ZimbabueHarare');
-      for (const picture of await page.getByRole('main').locator('img').all()) {
-        await expect(picture).toHaveAttribute('alt', '');
-      }
+      const alts = await page
+        .getByRole('main')
+        .locator('img')
+        .evaluateAll((images) => images.map((image) => image.getAttribute('alt')));
+      // A flag and a silhouette for each of the 247 entities, but Puntland and Jubalandia (SHAPE-04).
+      expect(alts).toHaveLength(2 * 247 - 2);
+      expect(alts.every((alt) => alt === '')).toBe(true);
+      // The first flag, on screen, is asked for: only then does the absence of the last one mean something.
+      await expect.poll(() => requested.some((url) => url.includes('/flags/af.svg'))).toBe(true);
       expect(requested.some((url) => url.includes('/flags/zw.svg'))).toBe(false);
 
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
       await expectNoSidewaysScroll(page);
-      const buttons = await page.getByRole('button').all();
-      expect(buttons.length).toBeGreaterThanOrEqual(1);
-      for (const button of buttons) {
-        const box = await button.boundingBox();
-        expect(box?.width ?? 0).toBeGreaterThanOrEqual(48);
-        expect(box?.height ?? 0).toBeGreaterThanOrEqual(48);
-      }
 
       await zimbabwe.scrollIntoViewIfNeeded();
       await expect.poll(() => requested.some((url) => url.includes('/flags/zw.svg'))).toBe(true);

@@ -122,7 +122,8 @@ function AtlasSection({ title, focusTitle, children }: AtlasSectionProps) {
 
 function EntryList({ entities }: { entities: readonly (Entity | ExtendedEntity)[] }) {
   return (
-    <ul className="flex flex-col gap-3">
+    // role="list": Safari drops the list role of a list without bullets, and VoiceOver would not count it.
+    <ul role="list" className="flex flex-col gap-3">
       {entities.map((entity) => (
         <Entry key={entity.code} entity={entity} />
       ))}
