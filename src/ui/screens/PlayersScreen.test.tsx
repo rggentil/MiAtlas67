@@ -53,6 +53,17 @@ const isPlayerName = (name: string) => !name.startsWith('Editar a ');
 const newPlayerButton = () => screen.queryByRole('button', { name: 'Nuevo jugador' });
 
 describe('PlayersScreen', () => {
+  it('DATA-05 D33 "Acerca de" in the footer, next to "Idioma", opens the credits without a player', async () => {
+    const onOpenAbout = vi.fn();
+    renderPlayers({ onOpenAbout });
+
+    const footer = screen.getByRole('contentinfo');
+    expect(within(footer).getByRole('group', { name: 'Idioma' })).toBeVisible();
+    await userEvent.click(within(footer).getByRole('button', { name: 'Acerca de' }));
+
+    expect(onOpenAbout).toHaveBeenCalledOnce();
+  });
+
   it('PRF-04 every player has its own "Editar" button, next to it in the list', async () => {
     const onEdit = vi.fn<(player: Player) => void>();
     const onChoose = vi.fn();

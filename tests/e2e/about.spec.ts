@@ -25,7 +25,7 @@ test.describe('"Acerca de"', () => {
 
   test(
     'NAV-01 "Acerca de" opens from the home screen; "Volver" and Back go back there',
-    { tag: ['@NAV-01', '@DATA-05'] },
+    { tag: ['@NAV-01'] },
     async ({ page }) => {
       const home = new HomePage(page);
       await home.goto();
@@ -58,8 +58,8 @@ test.describe('"Acerca de"', () => {
       await expect(about.heading).toHaveText('Acerca de');
       await page.goBack();
       await expect(players.heading).toHaveText('¿Quién juega?');
-      await expect(players.exitDialog).toBeHidden();
       await expect(players.newPlayerButton).toBeVisible();
+      await expect(players.exitDialog).toBeHidden();
     },
   );
 
@@ -76,7 +76,12 @@ test.describe('"Acerca de"', () => {
       await expect(flagIcons).toContainText('© 2013 Panayiotis Lipiridis');
 
       await about.commonsToggle.click();
-      await expect(about.commonsList.getByRole('listitem')).toHaveCount(15);
+      const commons = about.commonsList.getByRole('listitem');
+      await expect(commons).toHaveCount(15);
+      for (const flag of await commons.all()) {
+        await expect(flag).toContainText(/https:\/\/commons\.wikimedia\.org\/wiki\/File:\S+\.svg/);
+        await expect(flag).toContainText(/Dominio público|CC BY-SA 4\.0|CC BY-SA 3\.0/);
+      }
       for (const name of ['Afganistán', 'Abjasia', 'Puntland', 'Zanzíbar']) {
         await expect(about.credit(about.commonsList, name)).toContainText(
           'https://commons.wikimedia.org/wiki/File:',
@@ -147,18 +152,19 @@ test.describe('"Acerca de"', () => {
       await expect(about.credit(about.section('Animales'), 'OpenMoji')).toContainText(
         'https://openmoji.org/',
       );
+      await expect(about.commonsList.getByRole('listitem')).toHaveCount(15);
+      await expect(about.section('Territorios y nombres')).toContainText(NEUTRALITY);
       await expect(page.getByRole('link')).toHaveCount(0);
       expect(elsewhere).toEqual([]);
     },
   );
 
   test(
-    "NFR-06 DATA-08 in English, with the licensors' credit lines in their original wording",
-    { tag: ['@NFR-06', '@DATA-08'] },
+    "NFR-06 DATA-08 DATA-05 in English, with the licensors' credit lines in their original wording",
+    { tag: ['@NFR-06', '@DATA-08', '@DATA-05'] },
     async ({ page }) => {
-      const players = new PlayersPage(page);
-      await players.goto();
-      await page.getByText('English', { exact: true }).click();
+      await new PlayersPage(page).goto();
+      await new HomePage(page).chooseLanguage('English');
       await page.getByRole('contentinfo').getByRole('button', { name: 'About' }).click();
 
       await expect(about.heading).toHaveText('About');
@@ -201,6 +207,7 @@ test.describe('"Acerca de"', () => {
       await expect(about.heading).toBeFocused();
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
 
+      await expect(about.commonsList).toBeHidden();
       await about.commonsToggle.focus();
       await expect(about.commonsToggle).toHaveAttribute('aria-expanded', 'false');
       await page.keyboard.press('Enter');
@@ -208,7 +215,9 @@ test.describe('"Acerca de"', () => {
       await expect(about.commonsList).toBeVisible();
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
       await expectNoSidewaysScroll(page);
-      for (const button of await page.getByRole('button').all()) {
+      const buttons = await page.getByRole('button').all();
+      expect(buttons.length).toBeGreaterThanOrEqual(2);
+      for (const button of buttons) {
         const box = await button.boundingBox();
         expect(box?.width ?? 0).toBeGreaterThanOrEqual(48);
         expect(box?.height ?? 0).toBeGreaterThanOrEqual(48);

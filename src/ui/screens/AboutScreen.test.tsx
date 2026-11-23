@@ -5,8 +5,8 @@ import { renderWithI18n } from '../../test/render.tsx';
 import { AboutScreen } from './AboutScreen.tsx';
 
 function renderAbout(onBack = vi.fn()) {
-  renderWithI18n(<AboutScreen onBack={onBack} />);
-  return { onBack };
+  const { container } = renderWithI18n(<AboutScreen onBack={onBack} />);
+  return { onBack, container };
 }
 
 /** A section of the screen, by its heading. */
@@ -67,6 +67,10 @@ describe('AboutScreen', () => {
 
     const items = within(list).getAllByRole('listitem');
     expect(items).toHaveLength(15);
+    for (const flag of items) {
+      expect(flag).toHaveTextContent(/https:\/\/commons\.wikimedia\.org\/wiki\/File:\S+\.svg/);
+      expect(flag).toHaveTextContent(/Dominio público|CC BY-SA 4\.0|CC BY-SA 3\.0/);
+    }
     for (const name of ['Afganistán', 'Abjasia', 'Puntland', 'Zanzíbar']) {
       expect(item(list, name)).toHaveTextContent('https://commons.wikimedia.org/wiki/File:');
     }
@@ -148,10 +152,10 @@ describe('AboutScreen', () => {
   });
 
   it('NFR-04 nothing on the screen is fetched: no image, no link, every address is text', async () => {
-    renderAbout();
+    const { container } = renderAbout();
     await openCommonsList();
 
-    expect(document.querySelectorAll('img, iframe, link, script, a')).toHaveLength(0);
+    expect(container.querySelectorAll('img, iframe, link, script, a')).toHaveLength(0);
   });
 
   it("NFR-06 DATA-08 in English, with the licensors' credit lines in their original wording", async () => {

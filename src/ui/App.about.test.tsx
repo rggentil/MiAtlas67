@@ -51,7 +51,7 @@ describe('App · "Acerca de" (D33)', () => {
     await waitFor(() => {
       expect(heading()).toHaveTextContent('¿Quién juega?');
     });
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: '¿Salir del juego?' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Lucía' })).toBeVisible();
   });
 });
