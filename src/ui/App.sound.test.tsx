@@ -97,7 +97,7 @@ describe('App · sound (SET-02, D35)', () => {
     expect(screen.getAllByRole('img', { name: 'Incorrecta' })[0]).toBeVisible();
   });
 
-  it('SET-02 one sound per answer: tapping the options again, disabled now, plays nothing', async () => {
+  it('RND-04 SET-02 one sound per answer: tapping the options again, disabled now, plays nothing', async () => {
     const { player, played } = spyPlayer();
     await renderApp(undefined, player);
     await chooseLuciaAndStart();
@@ -220,14 +220,52 @@ describe('App · sound (SET-02, D35)', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('NFR-06 SET-02 in English the switch is called "Sound"', async () => {
+  it('NFR-06 SET-02 in English the switch is called "Sound", the sounds play the same, and "off" is kept', async () => {
     localStorage.setItem('miatlas67.language', 'en');
     const { player, played } = spyPlayer();
     await renderApp(undefined, player);
-
+    await userEvent.click(screen.getByRole('button', { name: 'Lucía' }));
     expect(screen.getByRole('switch', { name: 'Sound' })).toBeChecked();
+    await userEvent.click(screen.getByRole('button', { name: /^Flag → Country/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Europe' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Easy' }));
+    const first = ROUND[0];
+    if (!first) throw new Error('No question');
+
+    await userEvent.click(screen.getByRole('button', { name: first.entity.name.en }));
+    expect(played).toEqual(['correct']);
+    expect(feedback()).toHaveTextContent('Correct!');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Quit the round' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Yes, quit' }));
     await userEvent.click(screen.getByRole('switch', { name: 'Sound' }));
     expect(screen.getByRole('switch', { name: 'Sound' })).not.toBeChecked();
-    expect(played).toEqual([]);
+    expect(localStorage.getItem(SOUND_STORAGE_KEY)).toBe('off');
+  });
+
+  it('RND-04 RND-08 the image cards of "País → Bandera" play the same sounds: right, wrong and the round end', async () => {
+    const { player, played } = spyPlayer();
+    await renderApp(undefined, player);
+    await userEvent.click(screen.getByRole('button', { name: 'Lucía' }));
+    await userEvent.click(screen.getByRole('button', { name: /^País → Bandera/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Europa' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Fácil' }));
+
+    for (const [index, question] of ROUND.entries()) {
+      const right = index !== 1;
+      const option = right
+        ? question.entity
+        : question.options.find((candidate) => candidate.code !== question.entity.code);
+      if (!option) throw new Error('No wrong option');
+      const card = `Opción ${String(question.options.indexOf(option) + 1)}`;
+      await userEvent.click(screen.getByRole('button', { name: card }));
+      if (index === 0) expect(played).toEqual(['correct']);
+      if (index === 1) expect(played).toEqual(['correct', 'wrong']);
+      await nextQuestion();
+    }
+
+    expect(played).toHaveLength(11);
+    expect(played.at(-1)).toBe('roundEnd');
+    expect(screen.getByRole('button', { name: 'Jugar otra vez' })).toBeVisible();
   });
 });

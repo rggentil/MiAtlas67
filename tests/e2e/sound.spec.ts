@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { expectedRound, questionAt, wrongOption } from './expected.ts';
 import { expect, test } from './fixtures.ts';
 import { GameSetupPage } from './pages/GameSetupPage.ts';
@@ -15,19 +15,23 @@ const SECOND = questionAt(ROUND, 1);
 
 type AudioMode = 'normal' | 'slow' | 'none';
 
+interface AudioSpy {
+  AudioContext?: typeof AudioContext;
+  webkitAudioContext?: typeof AudioContext;
+  soundsPlayed: number;
+  resumes: number;
+  hasWebAudio: boolean;
+}
+
 /**
  * Counts the sounds the game plays: each sound is one gain node of the page's audio context. 'slow': the
- * context takes forever to start; 'none': the browser has no Web Audio at all.
+ * context is suspended and never finishes starting; 'none': the browser has no Web Audio at all.
  */
 async function listenToSounds(page: Page, mode: AudioMode = 'normal'): Promise<void> {
   await page.addInitScript((audio: AudioMode) => {
-    const scope = window as unknown as {
-      AudioContext?: typeof AudioContext;
-      webkitAudioContext?: typeof AudioContext;
-      soundsPlayed: number;
-      hasWebAudio: boolean;
-    };
+    const scope = window as unknown as AudioSpy;
     scope.soundsPlayed = 0;
+    scope.resumes = 0;
     scope.hasWebAudio = false;
     if (audio === 'none') {
       scope.AudioContext = undefined;
@@ -38,12 +42,17 @@ async function listenToSounds(page: Page, mode: AudioMode = 'normal'): Promise<v
     if (!Original) return;
     scope.hasWebAudio = true;
     scope.AudioContext = class extends Original {
+      override get state(): AudioContextState {
+        return audio === 'slow' ? 'suspended' : super.state;
+      }
+
       override createGain(): GainNode {
         scope.soundsPlayed += 1;
         return super.createGain();
       }
 
       override resume(): Promise<void> {
+        scope.resumes += 1;
         return audio === 'slow' ? new Promise<void>(() => undefined) : super.resume();
       }
     };
@@ -55,14 +64,12 @@ async function listenToSounds(page: Page, mode: AudioMode = 'normal'): Promise<v
  * Windows; the component tests count them with a spy player everywhere.
  */
 async function skipWithoutWebAudio(page: Page): Promise<void> {
-  const has = await page.evaluate(
-    () => (window as unknown as { hasWebAudio: boolean }).hasWebAudio,
-  );
+  const has = await page.evaluate(() => (window as unknown as AudioSpy).hasWebAudio);
   test.skip(!has, 'This browser build has no Web Audio to count the sounds of');
 }
 
 async function soundsPlayed(page: Page): Promise<number> {
-  return page.evaluate(() => (window as unknown as { soundsPlayed: number }).soundsPlayed);
+  return page.evaluate(() => (window as unknown as AudioSpy).soundsPlayed);
 }
 
 const soundSwitch = (page: Page, name = 'Sonido') =>
@@ -76,6 +83,26 @@ async function startRound(page: Page, home: HomePage): Promise<RoundPage> {
   const round = new RoundPage(page);
   await expect(round.heading).toHaveText('¿De qué país es esta bandera?');
   return round;
+}
+
+/** At least 48 × 48 px (NFR-05). */
+async function expectTouchTarget(target: Locator): Promise<void> {
+  const box = await target.boundingBox();
+  expect(box?.width ?? 0).toBeGreaterThanOrEqual(48);
+  expect(box?.height ?? 0).toBeGreaterThanOrEqual(48);
+}
+
+/** The switch sits next to the language chips: on their row, or right below them, in the footer. */
+async function expectNextToLanguage(page: Page): Promise<void> {
+  const language = await page
+    .getByRole('contentinfo')
+    .getByRole('group', { name: 'Idioma' })
+    .boundingBox();
+  const sound = await soundSwitch(page).boundingBox();
+  if (!language || !sound) throw new Error('The language or the sound switch is not on screen');
+  const languageBottom = language.y + language.height;
+  expect(sound.y).toBeLessThan(languageBottom + 24);
+  expect(sound.y + sound.height).toBeGreaterThan(language.y);
 }
 
 test.describe('Sound effects', () => {
@@ -94,8 +121,10 @@ test.describe('Sound effects', () => {
       await expect(round.feedbackMark('Correcta')).toBeVisible();
       await expect.poll(() => soundsPlayed(page)).toBe(1);
       for (const option of FIRST.options) {
+        await expect(round.option(option.name.es)).toBeDisabled();
         await round.option(option.name.es).dispatchEvent('click');
       }
+      expect(await soundsPlayed(page)).toBe(1);
 
       await round.nextButton.click();
       await round.answer(wrongOption(SECOND).name.es);
@@ -123,34 +152,68 @@ test.describe('Sound effects', () => {
   );
 
   test(
-    'SET-02 NFR-05 "Sonido" is on the first time, next to "Idioma" on both screens; turned off, a whole round is silent, and it stays off after a reload, for Pablo too',
+    'SET-02 NFR-05 "Sonido" is on the first time, next to "Idioma" on both screens, 48 px, with no axe violations',
     { tag: ['@SET-02', '@NFR-05'] },
     async ({ page, makeAxeBuilder }) => {
-      await listenToSounds(page);
-      const home = new HomePage(page);
       const players = new PlayersPage(page);
-      await home.goto('?seed=42');
+      await players.goto();
 
-      const footer = page.getByRole('contentinfo');
-      await expect(footer.getByRole('group', { name: 'Idioma' })).toBeVisible();
       await expect(soundSwitch(page)).toBeChecked();
-      const box = await soundSwitch(page).boundingBox();
-      expect(box?.width ?? 0).toBeGreaterThanOrEqual(48);
-      expect(box?.height ?? 0).toBeGreaterThanOrEqual(48);
+      await expectNextToLanguage(page);
+      await expectTouchTarget(soundSwitch(page));
+      expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
+
+      const home = new HomePage(page);
+      await players.newPlayerButton.click();
+      await new NewPlayerPage(page).create('Lucía', 'Zorro');
+      await expect(home.heading).toHaveText('¿A qué jugamos?');
+      await expect(soundSwitch(page)).toBeChecked();
+      await expectNextToLanguage(page);
+      await expectTouchTarget(soundSwitch(page));
+      expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
+
       await soundSwitch(page).click();
       await expect(soundSwitch(page)).not.toBeChecked();
       expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
+    },
+  );
+
+  test(
+    'SET-02 with "Sonido" off, a round right and wrong to its summary plays nothing, with the same feedback',
+    { tag: ['@SET-02'] },
+    async ({ page }) => {
+      await listenToSounds(page);
+      const home = new HomePage(page);
+      await home.goto('?seed=42');
+      await skipWithoutWebAudio(page);
+      await soundSwitch(page).click();
+      await expect(soundSwitch(page)).not.toBeChecked();
 
       const round = await startRound(page, home);
       await round.answer(FIRST.entity.name.es);
+      await expect(round.feedback).toContainText('¡Correcto!');
       await expect(round.feedbackMark('Correcta')).toBeVisible();
       await round.nextButton.click();
       await round.answer(wrongOption(SECOND).name.es);
       await expect(round.feedback).toContainText('¡Uy!');
+      await expect(round.mark(wrongOption(SECOND).name.es, 'Incorrecta')).toBeVisible();
       await round.nextButton.click();
       await round.playRound(ROUND.slice(2), []);
+
       await expect(new SummaryPage(page).playAgainButton).toBeVisible();
       expect(await soundsPlayed(page)).toBe(0);
+    },
+  );
+
+  test(
+    'SET-02 the choice is kept on the device: off after a reload, and for Pablo too',
+    { tag: ['@SET-02'] },
+    async ({ page }) => {
+      const home = new HomePage(page);
+      const players = new PlayersPage(page);
+      await home.goto();
+      await soundSwitch(page).click();
+      await expect(soundSwitch(page)).not.toBeChecked();
 
       await page.reload();
       await expect(players.heading).toHaveText('¿Quién juega?');
@@ -188,26 +251,35 @@ test.describe('Sound effects', () => {
       await listenToSounds(page, 'slow');
       const home = new HomePage(page);
       await home.goto('?seed=42');
+      await skipWithoutWebAudio(page);
       const round = await startRound(page, home);
 
       await round.answer(FIRST.entity.name.es);
 
       await expect(round.feedbackMark('Correcta')).toBeVisible({ timeout: 1_000 });
       await expect(round.feedback).toContainText('¡Correcto!');
+      // The context was asked to start, and has not: the feedback did not wait for it.
+      expect(await page.evaluate(() => (window as unknown as AudioSpy).resumes)).toBe(1);
     },
   );
 
   test(
-    'NFR-06 SET-02 in English the switch is called "Sound" and works the same',
+    'NFR-06 SET-02 in English the switch is called "Sound", and a right answer plays its sound',
     { tag: ['@NFR-06', '@SET-02'] },
     async ({ page }) => {
       await listenToSounds(page);
-      await new PlayersPage(page).goto();
-      await new HomePage(page).chooseLanguage('English');
+      const home = new HomePage(page);
+      await home.goto('?seed=42');
+      await home.chooseLanguage('English');
 
       await expect(soundSwitch(page, 'Sound')).toBeChecked();
-      await soundSwitch(page, 'Sound').click();
-      await expect(soundSwitch(page, 'Sound')).not.toBeChecked();
+      await skipWithoutWebAudio(page);
+      await home.openGame('Flag → Country');
+      await page.getByRole('button', { name: 'Europe', exact: true }).click();
+      await page.getByRole('button', { name: 'Easy', exact: true }).click();
+      await page.getByRole('button', { name: FIRST.entity.name.en, exact: true }).click();
+      await expect(new RoundPage(page).feedback).toContainText('Correct!');
+      await expect.poll(() => soundsPlayed(page)).toBe(1);
     },
   );
 });
