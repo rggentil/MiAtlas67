@@ -122,8 +122,13 @@ function ProgressTable({ progress, mastery }: { progress: GameProgress; mastery?
           </p>
         </div>
       )}
-      <div className="overflow-hidden rounded-block border-3 border-ink bg-paper shadow-block-sm">
-        <table aria-labelledby={headingId} className="w-full table-fixed border-collapse">
+      {/* The table fills a 360 px phone (20rem inside the box); with larger text it grows with it and scrolls inside its box,
+          as a data table may (WCAG 1.4.10), instead of cutting its text off. */}
+      <div className="overflow-x-auto rounded-block border-3 border-ink bg-paper shadow-block-sm">
+        <table
+          aria-labelledby={headingId}
+          className="w-full min-w-[20rem] table-fixed border-collapse"
+        >
           <thead>
             <tr className="bg-sun">
               <th scope="col" className="w-[24%] px-2 py-2 text-left text-sm font-black">

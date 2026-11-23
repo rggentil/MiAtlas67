@@ -215,7 +215,10 @@ export function RoundScreen({ game, settings, questions, onQuit, onFinish }: Rou
                         <FlagImage entity={question.entity} alt="" className="rounded-md" />
                       </span>
                     )}
-                    {t('round.askedName', { name: question.entity.name[language] })}
+                    {/* Beside the flag, a name too long for very large text is split rather than spilled. */}
+                    <span className="min-w-0 [overflow-wrap:anywhere]">
+                      {t('round.askedName', { name: question.entity.name[language] })}
+                    </span>
                   </span>
                 </ScreenTitle>
               ) : game.id === 'CAP-B' ? (
@@ -310,7 +313,8 @@ function TextOption({
             <FlagImage entity={flag} alt="" className="rounded-md" />
           </span>
         )}
-        {text}
+        {/* With very large text, a name that does not fit beside the flag is split rather than spilled. */}
+        <span className="min-w-0 [overflow-wrap:anywhere]">{text}</span>
       </button>
       {(state === 'correct' || state === 'wrong') && (
         <AnswerMark correct={state === 'correct'} variant="badge" />
@@ -425,17 +429,23 @@ function Feedback({ game, question, chosen, nextRef, onNext }: FeedbackProps) {
     <section
       className={
         answered
-          ? `fixed inset-x-0 bottom-0 border-t-3 border-ink ${correct ? 'bg-success' : 'bg-error'}`
+          ? // Never taller than the screen: with large text it scrolls, so "Siguiente" is always reachable.
+            `fixed inset-x-0 bottom-0 max-h-dvh overflow-y-auto border-t-3 border-ink ${correct ? 'bg-success' : 'bg-error'}`
           : ''
       }
     >
-      <div className={answered ? 'mx-auto flex max-w-md flex-col gap-4 px-5 pt-5 pb-6' : ''}>
+      <div
+        className={
+          answered ? 'mx-auto flex max-w-md flex-col gap-4 px-[min(1.25rem,20px)] pt-5 pb-6' : ''
+        }
+      >
         <div role="status" className="flex items-center gap-3">
           {answered && (
             <>
               <AnswerMark correct={correct} variant="tile" />
+              {/* With very large text, a word that does not fit on its own is split rather than cut off. */}
               <p
-                className={`font-display leading-tight ${correct || (game.id !== 'FLAG-B' && game.id !== 'SHAPE-B') ? 'text-3xl' : 'text-2xl'}`}
+                className={`min-w-0 font-display leading-tight [overflow-wrap:anywhere] ${correct || (game.id !== 'FLAG-B' && game.id !== 'SHAPE-B') ? 'text-3xl' : 'text-2xl'}`}
               >
                 {correct ? t('round.correct') : miss}
               </p>

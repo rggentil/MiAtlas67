@@ -57,5 +57,7 @@
 @layer base {
   body {
     @apply min-h-dvh bg-sky font-body text-ink antialiased;
+    /* With very large text, a word longer than its line is split instead of spilling out (NFR-05). */
+    overflow-wrap: break-word;
   }
 }
