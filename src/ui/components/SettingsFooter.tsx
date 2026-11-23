@@ -1,6 +1,7 @@
 import { useI18n } from '../../i18n/context.ts';
 import { Button } from './Button.tsx';
 import { LanguageSwitch } from './LanguageSwitch.tsx';
+import { SoundSwitch } from './SoundSwitch.tsx';
 
 interface SettingsFooterProps {
   /** "Atlas": browse the entities of a region, without a player (ATL-01, ATL-02, D34). */
@@ -10,7 +11,7 @@ interface SettingsFooterProps {
 }
 
 /**
- * The footer of the home screen and of "¿Quién juega?": the language (SET-01), the Atlas and "Acerca de", which
+ * The footer of the home screen and of "¿Quién juega?": the language (SET-01), the sound (SET-02), the Atlas and "Acerca de", which
  * open without a player.
  */
 export function SettingsFooter({ onOpenAtlas, onOpenAbout }: SettingsFooterProps) {
@@ -18,7 +19,10 @@ export function SettingsFooter({ onOpenAtlas, onOpenAbout }: SettingsFooterProps
 
   return (
     <footer className="mt-auto flex flex-col items-center gap-4 pt-4 text-center">
-      <LanguageSwitch />
+      <div className="flex flex-wrap items-end justify-center gap-x-5 gap-y-3">
+        <LanguageSwitch />
+        <SoundSwitch />
+      </div>
       <div className="flex flex-wrap justify-center gap-3">
         <Button variant="secondary" onClick={onOpenAtlas}>
           {t('atlas.title')}

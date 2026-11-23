@@ -6,6 +6,9 @@ import { createRng } from '../domain/random.ts';
 import { unlockedLevel } from '../domain/unlocking.ts';
 import type { RoundResult } from '../domain/round.ts';
 import { I18nProvider } from '../i18n/I18nProvider.tsx';
+import type { SoundPlayer } from '../sound/sounds.ts';
+import { SoundProvider } from '../sound/SoundProvider.tsx';
+import { createWebAudioPlayer } from '../sound/webAudio.ts';
 import { openStore } from '../storage/indexedDbStore.ts';
 import {
   roundToSave,
@@ -453,9 +456,14 @@ function CurrentScreen({
 interface AppProps {
   /** Where players and rounds are kept; the device's IndexedDB when not given (tests give a memory one). */
   store?: GameStore;
+  /** What plays the sounds (SET-02); the browser's Web Audio when not given (tests give a spy). */
+  sound?: SoundPlayer;
 }
 
-export function App({ store }: AppProps = {}) {
+/** The device's sounds: its audio context is created on the first sound, after a tap. */
+const webAudio = createWebAudioPlayer();
+
+export function App({ store, sound = webAudio }: AppProps = {}) {
   if (Showcase && window.location.hash === '#showcase') {
     return (
       <Suspense fallback={null}>
@@ -466,7 +474,9 @@ export function App({ store }: AppProps = {}) {
 
   return (
     <I18nProvider>
-      <Screens givenStore={store} />
+      <SoundProvider player={sound}>
+        <Screens givenStore={store} />
+      </SoundProvider>
     </I18nProvider>
   );
 }

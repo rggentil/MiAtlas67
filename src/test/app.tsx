@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect } from 'vitest';
 import { createMemoryStore } from '../storage/memoryStore.ts';
+import type { SoundPlayer } from '../sound/sounds.ts';
 import type { GameStore, PlayerData } from '../storage/store.ts';
 import { App } from '../ui/App.tsx';
 
@@ -29,12 +30,13 @@ export async function deviceWith({
 }
 
 /**
- * Renders the whole game on `store` (by default a device with "Lucía"). It opens on "¿Quién juega?" and
+ * Renders the whole game on `store` (by default a device with "Lucía"), with `sound` playing the sounds (by
+ * default the browser's Web Audio, silent in jsdom). It opens on "¿Quién juega?" and
  * returns once the players are on screen.
  */
-export async function renderApp(store?: GameStore): Promise<GameStore> {
+export async function renderApp(store?: GameStore, sound?: SoundPlayer): Promise<GameStore> {
   const device = store ?? (await deviceWith());
-  render(<App store={device} />);
+  render(<App store={device} sound={sound} />);
   // Before the players are read, "¿Quién juega?" has no button in its main area (the footer has its own).
   await waitFor(() => {
     expect(within(screen.getByRole('main')).queryAllByRole('button')).not.toHaveLength(0);
