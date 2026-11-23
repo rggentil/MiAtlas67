@@ -150,24 +150,6 @@ const REVIEWED_GROUPS: readonly (readonly string[])[] = [
   ['XK', 'BA'],
 ];
 
-/** Flags that flag-icons does not have: they come from Wikimedia Commons (DATA-05). */
-const COMMONS_FLAGS = [
-  'GE-AB',
-  'XO',
-  'MD-SN',
-  'XC',
-  'XS',
-  'MD-GA',
-  'BQ-BO',
-  'BQ-SE',
-  'BQ-SA',
-  'IQ-KR',
-  'XP',
-  'XJ',
-  'XZ',
-  'PG-NSB',
-];
-
 const everyEntity: readonly Entity[] = [...countries, ...extendedEntities];
 
 function byCode(code: string): Entity {
@@ -361,13 +343,15 @@ describe('extended set dataset', () => {
     expect(missing).toEqual([]);
   });
 
-  it('DATA-05 every flag from Wikimedia Commons is listed in SOURCES.md with its source and licence', () => {
+  it('DATA-05 D39 every extended flag is listed in SOURCES.md with its Commons file and licence', () => {
     const rows = flagSources.split('\n').filter((line) => /^\| `[a-z-]+\.svg` \|/.test(line));
-    const listed = rows.map((row) => row.slice(3, row.indexOf('.svg')).toUpperCase());
-    expect(sorted(listed)).toEqual(sorted(['AF', ...COMMONS_FLAGS]));
-    for (const row of rows) {
-      expect(row).toContain('https://commons.wikimedia.org/wiki/File:');
-      expect(row).toMatch(/\| (Public domain|CC BY-SA [0-9.]+) \|$/);
+    const listed = new Map(
+      rows.map((row) => [row.slice(3, row.indexOf('.svg')).toUpperCase(), row]),
+    );
+    for (const entity of extendedEntities) {
+      const row = listed.get(entity.code);
+      expect(row, entity.code).toContain('https://commons.wikimedia.org/wiki/File:');
+      expect(row, entity.code).toMatch(/\| (Public domain|CC0|CC BY-SA [0-9.]+) \|$/);
     }
   });
 });

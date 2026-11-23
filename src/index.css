@@ -61,3 +61,12 @@
     overflow-wrap: break-word;
   }
 }
+
+/*
+ * The dark outline of a flag (§15, D39): drawn around the flag's own shape, so Nepal's pennants get it and no
+ * rectangle surrounds them. Four shadows, two along each axis, fill the corners too.
+ */
+@utility flag-outline {
+  filter: drop-shadow(2px 0 0 var(--color-ink)) drop-shadow(-2px 0 0 var(--color-ink))
+    drop-shadow(0 2px 0 var(--color-ink)) drop-shadow(0 -2px 0 var(--color-ink));
+}

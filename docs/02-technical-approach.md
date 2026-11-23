@@ -14,7 +14,7 @@
 | Styling | **Tailwind CSS** | Fast, consistent, mobile-first utilities |
 | Animation | **Motion** (framer-motion) | Smooth, kid-friendly transitions |
 | Country shapes | **d3-geo + topojson-client**, **Natural Earth** data | Renders silhouettes as SVG; the same base serves the future map mode |
-| Flags | **flag-icons** SVGs (MIT); the few missing ones (e.g. Abjasia, Puntland) from **Wikimedia Commons** | Every country, crisp at any size, works offline. Source and licence recorded per file |
+| Flags | **Wikimedia Commons** SVGs, the file Wikipedia shows, optimised with **svgo** (`npm run data:flags`) | Every flag in its real ratio (D39), crisp at any size, works offline. Source, licence and ratio recorded per file |
 | Fonts | **Lilita One** + **Nunito**, self-hosted via **@fontsource** (SIL OFL) | No runtime call to Google Fonts (NFR-04); works offline |
 | Local persistence | **IndexedDB via Dexie**, behind a repository interface. Per-device preferences (language) in `localStorage`, with every access guarded | Robust on-device storage; the interface lets us plug in a cloud backend later. If storage is blocked, the app still works with defaults |
 | Offline / installable | **vite-plugin-pwa** | Service worker + web app manifest |

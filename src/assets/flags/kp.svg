@@ -1,15 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" id="flag-icons-kp" viewBox="0 0 640 480">
-  <defs>
-    <clipPath id="kp-a">
-      <path fill-opacity=".7" d="M5 .1h682.6V512H5.1z"/>
-    </clipPath>
-  </defs>
-  <g fill-rule="evenodd" clip-path="url(#kp-a)" transform="translate(-4.8 -.1)scale(.93768)">
-    <path fill="#fff" stroke="#000" d="M776 511.5H-76V.5h852z"/>
-    <path fill="#3e5698" d="M776 419H-76v92.5h852z"/>
-    <path fill="#c60000" d="M776 397.6H-76V114.4h852z"/>
-    <path fill="#3e5698" d="M776 .6H-76V93h852z"/>
-    <path fill="#fff" d="M328.5 256c0 63.5-53 115-118.6 115S91.3 319.5 91.3 256s53-114.8 118.6-114.8 118.6 51.4 118.6 114.9z"/>
-    <path fill="#c40000" d="m175.8 270.6-57-40.7 71-.2 22.7-66.4 21.1 66.1 71-.4-57.9 41.2 21.3 66.1-57-40.7-58 41.3z"/>
-  </g>
-</svg>
+<svg viewBox="0 0 1188 720" xmlns="http://www.w3.org/2000/svg" width="1188" height="720"><path fill="#034da2" d="M0 0h1188v720H0z"/><path fill="#fff" d="M0 120h1188v480H0z"/><path fill="#ec1d25" d="M0 154h1188v412H0z"/><circle cx="475.2" cy="360" r="160" fill="#fff"/><path fill="#ec1d25" d="m475.2 205-91.107 280.398 238.521-173.296H327.786l238.521 173.296z"/></svg>

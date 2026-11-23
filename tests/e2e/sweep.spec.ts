@@ -289,8 +289,7 @@ for (const [language, mode] of [
           .getByRole('contentinfo')
           .getByRole('button', { name: t('about.title') })
           .click();
-        await page.getByRole('button', { name: new RegExp(t('about.commons')) }).click();
-        await sweep(page, makeAxeBuilder, language, mode, 'about, list open');
+        await sweep(page, makeAxeBuilder, language, mode, 'about');
       },
     );
   });

@@ -23,12 +23,6 @@ function item(region: HTMLElement, title: string) {
   return found;
 }
 
-/** Opens the list of Commons flags and returns it. */
-async function openCommonsList() {
-  await userEvent.click(screen.getByRole('button', { name: /^Banderas de Wikimedia Commons/ }));
-  return screen.getByRole('list', { name: 'Banderas de Wikimedia Commons' });
-}
-
 describe('AboutScreen', () => {
   it('DATA-05 NFR-05 has the heading "Acerca de" and a heading for each section', () => {
     renderAbout();
@@ -51,69 +45,48 @@ describe('AboutScreen', () => {
     expect(onBack).toHaveBeenCalledOnce();
   });
 
-  it('DATA-05 under "Banderas": flag-icons, MIT and © 2013 Panayiotis Lipiridis, with its address', () => {
+  it('DATA-05 D39 under "Banderas": Wikimedia Commons, public domain or CC0 but for the flags named below', () => {
     renderAbout();
 
-    const flagIcons = item(section('Banderas'), 'flag-icons');
-    expect(flagIcons).toHaveTextContent('MIT');
-    expect(flagIcons).toHaveTextContent('© 2013 Panayiotis Lipiridis');
-    expect(flagIcons).toHaveTextContent('https://github.com/lipis/flag-icons');
+    const commons = item(section('Banderas'), 'Wikimedia Commons');
+    expect(commons).toHaveTextContent(
+      'Todas las banderas. Dominio público o CC0, salvo las que se citan aquí debajo.',
+    );
+    expect(commons).toHaveTextContent('https://commons.wikimedia.org/');
+    expect(section('Banderas')).not.toHaveTextContent('flag-icons');
   });
 
-  it('DATA-05 D13 the 15 Commons flags, each with its entity, licence and the address of its file', async () => {
+  it('DATA-05 D39 the three flags whose licence asks for it are named, with licence, author and addresses', () => {
     renderAbout();
 
-    const list = await openCommonsList();
-
-    const items = within(list).getAllByRole('listitem');
-    expect(items).toHaveLength(15);
-    for (const flag of items) {
-      expect(flag).toHaveTextContent(/https:\/\/commons\.wikimedia\.org\/wiki\/File:\S+\.svg/);
-      expect(flag).toHaveTextContent(/Dominio público|CC BY-SA 4\.0|CC BY-SA 3\.0/);
-    }
-    for (const name of ['Afganistán', 'Abjasia', 'Puntland', 'Zanzíbar']) {
-      expect(item(list, name)).toHaveTextContent('https://commons.wikimedia.org/wiki/File:');
-    }
-    expect(item(list, 'Afganistán')).toHaveTextContent('Flag_of_the_Taliban.svg');
-    const sintEustatius = item(list, 'San Eustaquio');
+    const flags = section('Banderas');
+    expect(within(flags).getAllByRole('listitem')).toHaveLength(4);
+    const oman = item(flags, 'Omán');
+    expect(oman).toHaveTextContent('Open Government Licence – Oman 1.0');
+    expect(oman).toHaveTextContent('https://commons.wikimedia.org/wiki/File:Flag_of_Oman.svg');
+    expect(oman).toHaveTextContent(
+      'https://www.oman.om/en/home-footer-level/faq/open-government-licence-oman',
+    );
+    const sintEustatius = item(flags, 'San Eustaquio');
     expect(sintEustatius).toHaveTextContent('CC BY-SA 4.0');
     expect(sintEustatius).toHaveTextContent('Autor: Andrwsc');
+    expect(sintEustatius).toHaveTextContent(
+      'https://commons.wikimedia.org/wiki/File:Flag_of_Sint_Eustatius.svg',
+    );
     expect(sintEustatius).toHaveTextContent('https://creativecommons.org/licenses/by-sa/4.0/');
-    const saba = item(list, 'Saba');
+    const saba = item(flags, 'Saba');
     expect(saba).toHaveTextContent('CC BY-SA 3.0');
     expect(saba).toHaveTextContent('Autor: Mysid');
-    const publicDomain = items.filter((li) => li.textContent.includes('Dominio público'));
-    expect(publicDomain).toHaveLength(13);
-    expect(publicDomain.every((li) => !li.textContent.includes('Autor'))).toBe(true);
+    expect(saba).toHaveTextContent('https://creativecommons.org/licenses/by-sa/3.0/');
   });
 
-  it('DATA-05 the Commons flags are listed in alphabetical order', async () => {
+  it('DATA-05 the named flags are in alphabetical order, after Wikimedia Commons', () => {
     renderAbout();
 
-    const list = await openCommonsList();
-
-    const names = within(list)
+    const names = within(section('Banderas'))
       .getAllByRole('listitem')
       .map((li) => li.querySelector('p')?.textContent ?? '');
-    expect(names).toEqual([...names].sort(new Intl.Collator('es').compare));
-    expect(names[0]).toBe('Abjasia');
-  });
-
-  it('NFR-05 the list of Commons flags opens and closes, and says whether it is open', async () => {
-    renderAbout();
-    const toggle = screen.getByRole('button', { name: 'Banderas de Wikimedia Commons (15)' });
-
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByRole('list', { name: 'Banderas de Wikimedia Commons' })).toBeNull();
-
-    toggle.focus();
-    await userEvent.keyboard('{Enter}');
-    expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('list', { name: 'Banderas de Wikimedia Commons' })).toBeVisible();
-
-    await userEvent.keyboard(' ');
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByRole('list', { name: 'Banderas de Wikimedia Commons' })).toBeNull();
+    expect(names).toEqual(['Wikimedia Commons', 'Omán', 'Saba', 'San Eustaquio']);
   });
 
   it('DATA-05 D25 under "Siluetas": Natural Earth in the public domain, and Ciudad del Vaticano from OpenStreetMap', () => {
@@ -151,14 +124,13 @@ describe('AboutScreen', () => {
     expect(territories).toHaveTextContent('Los nombres son las formas neutras más usadas.');
   });
 
-  it('NFR-04 nothing on the screen is fetched: no image, no link, every address is text', async () => {
+  it('NFR-04 nothing on the screen is fetched: no image, no link, every address is text', () => {
     const { container } = renderAbout();
-    await openCommonsList();
 
     expect(container.querySelectorAll('img, iframe, link, script, a')).toHaveLength(0);
   });
 
-  it("NFR-06 DATA-08 in English, with the licensors' credit lines in their original wording", async () => {
+  it("NFR-06 DATA-08 in English, with the licensors' credit lines in their original wording", () => {
     localStorage.setItem('miatlas67.language', 'en');
     renderAbout();
 
@@ -182,12 +154,11 @@ describe('AboutScreen', () => {
     expect(section('Territories and names')).toHaveTextContent(
       'Names are the most widely used neutral forms.',
     );
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Flags from Wikimedia Commons (15)' }),
+    expect(item(section('Flags'), 'Wikimedia Commons')).toHaveTextContent(
+      'Every flag. Public domain or CC0, except the ones credited below.',
     );
-    const list = screen.getByRole('list', { name: 'Flags from Wikimedia Commons' });
-    expect(item(list, 'Sint Eustatius')).toHaveTextContent('Author: Andrwsc');
-    expect(item(list, 'Abkhazia')).toHaveTextContent('Public domain');
+    expect(item(section('Flags'), 'Sint Eustatius')).toHaveTextContent('Author: Andrwsc');
+    expect(item(section('Flags'), 'Oman')).toHaveTextContent('Open Government Licence – Oman 1.0');
     expect(screen.getByRole('button', { name: 'Back' })).toBeVisible();
   });
 });

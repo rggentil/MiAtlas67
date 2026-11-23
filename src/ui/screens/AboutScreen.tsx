@@ -1,14 +1,15 @@
-import { useId, useState, type ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { countries } from '../../data/countries.ts';
 import { extendedEntities } from '../../data/extended.ts';
 import {
-  COMMONS_FLAGS,
-  FLAG_ICONS,
   LICENCE_ADDRESSES,
+  LICENCE_NAMES,
+  NAMED_FLAGS,
   NATURAL_EARTH,
   OPENMOJI,
   OPENSTREETMAP,
   OPENSTREETMAP_SHAPES,
+  WIKIMEDIA_COMMONS,
   type Licence,
   type Source,
 } from '../../data/sources.ts';
@@ -43,7 +44,7 @@ export function AboutScreen({ onBack }: AboutScreenProps) {
   useOnBack(onBack);
 
   const licenceName = (licence: Licence) =>
-    licence === 'public-domain' ? t('about.publicDomain') : licence;
+    licence === 'public-domain' ? t('about.publicDomain') : (LICENCE_NAMES[licence] ?? licence);
 
   /** The lines of a source: its licence and credit, then its address and the licence's. */
   const sourceLines = (source: Source) => ({
@@ -61,9 +62,13 @@ export function AboutScreen({ onBack }: AboutScreenProps) {
 
         <AboutSection title="about.flags">
           <ul className="flex flex-col gap-3">
-            <Credit title={FLAG_ICONS.name} {...sourceLines(FLAG_ICONS)} />
+            <Credit
+              title={WIKIMEDIA_COMMONS.name}
+              lines={[t('about.commonsFlags')]}
+              addresses={[WIKIMEDIA_COMMONS.address]}
+            />
+            <NamedFlags licenceName={licenceName} />
           </ul>
-          <CommonsFlags licenceName={licenceName} />
         </AboutSection>
 
         <AboutSection title="about.shapes">
@@ -148,59 +153,26 @@ function Credit({ title, lines, addresses }: CreditProps) {
 }
 
 /**
- * The flags that come from Wikimedia Commons, one by one (DATA-05, D13): a list that opens and closes, so the
- * screen stays short. The button says whether it is open (NFR-05).
+ * The flags whose licence asks for them to be named (DATA-05, D39), in alphabetical order, each with its licence,
+ * its author where the licence asks for one, and the addresses of its file and its licence.
  */
-function CommonsFlags({ licenceName }: { licenceName: (licence: Licence) => string }) {
+function NamedFlags({ licenceName }: { licenceName: (licence: Licence) => string }) {
   const { t, language } = useI18n();
-  const [open, setOpen] = useState(false);
-  const listId = useId();
   const collator = new Intl.Collator(language);
-  const flags = COMMONS_FLAGS.map((flag) => ({
+  const flags = NAMED_FLAGS.map((flag) => ({
     ...flag,
     name: entityOf(flag.code).name[language],
   })).sort((a, b) => collator.compare(a.name, b.name));
 
-  return (
-    <div className="flex flex-col gap-3">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={listId}
-        onClick={() => {
-          setOpen((was) => !was);
-        }}
-        className={[
-          'flex min-h-12 w-full items-center justify-between gap-2 px-3 py-2 text-left font-black',
-          'rounded-xl border-3 border-ink bg-sky shadow-block-sm',
-          'motion-safe:transition-[translate,box-shadow] motion-safe:duration-75',
-          'active:translate-x-0.5 active:translate-y-0.5 active:shadow-none',
-          'focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-accent',
-        ].join(' ')}
-      >
-        <span>{t('about.commonsCount', { n: flags.length })}</span>
-        <span aria-hidden="true" className="flex-none text-xl leading-none">
-          {open ? '▴' : '▾'}
-        </span>
-      </button>
-      <ul
-        id={listId}
-        aria-label={t('about.commons')}
-        hidden={!open}
-        className="flex flex-col gap-3"
-      >
-        {flags.map((flag) => (
-          <Credit
-            key={flag.code}
-            title={flag.name}
-            lines={[
-              licenceName(flag.licence),
-              ...(flag.author ? [t('about.author', { name: flag.author })] : []),
-            ]}
-            addresses={[flag.address, ...licenceAddress(flag.licence)]}
-          />
-        ))}
-      </ul>
-    </div>
-  );
+  return flags.map((flag) => (
+    <Credit
+      key={flag.code}
+      title={flag.name}
+      lines={[
+        licenceName(flag.licence),
+        ...(flag.author ? [t('about.author', { name: flag.author })] : []),
+      ]}
+      addresses={[flag.address, ...licenceAddress(flag.licence)]}
+    />
+  ));
 }

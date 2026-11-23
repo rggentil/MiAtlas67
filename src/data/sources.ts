@@ -6,13 +6,20 @@
  * A licence, by the name its licensor gives it. Public domain is not a licence name, so the screen says it in
  * the player's language.
  */
-export type Licence = 'public-domain' | 'MIT' | 'CC BY-SA 4.0' | 'CC BY-SA 3.0' | 'ODbL';
+export type Licence =
+  'public-domain' | 'CC0' | 'MIT' | 'CC BY-SA 4.0' | 'CC BY-SA 3.0' | 'ODbL' | 'OGL-om 1.0';
 
-/** The text of the licences that ask for it to be named with an address (CC BY-SA, ODbL). */
+/** The text of the licences that ask for it to be named with an address (CC BY-SA, ODbL, OGL-om). */
 export const LICENCE_ADDRESSES: Readonly<Partial<Record<Licence, string>>> = {
   'CC BY-SA 4.0': 'https://creativecommons.org/licenses/by-sa/4.0/',
   'CC BY-SA 3.0': 'https://creativecommons.org/licenses/by-sa/3.0/',
   ODbL: 'https://opendatacommons.org/licenses/odbl/',
+  'OGL-om 1.0': 'https://www.oman.om/en/home-footer-level/faq/open-government-licence-oman',
+};
+
+/** The full name of a licence where its short name is not what its licensor calls it. */
+export const LICENCE_NAMES: Readonly<Partial<Record<Licence, string>>> = {
+  'OGL-om 1.0': 'Open Government Licence – Oman 1.0',
 };
 
 /** A source of many files. */
@@ -24,12 +31,14 @@ export interface Source {
   readonly address: string;
 }
 
-/** Every flag that is not in {@link COMMONS_FLAGS} (`scripts/sync-flags.ts`). */
-export const FLAG_ICONS: Source = {
-  name: 'flag-icons',
-  licence: 'MIT',
-  credit: '© 2013 Panayiotis Lipiridis',
-  address: 'https://github.com/lipis/flag-icons',
+/**
+ * Every flag (D39, `scripts/sync-flags.ts`): public domain or CC0, but for the {@link NAMED_FLAGS}, whose licence
+ * asks for them to be named.
+ */
+export const WIKIMEDIA_COMMONS: Source = {
+  name: 'Wikimedia Commons',
+  licence: 'public-domain',
+  address: 'https://commons.wikimedia.org/',
 };
 
 /** Every silhouette but the ones of {@link OPENSTREETMAP_SHAPES}. */
@@ -57,8 +66,8 @@ export const OPENMOJI: Source = {
   address: 'https://openmoji.org/',
 };
 
-/** A flag file taken from Wikimedia Commons instead of flag-icons (DATA-05, D13). */
-export interface CommonsFlag {
+/** A flag file whose licence asks for it to be named on "Acerca de" (DATA-05, D39). */
+export interface NamedFlag {
   /** The entity whose flag it is. */
   readonly code: string;
   readonly licence: Licence;
@@ -71,30 +80,11 @@ export interface CommonsFlag {
 const COMMONS = 'https://commons.wikimedia.org/wiki/File:';
 
 /**
- * The flags where flag-icons does not show the flag in use today (Afganistán, D13) or has none (the extended
- * entities). `scripts/sync-flags.ts` leaves these files alone.
+ * The three flags named on "Acerca de" (D39): the licence of every other flag file asks for no credit. The full
+ * list, file by file, is `src/assets/flags/SOURCES.md`; an integrity test keeps the two in step.
  */
-export const COMMONS_FLAGS: readonly CommonsFlag[] = [
-  { code: 'AF', licence: 'public-domain', address: `${COMMONS}Flag_of_the_Taliban.svg` },
-  {
-    code: 'GE-AB',
-    licence: 'public-domain',
-    address: `${COMMONS}Flag_of_the_Republic_of_Abkhazia.svg`,
-  },
-  { code: 'XO', licence: 'public-domain', address: `${COMMONS}Flag_of_South_Ossetia.svg` },
-  {
-    code: 'MD-SN',
-    licence: 'public-domain',
-    address: `${COMMONS}Flag_of_Transnistria_(state).svg`,
-  },
-  {
-    code: 'XC',
-    licence: 'public-domain',
-    address: `${COMMONS}Flag_of_the_Turkish_Republic_of_Northern_Cyprus.svg`,
-  },
-  { code: 'XS', licence: 'public-domain', address: `${COMMONS}Flag_of_Somaliland.svg` },
-  { code: 'MD-GA', licence: 'public-domain', address: `${COMMONS}Flag_of_Gagauzia.svg` },
-  { code: 'BQ-BO', licence: 'public-domain', address: `${COMMONS}Flag_of_Bonaire.svg` },
+export const NAMED_FLAGS: readonly NamedFlag[] = [
+  { code: 'OM', licence: 'OGL-om 1.0', address: `${COMMONS}Flag_of_Oman.svg` },
   {
     code: 'BQ-SE',
     licence: 'CC BY-SA 4.0',
@@ -107,9 +97,4 @@ export const COMMONS_FLAGS: readonly CommonsFlag[] = [
     author: 'Mysid',
     address: `${COMMONS}Flag_of_Saba.svg`,
   },
-  { code: 'IQ-KR', licence: 'public-domain', address: `${COMMONS}Flag_of_Kurdistan.svg` },
-  { code: 'XP', licence: 'public-domain', address: `${COMMONS}Flag_of_Puntland.svg` },
-  { code: 'XJ', licence: 'public-domain', address: `${COMMONS}Flag_of_Jubaland.svg` },
-  { code: 'XZ', licence: 'public-domain', address: `${COMMONS}Flag_of_Zanzibar.svg` },
-  { code: 'PG-NSB', licence: 'public-domain', address: `${COMMONS}Flag_of_Bougainville.svg` },
 ];
