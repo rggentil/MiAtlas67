@@ -94,18 +94,28 @@ export function createWebAudioPlayer(
   let context: AudioContext | null = null;
   let unavailable = false;
 
+  /** The audio context, created once; `null` when the browser cannot play sound. */
+  function ready(): AudioContext | null {
+    if (!context && !unavailable) {
+      const Context = getContextClass();
+      if (Context) context = new Context();
+      else unavailable = true;
+    }
+    return context;
+  }
+
   return {
-    play(sound) {
-      if (unavailable) return;
+    prepare() {
       try {
-        if (!context) {
-          const Context = getContextClass();
-          if (!Context) {
-            unavailable = true;
-            return;
-          }
-          context = new Context();
-        }
+        ready();
+      } catch {
+        // A browser that cannot play sound plays the round in silence.
+      }
+    },
+    play(sound) {
+      try {
+        const context = ready();
+        if (!context) return;
         if (context.state === 'suspended') {
           // Not awaited: the notes are scheduled now and play once the context runs.
           Promise.resolve(context.resume()).catch(() => undefined);

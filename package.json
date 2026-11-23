@@ -25,7 +25,8 @@
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run test:coverage && npm run test:e2e",
     "data:flags": "node scripts/sync-flags.ts",
     "data:shapes": "node scripts/build-shapes.ts",
-    "trace": "node scripts/trace.ts"
+    "trace": "node scripts/trace.ts",
+    "budget": "node scripts/budget.ts"
   },
   "dependencies": {
     "@fontsource-variable/nunito": "5.3.0",

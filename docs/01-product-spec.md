@@ -272,7 +272,8 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 - **NFR-01** Mobile-first responsive; supported browsers: latest Chrome (Android, desktop), Safari (iOS) and Edge.
 - **NFR-02** *(Should)* Fully playable offline after the first load; installable on the home screen (PWA).
   Installable part, done early (D24, story #74): a web manifest named "MiAtlas67" with its icons and the iOS meta tags, so it opens full screen from the home screen on «¿Quién juega?». Playing offline is a service worker that keeps the whole game on the device; a new version arrives in silence the next time the game is opened (D36, story #110).
-- **NFR-03** Usable within 2 s on a mid-range phone over Wi-Fi; answer feedback feels instant (< 100 ms).
+- **NFR-03** Usable within 2 s on a mid-range phone over Wi-Fi; answer feedback feels instant (< 100 ms). The
+  profile, the size budgets and how they are checked are in D38.
 - **NFR-04** Privacy by design (GDPR/AVG): all data stays on the device. Only nickname, avatar and game results
   are stored. No analytics, ads, cookies or third-party calls at runtime. Deleting a profile deletes its data.
   Any future online feature (sync, multiplayer) needs a separate privacy review first, because it involves
@@ -325,11 +326,13 @@ The product owner reviewed the tiers of every country in story #15 (42 / 71 / 82
 | D35 | Sound (#108) | ✅ Approved by the product owner (2026-11-23, questions P4–P6 of epic 7). Three short sounds: a correct answer, a soft wrong answer (D16) and the end of a round, when the summary opens. They are synthesized in the browser (Web Audio), so there is no sound file to license or download. The sound is on the first time; the switch «Sonido» sits in the footer of the home screen and of «¿Quién juega?», next to «Idioma», shows whether it is on with an icon besides its colour, and is stored on the device for every player, like the language (SET-01). Blocked storage or a browser that cannot play sound never breaks the game, and a sound never delays the ✓ or ✗ of an answer (NFR-03) |
 | D36 | Offline play and new versions (#110) | ✅ Approved by the product owner (2026-11-23, question P10 of epic 7). After the first visit a service worker keeps the whole game on the device (pages, scripts, styles, fonts, flags and silhouettes) and it plays with no connection (NFR-02). It stores only the game's own files, under its own address (NFR-04, D10). A new version arrives in silence: the game goes on with the version it has, a round in progress is never reloaded, and the new one is used the next time the game is opened after it was closed. Players and rounds are never touched by an update |
 | D37 | Accessibility pass (#111) | ✅ Approved by the product owner (2026-11-23, question P12 of epic 7). The chosen language shows a ✓ besides its colour, as the «Sonido» switch shows its speaker icon, so colour is never the only signal (§15). The sweep of every screen in both languages also made the game usable on a 360 px phone with the text at 200 %, without changing how it looks at the normal size: a word too long for its line is split, the side padding of buttons stays at 20 px, the language chips and the animals wrap, the answer panel scrolls when it is taller than the screen, and the tables of «Progreso» and «Récords» scroll inside their box, as data tables may (WCAG 1.4.10). The dialogs keep the focus inside them |
+| D38 | Performance budget (#112) | ✅ Approved by the product owner (2026-11-23, question P13 of epic 7). NFR-03 is measured on a mid-range phone emulated in Chromium: CPU 4 times slower, 10 Mbit/s, 40 ms latency. «¿Quién juega?» is usable within 2 s (median of 5 first openings); a tap on an answer shows its ✓ or ✗ within 100 ms; «Historial» with 500 rounds and the Atlas «Mundo» (247 entries) are usable within 2 s. The build fails when the JavaScript of the first screen is over 200 KB gzipped, its CSS over 20 KB gzipped, or the files stored for offline play over 5 MB; flags and silhouettes are never part of the first load. If a time test proves unstable in CI, it reports its number instead of failing, and the sizes stay a hard limit |
 
 No open questions.
 
 ## 18. Change log
 
+- **v1.24** (2026-11-23): the performance budget: profile, times and sizes (NFR-03, D38, story #112).
 - **v1.23** (2026-11-23): accessibility pass: a ✓ on the chosen language, large text on a small phone, focus kept in dialogs (NFR-05, D37, story #111).
 - **v1.22** (2026-11-23): playing offline and how a new version arrives (NFR-02, D36, story #110).
 - **v1.21** (2026-11-23): sound effects and the «Sonido» switch (SET-02, RND-04, RND-08, D35, story #108).

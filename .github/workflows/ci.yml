@@ -36,6 +36,10 @@ jobs:
       - run: npm run format:check
       - name: Unit and component tests with coverage gate (src/domain >= 90 %)
         run: npm run test:coverage
+      - name: Production build and its size budget (NFR-03, D38)
+        run: |
+          npm run build
+          npm run budget
       - name: Traceability report (informational, never fails the build)
         continue-on-error: true
         env:
