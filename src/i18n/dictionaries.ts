@@ -142,6 +142,10 @@ const es = {
   'about.names': 'Los nombres son las formas neutras más usadas.',
   'about.publicDomain': 'Dominio público',
   'about.author': 'Autor: {name}',
+  'atlas.title': 'Atlas',
+  'atlas.region': '¿Qué región quieres ver?',
+  'atlas.others': 'Territorios y otros',
+  'atlas.otherCapitals': 'Otras capitales: {names}',
 } as const;
 
 export type MessageKey = keyof typeof es;
@@ -290,6 +294,10 @@ const en: Dictionary = {
   'about.names': 'Names are the most widely used neutral forms.',
   'about.publicDomain': 'Public domain',
   'about.author': 'Author: {name}',
+  'atlas.title': 'Atlas',
+  'atlas.region': 'Which region do you want to see?',
+  'atlas.others': 'Territories and others',
+  'atlas.otherCapitals': 'Other capitals: {names}',
 };
 
 export const dictionaries: Record<Language, Dictionary> = { es, en };

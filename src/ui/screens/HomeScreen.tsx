@@ -25,6 +25,8 @@ interface HomeScreenProps {
   /** "Récords": the best score of the family in every game, region and level (HIS-05, D28). */
   onOpenRecords: () => void;
   /** "Acerca de" (DATA-05, D33). */
+  /** "Atlas", which opens without a player (D34). */
+  onOpenAtlas: () => void;
   onOpenAbout: () => void;
   /** The phone's back button: back to "¿Quién juega?" (NAV-01, D22). */
   onBack: () => void;
@@ -47,6 +49,7 @@ export function HomeScreen({
   onOpenHistory,
   onOpenProgress,
   onOpenRecords,
+  onOpenAtlas,
   onOpenAbout,
   onBack,
 }: HomeScreenProps) {
@@ -77,7 +80,7 @@ export function HomeScreen({
           </Button>
         </div>
       </main>
-      <SettingsFooter onOpenAbout={onOpenAbout} />
+      <SettingsFooter onOpenAtlas={onOpenAtlas} onOpenAbout={onOpenAbout} />
     </div>
   );
 }

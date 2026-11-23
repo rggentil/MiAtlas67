@@ -18,6 +18,7 @@ import { BackButtonProvider } from './navigation/BackButtonProvider.tsx';
 import { getGameSeed } from './gameSeed.ts';
 import type { PlayableGame } from './games.ts';
 import { AboutScreen } from './screens/AboutScreen.tsx';
+import { AtlasScreen } from './screens/AtlasScreen.tsx';
 import { GameSetupScreen } from './screens/GameSetupScreen.tsx';
 import { HistoryScreen } from './screens/HistoryScreen.tsx';
 import { HomeScreen } from './screens/HomeScreen.tsx';
@@ -38,6 +39,8 @@ type Screen =
   | { readonly name: 'home' }
   /** "Acerca de" opens with or without a player, and goes back to where it was opened (D33). */
   | { readonly name: 'about'; readonly from: 'players' | 'home' }
+  /** The Atlas, like "Acerca de", opens with or without a player (ATL-02, D34). */
+  | { readonly name: 'atlas'; readonly from: 'players' | 'home' }
   | { readonly name: 'history' }
   | { readonly name: 'progress' }
   | { readonly name: 'records' }
@@ -62,10 +65,10 @@ type Screen =
       readonly unlocked: Level | null;
     };
 
-/** The screens that need a player: all but "¿Quién juega?", the player form and "Acerca de". */
+/** The screens that need a player: all but "¿Quién juega?", the player form, "Acerca de" and the Atlas. */
 type GameScreen = Exclude<
   Screen,
-  { readonly name: 'players' | 'newPlayer' | 'editPlayer' | 'about' }
+  { readonly name: 'players' | 'newPlayer' | 'editPlayer' | 'about' | 'atlas' }
 >;
 
 const PLAYERS: Screen = { name: 'players' };
@@ -262,12 +265,21 @@ function Screens({ givenStore }: { givenStore: GameStore | undefined }) {
           onEdit={(edited) => {
             setScreen({ name: 'editPlayer', player: edited });
           }}
+          onOpenAtlas={() => {
+            setScreen({ name: 'atlas', from: 'players' });
+          }}
           onOpenAbout={() => {
             setScreen({ name: 'about', from: 'players' });
           }}
         />
       ) : screen.name === 'about' ? (
         <AboutScreen
+          onBack={() => {
+            setScreen(screen.from === 'home' && player ? HOME : PLAYERS);
+          }}
+        />
+      ) : screen.name === 'atlas' ? (
+        <AtlasScreen
           onBack={() => {
             setScreen(screen.from === 'home' && player ? HOME : PLAYERS);
           }}
@@ -350,6 +362,9 @@ function CurrentScreen({
           }}
           onOpenRecords={() => {
             setScreen({ name: 'records' });
+          }}
+          onOpenAtlas={() => {
+            setScreen({ name: 'atlas', from: 'home' });
           }}
           onOpenAbout={() => {
             setScreen({ name: 'about', from: 'home' });

@@ -23,6 +23,8 @@ interface PlayersScreenProps {
   /** "Editar a Lucía": change the nickname or avatar, or delete the player (PRF-04). */
   onEdit: (player: Player) => void;
   /** "Acerca de", which opens without choosing a player (D33). */
+  /** "Atlas", which opens without a player (D34). */
+  onOpenAtlas: () => void;
   onOpenAbout: () => void;
 }
 
@@ -37,6 +39,7 @@ export function PlayersScreen({
   onChoose,
   onNewPlayer,
   onEdit,
+  onOpenAtlas,
   onOpenAbout,
 }: PlayersScreenProps) {
   const { t } = useI18n();
@@ -115,7 +118,7 @@ export function PlayersScreen({
             </>
           )}
         </main>
-        <SettingsFooter onOpenAbout={onOpenAbout} />
+        <SettingsFooter onOpenAtlas={onOpenAtlas} onOpenAbout={onOpenAbout} />
       </div>
       {exiting && <ExitDialog onStay={stay} />}
     </>
