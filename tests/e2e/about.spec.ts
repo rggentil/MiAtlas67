@@ -130,12 +130,14 @@ test.describe('"Acerca de"', () => {
     async ({ page, baseURL }) => {
       const own = new URL(baseURL ?? page.url()).origin;
       const elsewhere: string[] = [];
-      await page.route('**/*', (route) => {
-        const url = route.request().url();
-        if (new URL(url).origin === own) return route.continue();
-        elsewhere.push(url);
-        return route.abort();
-      });
+      // Only requests to another site are intercepted, so the game's own files load at full speed.
+      await page.route(
+        (url) => url.origin !== own,
+        (route) => {
+          elsewhere.push(route.request().url());
+          return route.abort();
+        },
+      );
       await new PlayersPage(page).goto();
       await about.openButton.click();
       await about.commonsToggle.click();
