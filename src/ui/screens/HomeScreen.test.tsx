@@ -21,6 +21,7 @@ function renderHome(
   onOpenProgress: () => void = vi.fn(),
   onOpenRecords: () => void = vi.fn(),
   onOpenAbout: () => void = vi.fn(),
+  onOpenAtlas: () => void = vi.fn(),
 ) {
   renderWithI18n(
     <HomeScreen
@@ -31,12 +32,24 @@ function renderHome(
       onOpenProgress={onOpenProgress}
       onOpenRecords={onOpenRecords}
       onOpenAbout={onOpenAbout}
+      onOpenAtlas={onOpenAtlas}
       onBack={vi.fn()}
     />,
   );
 }
 
 describe('HomeScreen', () => {
+  it('ATL-02 D34 "Atlas" in the footer, next to "Acerca de", opens the Atlas', async () => {
+    const onOpenAtlas = vi.fn();
+    renderHome(vi.fn(), LUCIA, vi.fn(), vi.fn(), vi.fn(), vi.fn(), vi.fn(), onOpenAtlas);
+
+    const footer = screen.getByRole('contentinfo');
+    expect(within(footer).getByRole('button', { name: 'Acerca de' })).toBeVisible();
+    await userEvent.click(within(footer).getByRole('button', { name: 'Atlas' }));
+
+    expect(onOpenAtlas).toHaveBeenCalledOnce();
+  });
+
   it('DATA-05 D33 "Acerca de" in the footer, next to "Idioma", opens the credits', async () => {
     const onOpenAbout = vi.fn();
     renderHome(vi.fn(), LUCIA, vi.fn(), vi.fn(), vi.fn(), vi.fn(), onOpenAbout);

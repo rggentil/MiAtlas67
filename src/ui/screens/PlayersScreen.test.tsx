@@ -25,6 +25,7 @@ interface Shown {
   onNewPlayer?: () => void;
   onEdit?: (player: Player) => void;
   onOpenAbout?: () => void;
+  onOpenAtlas?: () => void;
 }
 
 function renderPlayers({
@@ -34,6 +35,7 @@ function renderPlayers({
   onNewPlayer = vi.fn(),
   onEdit = vi.fn(),
   onOpenAbout = vi.fn(),
+  onOpenAtlas = vi.fn(),
 }: Shown = {}) {
   renderWithI18n(
     <PlayersScreen
@@ -43,6 +45,7 @@ function renderPlayers({
       onNewPlayer={onNewPlayer}
       onEdit={onEdit}
       onOpenAbout={onOpenAbout}
+      onOpenAtlas={onOpenAtlas}
     />,
   );
 }
@@ -53,6 +56,17 @@ const isPlayerName = (name: string) => !name.startsWith('Editar a ');
 const newPlayerButton = () => screen.queryByRole('button', { name: 'Nuevo jugador' });
 
 describe('PlayersScreen', () => {
+  it('ATL-02 D34 "Atlas" in the footer opens the Atlas without a player', async () => {
+    const onOpenAtlas = vi.fn();
+    renderPlayers({ onOpenAtlas });
+
+    await userEvent.click(
+      within(screen.getByRole('contentinfo')).getByRole('button', { name: 'Atlas' }),
+    );
+
+    expect(onOpenAtlas).toHaveBeenCalledOnce();
+  });
+
   it('DATA-05 D33 "Acerca de" in the footer, next to "Idioma", opens the credits without a player', async () => {
     const onOpenAbout = vi.fn();
     renderPlayers({ onOpenAbout });

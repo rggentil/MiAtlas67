@@ -12,6 +12,11 @@ const SHAPE_URLS = import.meta.glob<string>('../assets/shapes/*.svg', {
   import: 'default',
 });
 
+/** Whether the entity has a bundled silhouette: Puntland and Jubalandia have none (SHAPE-04). */
+export function hasShape(entity: Entity): boolean {
+  return `${SHAPE_DIRECTORY}${shapeFileName(entity)}` in SHAPE_URLS;
+}
+
 /** The bundled silhouette of a shape-eligible entity; a missing file is a data error (DATA-06). */
 export function shapeUrl(entity: Entity): string {
   const url = SHAPE_URLS[`${SHAPE_DIRECTORY}${shapeFileName(entity)}`];
