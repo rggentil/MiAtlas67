@@ -5,9 +5,9 @@ import type { Player } from '../../storage/store.ts';
 import { AvatarImage } from '../components/AvatarImage.tsx';
 import { Button } from '../components/Button.tsx';
 import { CapitalIcon, FlagIcon, ShapeIcon, SwitchIcon } from '../components/icons.tsx';
-import { LanguageSwitch } from '../components/LanguageSwitch.tsx';
 import { Logo } from '../components/Logo.tsx';
 import { ScreenTitle } from '../components/ScreenTitle.tsx';
+import { SettingsFooter } from '../components/SettingsFooter.tsx';
 import { toneClasses } from '../components/tones.ts';
 import { isPlayable, type PlayableGame } from '../games.ts';
 import { useOnBack } from '../navigation/useOnBack.ts';
@@ -24,6 +24,8 @@ interface HomeScreenProps {
   onOpenProgress: () => void;
   /** "Récords": the best score of the family in every game, region and level (HIS-05, D28). */
   onOpenRecords: () => void;
+  /** "Acerca de" (DATA-05, D33). */
+  onOpenAbout: () => void;
   /** The phone's back button: back to "¿Quién juega?" (NAV-01, D22). */
   onBack: () => void;
 }
@@ -45,6 +47,7 @@ export function HomeScreen({
   onOpenHistory,
   onOpenProgress,
   onOpenRecords,
+  onOpenAbout,
   onBack,
 }: HomeScreenProps) {
   const { t } = useI18n();
@@ -74,9 +77,7 @@ export function HomeScreen({
           </Button>
         </div>
       </main>
-      <footer className="mt-auto pt-4 text-center">
-        <LanguageSwitch />
-      </footer>
+      <SettingsFooter onOpenAbout={onOpenAbout} />
     </div>
   );
 }

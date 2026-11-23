@@ -24,6 +24,7 @@ interface Shown {
   onChoose?: (player: Player) => void;
   onNewPlayer?: () => void;
   onEdit?: (player: Player) => void;
+  onOpenAbout?: () => void;
 }
 
 function renderPlayers({
@@ -32,6 +33,7 @@ function renderPlayers({
   onChoose = vi.fn(),
   onNewPlayer = vi.fn(),
   onEdit = vi.fn(),
+  onOpenAbout = vi.fn(),
 }: Shown = {}) {
   renderWithI18n(
     <PlayersScreen
@@ -40,6 +42,7 @@ function renderPlayers({
       onChoose={onChoose}
       onNewPlayer={onNewPlayer}
       onEdit={onEdit}
+      onOpenAbout={onOpenAbout}
     />,
   );
 }
@@ -50,6 +53,17 @@ const isPlayerName = (name: string) => !name.startsWith('Editar a ');
 const newPlayerButton = () => screen.queryByRole('button', { name: 'Nuevo jugador' });
 
 describe('PlayersScreen', () => {
+  it('DATA-05 D33 "Acerca de" in the footer, next to "Idioma", opens the credits without a player', async () => {
+    const onOpenAbout = vi.fn();
+    renderPlayers({ onOpenAbout });
+
+    const footer = screen.getByRole('contentinfo');
+    expect(within(footer).getByRole('group', { name: 'Idioma' })).toBeVisible();
+    await userEvent.click(within(footer).getByRole('button', { name: 'Acerca de' }));
+
+    expect(onOpenAbout).toHaveBeenCalledOnce();
+  });
+
   it('PRF-04 every player has its own "Editar" button, next to it in the list', async () => {
     const onEdit = vi.fn<(player: Player) => void>();
     const onChoose = vi.fn();
@@ -82,7 +96,8 @@ describe('PlayersScreen', () => {
     renderPlayers({ players: [] });
 
     expect(screen.getByRole('heading', { level: 1, name: '¿Quién juega?' })).toBeVisible();
-    expect(screen.getAllByRole('button')).toEqual([newPlayerButton()]);
+    // The footer holds the settings and "Acerca de" (D33).
+    expect(within(screen.getByRole('main')).getAllByRole('button')).toEqual([newPlayerButton()]);
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
   });
 
@@ -158,7 +173,7 @@ describe('PlayersScreen', () => {
     renderPlayers({ players: null });
 
     expect(screen.getByRole('heading', { level: 1, name: '¿Quién juega?' })).toBeVisible();
-    expect(screen.queryAllByRole('button')).toEqual([]);
+    expect(within(screen.getByRole('main')).queryAllByRole('button')).toEqual([]);
   });
 
   it('PRF-01 PRF-05 NFR-06 "¿Quién juega?" speaks English when English is chosen', async () => {

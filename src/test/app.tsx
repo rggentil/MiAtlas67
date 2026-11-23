@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect } from 'vitest';
 import { createMemoryStore } from '../storage/memoryStore.ts';
@@ -35,9 +35,9 @@ export async function deviceWith({
 export async function renderApp(store?: GameStore): Promise<GameStore> {
   const device = store ?? (await deviceWith());
   render(<App store={device} />);
-  // Before the players are read, "¿Quién juega?" has no button at all.
+  // Before the players are read, "¿Quién juega?" has no button in its main area (the footer has its own).
   await waitFor(() => {
-    expect(screen.queryAllByRole('button')).not.toHaveLength(0);
+    expect(within(screen.getByRole('main')).queryAllByRole('button')).not.toHaveLength(0);
   });
   return device;
 }

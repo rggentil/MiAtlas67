@@ -37,7 +37,9 @@ describe('App · who plays (PRF-01, PRF-02, PRF-05)', () => {
     await renderApp(await deviceWith({ players: [] }));
 
     expect(heading()).toHaveTextContent('¿Quién juega?');
-    expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual([
+    // The footer holds the settings and "Acerca de" (D33).
+    const main = within(screen.getByRole('main'));
+    expect(main.getAllByRole('button').map((button) => button.textContent)).toEqual([
       '+Nuevo jugador',
     ]);
   });

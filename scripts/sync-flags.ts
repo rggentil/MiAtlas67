@@ -4,18 +4,15 @@ import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { countries } from '../src/data/countries.ts';
 import { extendedEntities } from '../src/data/extended.ts';
+import { COMMONS_FLAGS } from '../src/data/sources.ts';
 import { flagFileName } from '../src/domain/entity.ts';
 
 /**
  * Flags kept from Wikimedia Commons instead of flag-icons, because flag-icons does not show the flag in use
- * today (AF) or has none (the extended entities after it). Each one is listed with its source and licence in
- * src/assets/flags/SOURCES.md.
+ * today (AF) or has none (the extended entities). They are credited on "Acerca de" from the same list
+ * (src/data/sources.ts), and recorded with their source and licence in src/assets/flags/SOURCES.md.
  */
-// prettier-ignore
-const OVERRIDES = new Set([
-  'AF',
-  'GE-AB', 'XO', 'MD-SN', 'XC', 'XS', 'MD-GA', 'BQ-BO', 'BQ-SE', 'BQ-SA', 'IQ-KR', 'XP', 'XJ', 'XZ', 'PG-NSB',
-]);
+const OVERRIDES = new Set(COMMONS_FLAGS.map((flag) => flag.code));
 
 const root = join(import.meta.dirname, '..');
 const source = join(root, 'node_modules', 'flag-icons', 'flags', '4x3');

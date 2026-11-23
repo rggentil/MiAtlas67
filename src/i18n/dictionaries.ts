@@ -130,6 +130,18 @@ const es = {
   'avatar.dog': 'Perro',
   'avatar.owl': 'Búho',
   'settings.language': 'Idioma',
+  'about.title': 'Acerca de',
+  'about.flags': 'Banderas',
+  'about.commons': 'Banderas de Wikimedia Commons',
+  'about.commonsCount': 'Banderas de Wikimedia Commons ({n})',
+  'about.shapes': 'Siluetas',
+  'about.animals': 'Animales',
+  'about.territories': 'Territorios y nombres',
+  'about.neutrality':
+    'Incluir un territorio, un estado con reconocimiento limitado o una región autónoma refleja su geografía y su bandera, no una posición política.',
+  'about.names': 'Los nombres son las formas neutras más usadas.',
+  'about.publicDomain': 'Dominio público',
+  'about.author': 'Autor: {name}',
 } as const;
 
 export type MessageKey = keyof typeof es;
@@ -266,6 +278,18 @@ const en: Dictionary = {
   'avatar.dog': 'Dog',
   'avatar.owl': 'Owl',
   'settings.language': 'Language',
+  'about.title': 'About',
+  'about.flags': 'Flags',
+  'about.commons': 'Flags from Wikimedia Commons',
+  'about.commonsCount': 'Flags from Wikimedia Commons ({n})',
+  'about.shapes': 'Silhouettes',
+  'about.animals': 'Animals',
+  'about.territories': 'Territories and names',
+  'about.neutrality':
+    'Including a territory, a state with limited recognition or an autonomous region reflects its geography and its flag, not a political position.',
+  'about.names': 'Names are the most widely used neutral forms.',
+  'about.publicDomain': 'Public domain',
+  'about.author': 'Author: {name}',
 };
 
 export const dictionaries: Record<Language, Dictionary> = { es, en };
