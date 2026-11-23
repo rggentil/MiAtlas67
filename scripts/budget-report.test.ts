@@ -43,7 +43,7 @@ describe('size budget (NFR-03, NFR-02, D38)', () => {
 
     expect(lines[0]?.over).toBe(true);
     expect(budgetReport(lines)).toContain(
-      '✗ JavaScript of the first screen (gzipped): 210.0 KB, over the 200.0 KB budget (assets/index-a.js, assets/vendor-c.js)',
+      '✗ JavaScript of the first screen (gzipped): 210.0 KB, over the 200.0 KB budget (assets/index-a.js 150.0 KB, assets/vendor-c.js 60.0 KB)',
     );
   });
 
@@ -55,7 +55,7 @@ describe('size budget (NFR-03, NFR-02, D38)', () => {
 
     expect(lines[1]?.over).toBe(true);
     expect(budgetReport(lines)).toContain(
-      '✗ CSS of the first screen (gzipped): 21.0 KB, over the 20.0 KB budget (assets/index-b.css)',
+      '✗ CSS of the first screen (gzipped): 21.0 KB, over the 20.0 KB budget (assets/index-b.css 21.0 KB)',
     );
   });
 
@@ -68,7 +68,7 @@ describe('size budget (NFR-03, NFR-02, D38)', () => {
     expect(lines[2]?.size).toBe(600 * 9 * KB);
     expect(lines[2]?.over).toBe(true);
     expect(budgetReport(lines)).toContain(
-      '✗ Files stored for offline play: 5.27 MB, over the 5.00 MB budget (600 files)',
+      '✗ Files stored for offline play: 5.27 MB, over the 5.00 MB budget (assets/f0.svg 9.0 KB, assets/f1.svg 9.0 KB, assets/f2.svg 9.0 KB, assets/f3.svg 9.0 KB, assets/f4.svg 9.0 KB, and 595 more files)',
     );
   });
 

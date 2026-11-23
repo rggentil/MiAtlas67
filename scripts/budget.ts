@@ -2,11 +2,11 @@
 // It reads dist/ and fails when the first screen's JavaScript or CSS, gzipped, or the files stored for offline
 // play are over their budget; the message names the files, their size and the budget.
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { budgetReport, checkBudget, type BuiltFile } from './budget-report.ts';
 
-const dist = join(import.meta.dirname, '..', process.argv[2] ?? 'dist');
+const dist = resolve(join(import.meta.dirname, '..'), process.argv[2] ?? 'dist');
 const BASE = process.env.VITE_BASE ?? '/';
 
 function built(path: string): BuiltFile {

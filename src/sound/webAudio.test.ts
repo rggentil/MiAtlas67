@@ -178,3 +178,17 @@ describe('Web Audio player · getting ready', () => {
     }).not.toThrow();
   });
 });
+
+describe('Web Audio player · a context that fails', () => {
+  it('NFR-03 prepare() with an audio context that cannot start throws nothing, and the sounds stay silent', () => {
+    function FailingContext(): never {
+      throw new Error('NotAllowedError');
+    }
+    const player = createWebAudioPlayer(() => FailingContext as unknown as new () => AudioContext);
+
+    expect(() => {
+      player.prepare?.();
+      player.play('correct');
+    }).not.toThrow();
+  });
+});

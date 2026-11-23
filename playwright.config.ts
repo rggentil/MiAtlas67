@@ -42,9 +42,12 @@ export default defineConfig({
     {
       name: 'perf-chrome',
       testMatch: PERFORMANCE_SPEC,
-      // A first visit: nothing stored by a service worker yet. One test at a time, so none slows another.
+      // Times are measured last, when every other project has finished, one test at a time, so nothing else
+      // loads the machine; a retry would only pick the best of three. Alone: --project=perf-chrome --no-deps.
+      dependencies: ['mobile-chrome', 'mobile-safari', 'desktop-chrome', 'offline-chrome'],
       fullyParallel: false,
-      use: { ...devices['Pixel 7'], baseURL: PREVIEW_URL, serviceWorkers: 'block' },
+      retries: 0,
+      use: { ...devices['Pixel 7'], baseURL: PREVIEW_URL, serviceWorkers: 'allow' },
     },
   ],
   webServer: [
