@@ -9,6 +9,8 @@ const OFFLINE_SPEC = /offline\.spec\.ts$/;
 /** The performance budget is measured on the production build too, on an emulated mid-range phone (D38). */
 const PERFORMANCE_SPEC = /performance\.spec\.ts$/;
 const PRODUCTION_SPECS = [OFFLINE_SPEC, PERFORMANCE_SPEC];
+/** Visual regression runs on mobile-chrome only, so there is one approved screenshot per screen (D40). */
+const VISUAL_SPEC = /visual\.spec\.ts$/;
 const isCI = Boolean(process.env.CI);
 
 export default defineConfig({
@@ -20,6 +22,16 @@ export default defineConfig({
   reporter: isCI
     ? [['html', { open: 'never' }], ['github']]
     : [['html', { open: 'never' }], ['list']],
+  // The approved screenshots (D40): one per screen, made in the CI container, so the name has no project or OS.
+  snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}{ext}',
+  // A missing screenshot fails instead of being written (a retry would then pass against it). Only the workflow
+  // "Update screenshots" writes them, with --update-snapshots.
+  updateSnapshots: 'none',
+  expect: {
+    // Up to 100 pixels may differ, each by a little (anti-aliasing). A changed colour token, even a shade
+    // (sun #FFC93C → #FFB92C), a padding or a changed word is far above it.
+    toHaveScreenshot: { maxDiffPixels: 100, threshold: 0.05 },
+  },
   use: {
     baseURL: `http://localhost:${String(PORT)}`,
     trace: 'on-first-retry',
@@ -28,10 +40,14 @@ export default defineConfig({
   },
   projects: [
     { name: 'mobile-chrome', testIgnore: PRODUCTION_SPECS, use: { ...devices['Pixel 7'] } },
-    { name: 'mobile-safari', testIgnore: PRODUCTION_SPECS, use: { ...devices['iPhone 15'] } },
+    {
+      name: 'mobile-safari',
+      testIgnore: [...PRODUCTION_SPECS, VISUAL_SPEC],
+      use: { ...devices['iPhone 15'] },
+    },
     {
       name: 'desktop-chrome',
-      testIgnore: PRODUCTION_SPECS,
+      testIgnore: [...PRODUCTION_SPECS, VISUAL_SPEC],
       use: { ...devices['Desktop Chrome'] },
     },
     {

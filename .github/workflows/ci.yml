@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Started by "Update screenshots" after it commits new images to a branch: a commit pushed by a workflow does not
+  # start CI by itself. Its checks count for the pull request's head commit (it never deploys: see the deploy job).
+  workflow_dispatch:
 
 # Least privilege: jobs can only read the repository.
 permissions:

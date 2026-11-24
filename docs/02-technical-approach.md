@@ -73,7 +73,7 @@ tests/
 | **2. Component / integration** | Vitest + React Testing Library + jsdom + fake-indexeddb | Screens with the real domain logic (round flow, feedback, summary); the storage repositories against a fake IndexedDB (`src/storage/*.test.ts`, which Vitest runs in Node: no React there) | Moderate, seconds |
 | **3. End-to-end** | Playwright | User journeys in real browser engines: create profile → play round → see history; persistence after reload; mobile and desktop viewports; accessibility scan | Few tests, critical paths only |
 
-**Playwright projects** (each E2E test runs on all of them):
+**Playwright projects** (each E2E test runs on all three, except the visual regression test, on `mobile-chrome` only):
 - `mobile-chrome`: Pixel 7 emulation (Chromium)
 - `mobile-safari`: iPhone emulation (WebKit, which runs fine on Windows)
 - `desktop-chrome`
@@ -92,7 +92,20 @@ tests/
 
 **Quality gates**: typecheck, lint, all three layers green, ≥ 90% coverage of `domain/`, CI green.
 
-*Could:* visual regression with Playwright `toHaveScreenshot` on key screens once the design is stable.
+**Visual regression** (D40, `tests/e2e/visual.spec.ts`): Playwright `toHaveScreenshot` compares twelve screenshots of
+the key screens with approved images in `tests/e2e/__screenshots__/`, on `mobile-chrome` only.
+- The images are made and compared only in the CI container (`CI` set): fonts and anti-aliasing differ between
+  operating systems, so on a laptop the test is skipped. A missing image fails (`updateSnapshots: 'none'`).
+- Stable pictures: `?seed=42`, `page.clock.setFixedTime`, rounds saved with fixed dates, reduced motion, and the
+  test waits for the web fonts and every image on show, decoded. Allowed difference: 100 pixels, each with a
+  per-pixel threshold of 0.05, so a shade of a colour token already fails.
+- A failure shows the expected, the actual and the difference in the Playwright report (artifact
+  `playwright-report` of the E2E job).
+- A change on purpose: run the workflow **Update screenshots** on the pull request's branch (Actions tab, or
+  `gh workflow run update-screenshots.yml --ref <branch>`). It makes the images in the same container, commits
+  the ones that changed to the branch, and starts CI again there; the pull request shows the new images for review.
+- A new `@playwright/test` version changes the container (browser and fonts), so its pull request runs
+  **Update screenshots** too, and the new images are checked to show the same screens.
 
 ## 4. Running and testing on a phone
 
